@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.codegraph/
+.cursor/
+reference/
+.env
+.env.*
+!.env.example
+.openai/*.zip
+.openai/*.tar*
+*.log
+artifacts/
+*.tsbuildinfo
+.sites-runtime/
