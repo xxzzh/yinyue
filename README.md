@@ -31,7 +31,7 @@ npm run preview -- --port 4173
 
 ## 使用 Release 压缩包
 
-优先直接访问在线版。也可以在 Releases 下载 `yinxu-v0.1.0-web.zip` 并解压，获得已构建网页，无需安装项目依赖或重新构建。
+优先直接访问在线版。也可以在 Releases 下载对应版本的 `yinxu-v版本号-web.zip` 并解压，获得已构建网页，无需安装项目依赖或重新构建。
 
 - Windows：已安装 Node.js 18+ 时双击 `start.bat`，打开终端显示的本地网址。
 - macOS / Linux：在解压目录运行 `node serve.mjs`，打开终端显示的网址。
