@@ -38,6 +38,31 @@
 @media(max-width:760px){.chord-area{flex-direction:column;align-items:stretch}.chord-area>div{text-align:center}.chord-options{justify-content:center}.chord-area .chord-diagram{align-self:center;width:160px;height:160px}.lesson-interactive .chord-area .chord-diagram{width:145px;height:145px}}
 
 /* Fit the navigation to the viewport; keep every item reachable on short screens. */
+.sidebar-route-label{display:flex;align-items:center;justify-content:space-between;gap:5px}
+.sidebar-route-label button{display:inline-flex;align-items:center;gap:2px;padding:0;font-size:10px;color:#6d8062}
+.filter-tabs,.practice-tabs{flex-wrap:wrap}
+.filter-bar{flex-wrap:wrap;gap:12px}
+.instrument-heading h3{font-family:var(--serif);font-size:17px;font-weight:500;color:#465d40;margin-bottom:10px}
+.instrument-heading p,.instrument-exercise p{font-size:12px;line-height:1.9;color:#718365}
+.reference-notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:9px;margin:20px 0}
+.reference-notes button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:1px solid #dce5d2;background:#f4f7ee;border-radius:7px;padding:10px 8px;font-size:12px;color:#617b50}
+.reference-notes button:hover,.reference-notes button.selected{background:#e4edd9;border-color:#acbf9b;color:#3f6339}
+.zheng-notes{grid-template-columns:repeat(5,minmax(0,1fr))}
+.reference-caption{font-size:11px;line-height:1.8;color:#8a977f;margin-top:16px}
+.instrument-exercise{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px 0;border-top:1px solid #e6ebdf}
+.instrument-picker{display:flex;align-items:center;gap:15px;margin-bottom:24px;font-size:12px;color:#6b7f5e}
+.instrument-picker select{max-width:100%;min-width:0;border:1px solid #d9e2d0;border-radius:6px;background:#fcfdf8;padding:11px;color:#4e6844}
+.ukulele-chords{padding:16px;background:#eff3e8;border-radius:8px;display:flex;align-items:center;flex-wrap:wrap;gap:15px;margin-bottom:18px}
+.ukulele-chords p{font-size:12px;color:#687d58}.ukulele-chords strong{color:#4b6b3c;letter-spacing:2px}
+.bass-fretboard{overflow-x:auto;padding-bottom:8px;margin-bottom:16px}.bass-string{display:grid;grid-template-columns:30px repeat(6,minmax(48px,1fr));align-items:center;gap:5px;min-width:355px;margin:5px 0;font-size:11px;color:#7f8c70}
+.bass-string button{display:flex;flex-direction:column;align-items:center;gap:4px;min-height:49px;border:1px solid #d9dfca;border-radius:5px;background:#f5f2e6;color:#516640}.bass-string small{font-size:9px;color:#9b9f84}.bass-string button:hover{background:#e4ecd7}
+.lesson-sources{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;margin-top:20px}.lesson-sources:empty{display:none}.lesson-sources a{display:inline-flex;align-items:center;gap:5px;color:#7a9067;text-underline-offset:3px}
+.drum-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin:20px 0}.drum-controls label{display:flex;align-items:center;gap:12px;font-size:12px;color:#758968}.drum-controls input{min-width:80px;width:140px}.drum-controls strong{font-weight:500;min-width:65px}
+.drum-grid{overflow-x:auto;margin:20px 0;padding:4px 0}.drum-count,.drum-row{display:grid;grid-template-columns:60px repeat(8,minmax(28px,1fr));gap:7px;min-width:340px;margin:8px 0}.drum-count span{text-align:center;font-size:11px;color:#96a187;padding:5px 0}.drum-count span.current-step{color:#42633b;font-weight:700}
+.drum-row>button{border-radius:6px;min-height:42px;border:1px solid #dce2d2;background:#f2f5ec}.drum-row>button.on{background:#9aac88;border-color:#8ca274}.drum-row>button.current-step{outline:2px solid #b8875e;outline-offset:1px}.drum-row>button.drum-pad{background:#ede5d4;border-color:#e4d8c0;color:#8d724c;font-size:11px}
+.drum-presets{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.drum-presets>span{font-size:10px;color:#94a081}
+@media(max-width:1000px) and (min-width:761px){.sidebar .sidebar-route-label{display:none}}
+@media(max-width:760px){.instrument-heading h3{font-size:15px}.reference-notes{grid-template-columns:repeat(2,minmax(0,1fr))}.zheng-notes{grid-template-columns:repeat(3,minmax(0,1fr))}.reference-notes button{font-size:11px}.instrument-exercise{align-items:flex-start;flex-direction:column;gap:12px}.instrument-picker{align-items:stretch;flex-direction:column;gap:8px}.drum-controls input{width:110px}.drum-count,.drum-row{grid-template-columns:45px repeat(8,minmax(25px,1fr));gap:4px;min-width:300px}.practice-tabs>button{padding:11px 10px}.filter-tabs{gap:14px}.filter-tabs>button{padding:11px 0}.lesson-sources{font-size:10px}}
 .sidebar{
   height:100vh;
   height:100dvh;

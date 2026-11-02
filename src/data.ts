@@ -1,5 +1,8 @@
-export type Track = 'theory' | 'ear' | 'piano' | 'guitar';
-export type Widget = 'score' | 'scale' | 'interval' | 'rhythm' | 'piano' | 'guitar' | 'chord' | 'sing';
+import { instrumentCourses } from './instrument-courses.ts';
+
+export type Track = 'theory' | 'ear' | 'piano' | 'guitar' | 'ukulele' | 'bass' | 'violin' | 'drums' | 'flute' | 'saxophone' | 'guzheng' | 'erhu';
+export type Widget = 'score' | 'scale' | 'interval' | 'rhythm' | 'piano' | 'guitar' | 'chord' | 'sing' | 'instrument' | 'drums';
+export type CourseFamily = 'foundation' | 'keyboard' | 'plucked' | 'bowed' | 'wind' | 'percussion';
 export interface Lesson {
   id: string;
   title: string;
@@ -12,17 +15,19 @@ export interface Lesson {
 }
 export interface Course {
   id: Track;
+  family: CourseFamily;
   title: string;
   english: string;
   description: string;
   tag: string;
   color: string;
   lessons: Lesson[];
+  sources?: { title: string; url: string }[];
 }
 
 export const courses: Course[] = [
   {
-    id: 'theory', title: '读懂音乐的语言', english: 'MUSIC THEORY',
+    id: 'theory', family: 'foundation', title: '读懂音乐的语言', english: 'MUSIC THEORY',
     description: '音符、节奏与和弦，把听到的美好变成看得懂的语言。', tag: '乐理基础', color: 'sage',
     lessons: [
       {
@@ -64,7 +69,7 @@ export const courses: Course[] = [
     ],
   },
   {
-    id: 'ear', title: '让耳朵先学会', english: 'EAR & RHYTHM',
+    id: 'ear', family: 'foundation', title: '让耳朵先学会', english: 'EAR & RHYTHM',
     description: '听辨音程、感受节拍，让耳朵成为可靠的音乐伙伴。', tag: '视唱练耳', color: 'peach',
     lessons: [
       {
@@ -102,7 +107,7 @@ export const courses: Course[] = [
     ],
   },
   {
-    id: 'piano', title: '指尖的第一段旋律', english: 'PIANO ESSENTIALS',
+    id: 'piano', family: 'keyboard', title: '指尖的第一段旋律', english: 'PIANO ESSENTIALS',
     description: '认识键盘、读谱与简单旋律，让指尖与声音相遇。', tag: '钢琴入门', color: 'lavender',
     lessons: [
       {
@@ -140,7 +145,7 @@ export const courses: Course[] = [
     ],
   },
   {
-    id: 'guitar', title: '六根弦，无限可能', english: 'GUITAR FOUNDATIONS',
+    id: 'guitar', family: 'plucked', title: '六根弦，无限可能', english: 'GUITAR FOUNDATIONS',
     description: '从空弦到第一个和弦，慢慢找到属于自己的声音。', tag: '吉他入门', color: 'sand',
     lessons: [
       {
@@ -177,7 +182,19 @@ export const courses: Course[] = [
       },
     ],
   },
+  ...instrumentCourses,
 ];
+
+export const courseFamilies = [
+  { id: 'all', tag: '全部课程' }, { id: 'foundation', tag: '乐理与听觉' },
+  { id: 'keyboard', tag: '键盘' }, { id: 'plucked', tag: '弹拨' },
+  { id: 'bowed', tag: '弓弦' }, { id: 'wind', tag: '管乐' }, { id: 'percussion', tag: '打击乐' },
+];
+export function filterCourses(query: string, family = 'all') {
+  const normalized = query.trim().toLowerCase();
+  return courses.filter(course => (family === 'all' || course.family === family) && (!normalized ||
+    `${course.title}${course.tag}${course.description}${course.english}${course.lessons.map(lesson => lesson.title).join('')}`.toLowerCase().includes(normalized)));
+}
 
 export const allLessons = courses.flatMap(course => course.lessons);
 export const findCourse = (id: string) => courses.find(course => course.id === id);
