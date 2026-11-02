@@ -1,8 +1,10 @@
 # 音序 · 音乐学习空间
 
-网站访问：[打开音序](https://yinxu-music-academy.spiffychasm.chatgpt.site/)（私有站点，使用所属 ChatGPT 账号登录）。
+**在线使用：[打开音序](https://xxzzh.github.io/yinyue/)，无需注册或登录。**
 
-源码仓库：[xxzzh/yinyue](https://github.com/xxzzh/yinyue)。GitHub 用于源码管理，当前网站访问地址保持不变。
+**正式版本：[GitHub Releases](https://github.com/xxzzh/yinyue/releases/latest)**，可下载已经构建好的网页压缩包和 SHA-256 校验文件。
+
+源码仓库：[xxzzh/yinyue](https://github.com/xxzzh/yinyue)。源码、版本发布和公开网页均托管在 GitHub；使用网站不需要 ChatGPT 账号。
 
 中文音乐学习网站第一版。包含乐理、视唱练耳、钢琴、吉他四条学习路线，共 16 节原创入门课。
 
@@ -10,8 +12,9 @@
 
 需要 Node.js 22.18+ 或 Node.js 24。
 
-```powershell
-cd D:\yy\music-academy
+```sh
+git clone https://github.com/xxzzh/yinyue.git
+cd yinyue
 npm ci
 npm run dev
 ```
@@ -25,6 +28,24 @@ npm run preview -- --port 4173
 ```
 
 正式构建输出在 `dist/`，可部署到静态托管服务。所有路由使用 URL hash，深链接不要求服务器 rewrite。
+
+## 使用 Release 压缩包
+
+优先直接访问在线版。也可以在 Releases 下载 `yinxu-v0.1.0-web.zip` 并解压，获得已构建网页，无需安装项目依赖或重新构建。
+
+- Windows：已安装 Node.js 18+ 时双击 `start.bat`，打开终端显示的本地网址。
+- macOS / Linux：在解压目录运行 `node serve.mjs`，打开终端显示的网址。
+- 部署：将解压包中的静态文件上传至任意静态服务器；`serve.mjs` 仅用于本地运行。
+
+浏览器的模块限制可能阻止直接双击 `index.html` 使用，因此请通过在线版或本地 HTTP 服务打开。
+
+## GitHub 自动发布
+
+- 推送到 `main`：检查、构建并自动发布 GitHub Pages。
+- 推送 `v*` 版本标签：检查、构建并创建 GitHub Release，附带网页 ZIP 与 SHA-256 校验。
+- GitHub 仓库 Settings → Pages 的发布源为 GitHub Actions。
+
+项目使用相对资源路径，同一份构建支持 GitHub 仓库子路径与普通静态服务器根目录。
 
 ## 已实现
 
@@ -51,7 +72,7 @@ npm run preview -- --port 4173
 
 见 [Educandu 评估](docs/educandu-evaluation.md) 与 [结构与扩展](docs/architecture.md)。上游 Educandu v4.1.1 源码已拉取到本机 `reference/educandu/`，仅用于评估，不包含在本站发布包中。
 
-Sites 托管配置在 `.openai/hosting.json`。本站以私有站点发布，沿用工具返回的项目标识，不创建第二个同名项目。
+`.openai/hosting.json` 仅保留最初预览站的配置；GitHub Pages 与 Release 不依赖它，不包含 ChatGPT 登录流程。
 
 ## 验证
 

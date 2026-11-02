@@ -1,0 +1,41 @@
+name: Publish release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Package compiled website
+        run: python3 scripts/package-release.py --version "$GITHUB_REF_NAME" --output artifacts/release
+      - name: Publish version and downloadable assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "artifacts/release/yinxu-$GITHUB_REF_NAME-web.zip" \
+            "artifacts/release/SHA256SUMS.txt" \
+            --verify-tag \
+            --title "音序 $GITHUB_REF_NAME" \
+            --notes-file docs/release-notes.md \
+            --latest
