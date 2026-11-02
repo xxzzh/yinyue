@@ -1,5 +1,6 @@
 """Run the real Windows launcher with no system Node.js on PATH."""
 import argparse
+from contextlib import contextmanager
 import json
 import os
 import socket
@@ -14,12 +15,31 @@ from zipfile import ZipFile
 ROOT = Path(__file__).resolve().parent.parent
 
 
+@contextmanager
+def smoke_directory(test_root):
+    temporary = tempfile.TemporaryDirectory(prefix="音序 smoke ", dir=test_root)
+    assert Path(temporary.name).resolve().is_relative_to(test_root)
+    try:
+        yield temporary.name
+    finally:
+        # Windows can retain the executable lock briefly after its process exits.
+        # Retry cleanup of this test's verified directory; never hide a test error.
+        for attempt in range(50):
+            try:
+                temporary.cleanup()
+                break
+            except PermissionError:
+                if attempt == 49:
+                    raise
+                time.sleep(0.1)
+
+
 def main(archive_path):
     if os.name != "nt":
         raise SystemExit("Run this smoke check on Windows.")
     test_root = (ROOT / "artifacts" / "smoke").resolve()
     test_root.mkdir(parents=True, exist_ok=True)
-    with tempfile.TemporaryDirectory(prefix="音序 smoke ", dir=test_root) as folder:
+    with smoke_directory(test_root) as folder:
         unpacked = Path(folder).resolve()
         assert unpacked.is_relative_to(test_root)
         with ZipFile(archive_path) as archive:

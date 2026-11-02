@@ -9,11 +9,12 @@
 
 **在线使用：https://xxzzh.github.io/yinyue/#/courses**
 
-**Windows 用户下载 `yinxu-v0.2.0-windows-x64.zip`，完整解压后双击 `start.bat`。**
+**Windows 用户下载 `yinxu-v0.2.1-windows-x64.zip`，完整解压后双击 `start.bat`。**
 自带运行环境，无需安装 Node.js、Python 或 npm。适用 Windows 10 / 11 的 Intel / AMD 64 位电脑。默认浏览器会自动打开，学习时保持启动窗口打开，关闭窗口或按 Ctrl+C 停止。
 
-`yinxu-v0.2.0-web.zip` 是给开发者的轻量网页包，本地运行需要 Node.js 18+，也可部署到静态服务器。`SHA256SUMS.txt` 用于核对两个 ZIP 文件；源码 ZIP / TAR.GZ 适合二次开发。
+`yinxu-v0.2.1-web.zip` 是给开发者的轻量网页包，本地运行需要 Node.js 18+，也可部署到静态服务器。`SHA256SUMS.txt` 用于核对两个 ZIP 文件；源码 ZIP / TAR.GZ 适合二次开发。
 
 在线版与本地版、不同浏览器或端口的进度各自独立，可通过“学习记录”的导出与导入迁移。升级时先关闭旧版启动窗口，再用同一浏览器、同一端口打开新版。
 
 声音为合成参考音和鼓声，帮助学习音高与节奏；不模拟真实乐器音色，也不提供实体演奏评分。
+
