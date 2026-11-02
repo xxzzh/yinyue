@@ -1,5 +1,9 @@
 # 音序 · 音乐学习空间
 
+网站访问：[打开音序](https://yinxu-music-academy.spiffychasm.chatgpt.site/)（私有站点，使用所属 ChatGPT 账号登录）。
+
+源码仓库：[xxzzh/yinyue](https://github.com/xxzzh/yinyue)。GitHub 用于源码管理，当前网站访问地址保持不变。
+
 中文音乐学习网站第一版。包含乐理、视唱练耳、钢琴、吉他四条学习路线，共 16 节原创入门课。
 
 ## 本地运行
