@@ -2,13 +2,13 @@
 
 **在线使用：[打开音序](https://xxzzh.github.io/yinyue/)，无需注册或登录。**
 
-**正式版本：[GitHub Releases](https://github.com/xxzzh/yinyue/releases/latest)**，可下载已经构建好的网页压缩包和 SHA-256 校验文件。
+**下载使用：[GitHub Releases](https://github.com/xxzzh/yinyue/releases/latest)**。Windows 用户请选择名称含 `windows-x64.zip` 的免安装包，解压后双击 `start.bat`，无需安装 Node.js。
 
 源码仓库：[xxzzh/yinyue](https://github.com/xxzzh/yinyue)。源码、版本发布和公开网页均托管在 GitHub；使用网站不需要 ChatGPT 账号。
 
 中文音乐学习网站第一版。包含乐理、视唱练耳、钢琴、吉他四条学习路线，共 16 节原创入门课。
 
-## 本地运行
+## 本地运行（开发者）
 
 需要 Node.js 22.18+ 或 Node.js 24。
 
@@ -23,6 +23,7 @@ npm run dev
 
 ```powershell
 npm test
+npm run test:server
 npm run build
 npm run preview -- --port 4173
 ```
@@ -31,21 +32,31 @@ npm run preview -- --port 4173
 
 ## 使用 Release 压缩包
 
-优先直接访问在线版。也可以在 Releases 下载对应版本的 `yinxu-v版本号-web.zip` 并解压，获得已构建网页，无需安装项目依赖或重新构建。
+普通 Windows 用户下载 `yinxu-v版本号-windows-x64.zip`：
 
-- Windows：已安装 Node.js 18+ 时双击 `start.bat`，打开终端显示的本地网址。
-- macOS / Linux：在解压目录运行 `node serve.mjs`，打开终端显示的网址。
-- 部署：将解压包中的静态文件上传至任意静态服务器；`serve.mjs` 仅用于本地运行。
+1. 将整个 ZIP 解压到普通文件夹。
+2. 双击 `start.bat`，默认浏览器会自动打开网站。
+3. 学习期间保持启动窗口打开；关闭窗口或按 Ctrl+C 即可停止。
 
-浏览器的模块限制可能阻止直接双击 `index.html` 使用，因此请通过在线版或本地 HTTP 服务打开。
+免安装包适用于 Windows 10 / 11 的 Intel / AMD 64 位电脑，包含官方 Node.js 运行环境和全部网页资源，无需另装 Node.js、Python 或 npm，无需管理员权限，解压后可离线学习。
+
+默认本地地址为 `http://127.0.0.1:4173/`。端口被占用时自动尝试下一个端口，以启动窗口显示的网址为准；若浏览器未自动打开，手动复制该网址。服务仅监听本机。
+
+在线版与本地版、不同浏览器或不同端口的学习进度各自独立。切换前可在“学习记录”导出备份，再到目标版本导入。升级时先关闭旧版启动窗口，再解压运行新版，用同一浏览器和端口访问。
+
+`yinxu-v版本号-web.zip` 是适合开发者和静态部署的轻量网页包，需要 Node.js 18+ 才能使用其中的本地启动器；macOS / Linux 可运行 `node serve.mjs`。源码 ZIP / TAR.GZ 用于二次开发。浏览器模块限制可能阻止直接双击 `index.html`，请使用启动器或在线地址。
+
+运行环境来自 [Node.js 官方下载](https://nodejs.org/dist/v24.22.2/)，版本和 SHA-256 固定在 `scripts/windows-runtime.json`，打包前验证原始压缩包校验值。免安装包保留 Node.js 原始许可证 `runtime/LICENSE` 和来源 `runtime/runtime.json`。
 
 ## GitHub 自动发布
 
 - 推送到 `main`：检查、构建并自动发布 GitHub Pages。
-- 推送 `v*` 版本标签：检查、构建并创建 GitHub Release，附带网页 ZIP 与 SHA-256 校验。
+- 推送 `v*` 版本标签：在 Windows 上检查、构建、打包并验证启动器，随后创建 GitHub Release，附带 Windows 免安装 ZIP、轻量网页 ZIP 与 SHA-256 校验。
 - GitHub 仓库 Settings → Pages 的发布源为 GitHub Actions。
 
 项目使用相对资源路径，同一份构建支持 GitHub 仓库子路径与普通静态服务器根目录。
+
+开发者可在构建后运行 `python scripts/package-release.py --windows-portable` 生成两个发布包（Python 3.11+）；在 Windows 上运行 `python scripts/smoke-windows-release.py --archive artifacts/release/yinxu-v版本号-windows-x64.zip` 验证打包产物。
 
 ## 已实现
 

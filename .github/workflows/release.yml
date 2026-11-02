@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write
     steps:
@@ -22,11 +22,18 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.13'
       - run: npm ci
       - run: npm test
+      - run: npm run test:server
       - run: npm run build
       - name: Package compiled website
-        run: python3 scripts/package-release.py --version "$GITHUB_REF_NAME" --output artifacts/release
+        shell: bash
+        run: python scripts/package-release.py --version "$GITHUB_REF_NAME" --windows-portable --output artifacts/release
+      - name: Verify bundled Windows launcher without system Node.js
+        run: python scripts/smoke-windows-release.py --archive "artifacts/release/yinxu-${{ github.ref_name }}-windows-x64.zip"
       - name: Publish version and downloadable assets
         env:
           GH_TOKEN: ${{ github.token }}
@@ -34,6 +41,7 @@ jobs:
         run: |
           gh release create "$GITHUB_REF_NAME" \
             "artifacts/release/yinxu-$GITHUB_REF_NAME-web.zip" \
+            "artifacts/release/yinxu-$GITHUB_REF_NAME-windows-x64.zip" \
             "artifacts/release/SHA256SUMS.txt" \
             --verify-tag \
             --title "音序 $GITHUB_REF_NAME" \
