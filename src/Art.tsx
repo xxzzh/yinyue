@@ -1,9 +1,13 @@
+import { TraditionalEmblem } from './Traditional';
+import { traditionalInstrument } from './traditional-catalog';
 import type { Track } from './data';
 
 export function BrandMark() {
   return <svg viewBox="0 0 36 36" fill="none" aria-hidden="true"><path d="M10 25V12l17-3v13M10 16l17-3" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/><ellipse cx="7" cy="26" rx="4" ry="3" fill="currentColor"/><ellipse cx="24" cy="23" rx="4" ry="3" fill="currentColor"/></svg>;
 }
 export function CourseArt({ track, hero = false }: { track: Track; hero?: boolean }) {
+  const traditional = traditionalInstrument(track);
+  if (traditional && track !== 'guzheng' && track !== 'erhu') return <TraditionalEmblem family={traditional.family} />;
   const id = `${track}-${hero ? 'hero' : 'card'}`;
   return <svg className={`course-art ${hero ? 'hero-art' : ''}`} viewBox="0 0 400 240" fill="none" aria-hidden="true">
     <defs>

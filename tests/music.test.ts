@@ -27,9 +27,9 @@ test('tap tempo needs enough evidence and rejects invalid intervals', () => {
   assert.equal(tapTempo([0, 0, 1000, 2000, 3000]), null);
   assert.equal(tapTempo([0, 6000, 7000, 8000, 9000]), null);
 });
-test('all twelve routes contain complete lessons with valid quiz answers', () => {
-  assert.equal(courses.length, 12);
-  assert.equal(allLessons.length, 48);
+test('all routes contain complete lessons with valid quiz answers', () => {
+  assert.equal(courses.length, 94);
+  assert.equal(allLessons.length, 294);
   assert.equal(new Set(allLessons.map(lesson => lesson.id)).size, allLessons.length);
   for (const lesson of allLessons) {
     assert.ok(lesson.sections.length >= 2);
@@ -63,8 +63,8 @@ test('instrument references preserve standard tunings, ukulele chord tones and s
   for (const item of instrumentProfiles) for (const note of [...item.notes.map(item => item.note), ...item.phrase]) assert.ok(Note.midi(note) !== null, note);
 });
 test('instrument families and lesson searches find new courses without losing original routes', () => {
-  assert.deepEqual(filterCourses('', 'wind').map(course => course.id), ['flute', 'saxophone']);
-  assert.deepEqual(filterCourses('二胡').map(course => course.id), ['erhu']);
+  assert.ok(['flute', 'saxophone', 'dizi', 'sheng'].every(id => filterCourses('', 'wind').some(course => course.id === id)));
+  assert.ok(filterCourses('二胡').some(course => course.id === 'erhu'));
   assert.deepEqual(filterCourses(' ALTO SAX ').map(course => course.id), ['saxophone']);
   assert.deepEqual(filterCourses('制音', 'plucked').map(course => course.id), ['bass']);
   for (const track of ['theory', 'ear', 'piano', 'guitar']) for (let i = 1; i <= 4; i++) assert.ok(allLessons.some(lesson => lesson.id === `${track}-${i}`));

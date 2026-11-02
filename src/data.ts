@@ -1,8 +1,11 @@
 import { instrumentCourses } from './instrument-courses.ts';
+import { traditionalCourses } from './traditional-courses.ts';
+import { traditionalInstrument } from './traditional-catalog.ts';
+import type { TraditionalTrack } from './traditional-catalog.ts';
 
-export type Track = 'theory' | 'ear' | 'piano' | 'guitar' | 'ukulele' | 'bass' | 'violin' | 'drums' | 'flute' | 'saxophone' | 'guzheng' | 'erhu';
-export type Widget = 'score' | 'scale' | 'interval' | 'rhythm' | 'piano' | 'guitar' | 'chord' | 'sing' | 'instrument' | 'drums';
-export type CourseFamily = 'foundation' | 'keyboard' | 'plucked' | 'bowed' | 'wind' | 'percussion';
+export type Track = 'theory' | 'ear' | 'piano' | 'guitar' | 'ukulele' | 'bass' | 'violin' | 'drums' | 'flute' | 'saxophone' | TraditionalTrack;
+export type Widget = 'score' | 'scale' | 'interval' | 'rhythm' | 'piano' | 'guitar' | 'chord' | 'sing' | 'instrument' | 'drums' | 'discovery';
+export type CourseFamily = 'foundation' | 'keyboard' | 'plucked' | 'bowed' | 'wind' | 'percussion' | 'other';
 export interface Lesson {
   id: string;
   title: string;
@@ -11,6 +14,7 @@ export interface Lesson {
   sections: { title: string; body: string }[];
   takeaway: string;
   widget: Widget;
+  activity?: { title: string; steps: { task: string; hint: string }[] };
   quiz: { question: string; options: string[]; answer: number; explanation: string };
 }
 export interface Course {
@@ -22,6 +26,9 @@ export interface Course {
   tag: string;
   color: string;
   lessons: Lesson[];
+  traditional?: boolean;
+  level?: string;
+  aliases?: string[];
   sources?: { title: string; url: string }[];
 }
 
@@ -183,17 +190,27 @@ export const courses: Course[] = [
     ],
   },
   ...instrumentCourses,
+  ...traditionalCourses,
 ];
+
+for (const course of courses) {
+  const traditional = traditionalInstrument(course.id);
+  if (traditional) {
+    course.traditional = true;
+    course.aliases = [...traditional.aliases];
+  }
+}
 
 export const courseFamilies = [
   { id: 'all', tag: '全部课程' }, { id: 'foundation', tag: '乐理与听觉' },
   { id: 'keyboard', tag: '键盘' }, { id: 'plucked', tag: '弹拨' },
   { id: 'bowed', tag: '弓弦' }, { id: 'wind', tag: '管乐' }, { id: 'percussion', tag: '打击乐' },
+  { id: 'other', tag: '口弦与其他' },
 ];
 export function filterCourses(query: string, family = 'all') {
   const normalized = query.trim().toLowerCase();
   return courses.filter(course => (family === 'all' || course.family === family) && (!normalized ||
-    `${course.title}${course.tag}${course.description}${course.english}${course.lessons.map(lesson => lesson.title).join('')}`.toLowerCase().includes(normalized)));
+    `${course.title} ${course.tag} ${course.description} ${course.english} ${course.aliases?.join(' ') ?? ''} ${traditionalInstrument(course.id)?.tradition ?? ''} ${course.lessons.map(lesson => lesson.title).join(' ')}`.toLowerCase().includes(normalized)));
 }
 
 export const allLessons = courses.flatMap(course => course.lessons);
