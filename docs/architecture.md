@@ -10,7 +10,13 @@
 - `src/learning.ts`：稳定的 React Context 与 hooks，和组件导出分离以支持开发热更新。
 - `src/Tools.tsx`：钢琴、吉他、听音、节拍器、视唱、乐谱等工具。
 - `src/App.tsx`：页面导航、课程窗口、搜索、记录导入导出、个人学习设置。
-- `src/Art.tsx`：原创 SVG 音乐插画。
+- `src/Art.tsx`：原创 SVG 音乐插画；有配图的乐器课程改用 `InstrumentImage` 显示真实照片。
+- `src/instrument-guides.ts`：每件乐器的使用说明与演奏指南链接，及排序去重规则 `playingGuides`。
+- `src/CatalogPager.tsx`：各目录共用的分页器。
+
+## 按需加载
+
+`App.tsx` 用 `React.lazy` 按需加载中国乐器、世界乐器、选乐器页面，乐器特色区块，以及钢琴、吉他、练耳、节拍器、乐谱等工具；首屏只包含外壳、课程数据与配图数据。Tone.js 与 OpenSheetMusicDisplay 本来就在用户操作时才加载。新增页面或重型组件时沿用这种方式，避免重新并入主包。
 
 ## 数据契约
 

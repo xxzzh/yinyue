@@ -315,7 +315,9 @@ const chinese = [
   {id:'yuscraper',name:'敔',art:'yuscraper',shape:'虎形木体、齿背与刮击具的代表外形。'},
 ];
 const ledger = JSON.parse(readFileSync(new URL('credits.json',out),'utf8'));
-for(const item of [...worldCatalog,...chinese]) {
+// Entries that now have a verified photo keep it; only draw what is still a diagram.
+const pending=[...worldCatalog,...chinese].filter(item=>(ledger[item.id]?.kind??'diagram')==='diagram');
+for(const item of pending) {
   if(!shapes[item.art]) throw new Error(`Missing drawing geometry: ${item.id} (${item.art})`);
   const body=shapes[item.art];
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 380" width="600" height="380"><title>${esc(item.name)} · 外形结构示意</title><rect width="600" height="380" fill="#f3f0e8"/>${body}<text x="300" y="353" text-anchor="middle" font-family="sans-serif" font-size="14" fill="#52684d">${esc(item.name)} · 代表外形</text><text x="300" y="373" text-anchor="middle" font-family="sans-serif" font-size="10" fill="#8b927a">原创示意 · 不作为尺寸、指法、精确弦数或制器依据</text></svg>`;
@@ -326,4 +328,4 @@ for(const item of [...worldCatalog,...chinese]) {
     note:'用于认识代表结构，不作为尺寸、指法、精确弦数或制器依据。结构参考见课程延伸资料。'};
 }
 writeFileSync(new URL('credits.json',out),JSON.stringify(ledger,null,2)+'\n');
-console.log(`Drew ${worldCatalog.length+chinese.length} original instrument diagrams.`);
+console.log(`Drew ${pending.length} original instrument diagrams.`);

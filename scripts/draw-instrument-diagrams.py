@@ -120,6 +120,10 @@ art['mugu']=(
     +path('M175 207Q295 176 428 181M187 234Q321 206 434 210','none','#b58b5f',2)
     +line(263,71,333,164,WOOD,8)+label('槽口',108,72,221,177)+label('中空木体',374,322,370,233))
 
+import json
+ledger = json.loads((OUT/'credits.json').read_text(encoding='utf8'))
+# Entries that now have a verified photo keep it; only draw what is still a diagram.
+art = {name: body for name, body in art.items() if ledger.get(name, {}).get('kind', 'diagram') == 'diagram'}
 for name, body in art.items():
     svg=f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 380" width="600" height="380"><title>{escape(name)} · 外形结构示意</title><rect width="600" height="380" fill="#f3f0e8"/>{body}<text x="300" y="366" text-anchor="middle" fill="#8b927a" font-family="sans-serif" font-size="11">结构示意 · 不作为尺寸、指法或制器依据</text></svg>'
     (OUT/f'{name}.svg').write_text(svg,encoding='utf8')

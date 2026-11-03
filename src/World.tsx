@@ -5,7 +5,7 @@ import { courseFamilies, courses } from './data';
 import { worldAreas, worldInstrument } from './world-catalog';
 import { InstrumentImage } from './InstrumentImage';
 import { CourseArt } from './Art';
-import { CatalogPager } from './Traditional';
+import { CatalogPager } from './CatalogPager';
 import { useLearning } from './learning';
 
 export const worldDirectory = courses.filter(course => !course.traditional && course.family !== 'foundation');

@@ -1,22 +1,12 @@
 import { TimbrePreview } from './TimbrePreview';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, Compass, Search } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, ChevronRight, Compass, Search } from 'lucide-react';
 import { courses, findCourse } from './data';
 import type { Lesson } from './data';
 import { filterTraditional, traditionalAreas, traditionalCatalog, traditionalFamilies } from './traditional-catalog';
 import { InstrumentImage } from './InstrumentImage';
 import { useLearning } from './learning';
-
-export function CatalogPager({ page, pages, onChange }: { page: number; pages: number; onChange: (page: number) => void }) {
-  const [targetPage, setTargetPage] = useState(String(page));
-  useEffect(() => { setTargetPage(String(page)); }, [page, pages]);
-  if (pages < 2) return null;
-  return <nav className="catalog-pager" aria-label="课程分页"><button className="button outline small" disabled={page === 1} onClick={() => onChange(page - 1)}><ArrowLeft size={14} />上一页</button><span aria-live="polite">第 {page} / {pages} 页</span><button className="button outline small" disabled={page === pages} onClick={() => onChange(page + 1)}>下一页<ArrowRight size={14} /></button><form className="pager-jump" onSubmit={event => {
-    event.preventDefault();
-    const target = Number(targetPage);
-    if (Number.isInteger(target) && target >= 1 && target <= pages) onChange(target);
-  }}><label>跳至<input type="number" inputMode="numeric" aria-label="跳转页码" title={`请输入 1 到 ${pages} 的整数页码`} min={1} max={pages} step={1} required value={targetPage} onChange={event => setTargetPage(event.target.value)} />页</label><button className="button outline small" type="submit">跳转</button></form></nav>;
-}
+import { CatalogPager } from './CatalogPager';
 
 const popular = ['guqin', 'pipa', 'guzheng', 'erhu', 'dizi', 'xiao', 'suona', 'hulusi'];
 export function TraditionalPage({ go, query, setQuery }: { go: (path: string) => void; query: string; setQuery: (query: string) => void }) {

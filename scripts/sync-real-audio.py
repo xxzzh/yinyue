@@ -1,6 +1,6 @@
 """Bundle a small, traceable CC0 real-instrument listening set from VSCO 2 CE.
 
-Only mono/16-bit conversion and an end fade are applied; never repitch a sample.
+Only mono conversion, an end fade and MP3 encoding (ffmpeg, 128 kbps) are applied; never repitch a sample.
 The source library and its complete CC0 text are retained in the attribution.
 """
 import concurrent.futures
@@ -10,6 +10,7 @@ import io
 import json
 from pathlib import Path
 import struct
+import subprocess
 import sys
 import urllib.parse
 import urllib.request
@@ -66,6 +67,13 @@ cached = '--cached' in sys.argv
 if not cached:
     (OUT/'LICENSE-VSCO-CC0.txt').write_bytes(get(base+'LICENSE'))
 
+MODIFICATION='原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。'
+
+def encode(wav_bytes, path):
+    # MP3 plays in every current browser and is about a fifth of the PCM size.
+    subprocess.run(['ffmpeg','-hide_banner','-loglevel','error','-f','wav','-i','pipe:0','-ac','1','-codec:a','libmp3lame','-b:a','128k',
+                    '-map_metadata','-1','-id3v2_version','0','-write_xing','0','-y',str(path)],input=wav_bytes,check=True)
+
 def convert(item):
     source = base + urllib.parse.quote(item['path'],safe='/')
     data = get(source)
@@ -81,14 +89,18 @@ def convert(item):
     # Avoid a cutoff click; the original attack and pitch remain untouched.
     fade=min(int(rate*.04),len(values))
     for i in range(fade): values[len(values)-fade+i]=int(values[len(values)-fade+i]*(fade-i)/fade)
-    path=OUT/f'{item["track"]}.wav'
-    with wave.open(str(path),'wb') as dst:
+    if max(map(abs,values),default=0)<=50:
+        raise ValueError(f'Silent excerpt for {item["track"]}')
+    pcm=io.BytesIO()
+    with wave.open(pcm,'wb') as dst:
         dst.setnchannels(1);dst.setsampwidth(2);dst.setframerate(rate)
         dst.writeframes(struct.pack('<'+'h'*len(values),*values))
+    path=OUT/f'{item["track"]}.mp3'
+    encode(pcm.getvalue(),path)
     return {**item,'file':path.name,'seconds':round(len(values)/rate,3),'sampleRate':rate,'channels':1,'source':f'https://github.com/{REPO}/blob/{config["commit"]}/'+urllib.parse.quote(item['path'],safe='/'),
         'license':'CC0-1.0','licenseUrl':'https://creativecommons.org/publicdomain/zero/1.0/',
         'author':'Versilian Studios / VSCO 2 Community Edition contributors',
-        'modification':'原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。',
+        'modification':MODIFICATION,
         'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
 
 if cached:

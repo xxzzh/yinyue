@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, Check, Headphones, Music2, Scale, X } from 'lucide-react';
+import { ArrowRight, BookOpen, Check, Headphones, Music2, Scale, X } from 'lucide-react';
 import { courses, courseFamilies } from './data';
 import type { Course } from './data';
 import { CourseArt } from './Art';
-import { CatalogPager } from './Traditional';
+import { CatalogPager } from './CatalogPager';
 import { filterInstrumentChoices, instrumentChoices, selectionLabels, selectionProfiles, timbreTags } from './instrument-selection';
 import { audioSamples } from './audio-samples';
+import { playingGuides } from './instrument-guides';
 import { useLearning } from './learning';
 
 function RealSound({ course }: { course: Course }) {
@@ -15,7 +16,13 @@ function RealSound({ course }: { course: Course }) {
     <p>{sample.label} · {sample.seconds.toFixed(1)} 秒 · 实物采样录音节选</p>
     <audio controls preload="none" aria-label={`${course.tag}真实录音`} src={`./audio/${sample.file}`} onPlay={event=>{ const playing=event.currentTarget; playing.volume=progress.volume; document.querySelectorAll('audio').forEach(other=>{if(other!==playing)other.pause();}); }}/>
     <small>单个录音不代表全部音区与奏法；不同示例的音高、力度、独奏或合奏人数可能不同。<a href={sample.source} target="_blank" rel="noreferrer">原录音与文件信息 ↗</a> · <a href="./audio-credits.html" target="_blank" rel="noreferrer">来源与授权</a></small>
-  </> : <><p>这件乐器暂未内置真实录音。先记下典型音色，再从课程资料寻找注明形制、演奏者与奏法的示范。</p><div className="sound-links">{course.sources?.slice(0,2).map(source=><a href={source.url} key={source.url} target="_blank" rel="noreferrer">{source.title} ↗</a>)}{course.traditional&&<a href="https://ccmusic-database.github.io/database/ctis.html" target="_blank" rel="noreferrer">中国乐器音响资料库 ↗</a>}</div><small>外部资料需联网；资料介绍页不保证包含这件乐器的直接播放按钮。</small></>}</div>;
+  </> : <><p>这件乐器暂未内置真实录音。先记下典型音色，再从下方资料寻找注明形制、演奏者与奏法的示范。</p>{course.traditional&&<><div className="sound-links"><a href="https://ccmusic-database.github.io/database/ctis.html" target="_blank" rel="noreferrer">中国乐器音响资料库 ↗</a></div><small>外部资料需联网；资料介绍页不保证包含这件乐器的直接播放按钮。</small></>}</>}</div>;
+}
+
+function PlayingGuide({ course }: { course: Course }) {
+  const links = playingGuides(course);
+  if (!links.length) return null;
+  return <div className="playing-guide"><div className="character-label"><BookOpen size={16}/><strong>使用说明与演奏指南</strong></div><p>想知道它怎么拿、怎么发声、怎么保养，可以先读这些资料。</p><div className="sound-links">{links.map(link=><a href={link.url} key={link.url} target="_blank" rel="noreferrer">{link.title} ↗</a>)}</div><small>外部资料需联网；维基百科在部分网络环境下可能无法打开。</small></div>;
 }
 
 export function InstrumentCharacter({ course }: { course: Course }) {
@@ -25,7 +32,7 @@ export function InstrumentCharacter({ course }: { course: Course }) {
     <div className="section-title"><div><span className="eyebrow">GET TO KNOW ITS CHARACTER</span><h2>这个声音，适合你吗？</h2><p>先喜欢它的声音，再看看日常练习是否合适。</p></div><div className="tone-tags">{profile.tags.map(tag=><span key={tag}>{tag}</span>)}</div></div>
     <div className="character-grid"><div><h3>典型音色</h3><p>{profile.timbre}</p></div><div><h3>为什么是这种声音</h3><p>{profile.reason}</p></div><div><h3>它擅长表达什么</h3><p>{profile.strength}</p></div><div><h3>入门先过哪一关</h3><p>{profile.challenge}</p></div></div>
     <div className="character-setup"><h3>练习前，准备这些</h3><p>{profile.setup}</p><div className="condition-tags"><span>{selectionLabels.portability[profile.portability]}</span><span>{selectionLabels.practice[profile.practice]}</span><span>{selectionLabels.start[profile.start]}</span><span>{selectionLabels.access[profile.access]}</span></div></div>
-    <RealSound course={course}/><p className="character-note">音色随形制、音区、力度、奏法与录音环境变化；这些描述与选学条件是编辑参考。起步发声直接不等于容易精通，原声乐器的弱奏也不代表适合所有夜间环境。</p>
+    <RealSound course={course}/><PlayingGuide course={course}/><p className="character-note">音色随形制、音区、力度、奏法与录音环境变化；这些描述与选学条件是编辑参考。起步发声直接不等于容易精通，原声乐器的弱奏也不代表适合所有夜间环境。</p>
   </section>;
 }
 

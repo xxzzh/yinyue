@@ -4,6 +4,7 @@ import { readFileSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { instrumentChoices, selectionProfiles, filterInstrumentChoices, timbreTags, selectionLabels } from '../src/instrument-selection.ts';
 import { audioSamples } from '../src/audio-samples.ts';
+import { playingGuides } from '../src/instrument-guides.ts';
 
 test('every instrument has an individual complete selection profile and foundations are excluded',()=>{
   assert.equal(instrumentChoices.length,200);
@@ -35,24 +36,34 @@ test('selection filters intersect actual conditions and preserve sound/name sear
   assert.equal(filterInstrumentChoices('',{origin:'world'}).length,100);
 });
 
-test('real sound excerpts retain valid PCM data, attribution, duration and integrity',()=>{
+test('real sound excerpts are valid MP3 files with attribution, duration and integrity',()=>{
   const ledger=JSON.parse(readFileSync(new URL('../public/audio/credits.json',import.meta.url),'utf8'));
   assert.deepEqual(audioSamples,ledger);
   assert.equal(Object.keys(ledger).length,16);
   const credits=readFileSync(new URL('../public/audio-credits.html',import.meta.url),'utf8');
   for(const item of Object.values(audioSamples)){
     assert.ok(instrumentChoices.some(course=>course.id===item.track),item.track);
-    assert.match(item.file,/^[a-z]+\.wav$/);
+    assert.match(item.file,/^[a-z]+\.mp3$/);
     const path=new URL(`../public/audio/${item.file}`,import.meta.url),bytes=readFileSync(path);
-    assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.toString('ascii',8,12),'WAVE');
-    assert.equal(bytes.readUInt16LE(20),1);assert.equal(bytes.readUInt16LE(22),1);assert.equal(bytes.readUInt16LE(34),16);
-    assert.equal(bytes.readUInt32LE(24),item.sampleRate);
+    assert.ok(bytes[0]===0xff&&(bytes[1]&0xe0)===0xe0,`${item.track} must start with an MP3 frame`);
+    // 128 kbps mono: a non-trivial excerpt is tens of kilobytes; silence-only input is rejected by the sync script.
+    assert.ok(bytes.length>20000&&bytes.length<120000,item.track);
     assert.ok(item.seconds>.1&&item.seconds<=5.01,item.track);
     assert.equal(createHash('sha256').update(bytes).digest('hex'),item.sha256,item.track);
-    let peak=0;for(let i=44;i<bytes.length;i+=2)peak=Math.max(peak,Math.abs(bytes.readInt16LE(i)));
-    assert.ok(peak>50,`${item.track} must not be silence`);
     assert.equal(item.license,'CC0-1.0');assert.equal(new URL(item.source).protocol,'https:');
     assert.ok(credits.includes(item.label)&&credits.includes(item.file),item.track);
   }
   assert.ok(statSync(new URL('../public/audio/LICENSE-VSCO-CC0.txt',import.meta.url)).size>1000);
+});
+
+test('every instrument page links to at least one specific playing guide or reference', () => {
+  for (const course of instrumentChoices) {
+    const links = playingGuides(course);
+    assert.ok(links.length > 0, course.id);
+    for (const link of links) {
+      assert.equal(new URL(link.url).protocol, 'https:', course.id);
+      assert.ok(link.title.trim(), course.id);
+    }
+  }
+  assert.equal(playingGuides(instrumentChoices.find(course => course.id === 'bass')!)[0].title, 'Fender · 贝斯使用手册');
 });

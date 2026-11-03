@@ -4,15 +4,20 @@ import { readFileSync, statSync } from 'node:fs';
 import { instrumentImages } from '../src/instrument-images.ts';
 import { traditionalCatalog } from '../src/traditional-catalog.ts';
 import { worldCatalog } from '../src/world-catalog.ts';
+import { courses } from '../src/data.ts';
 
-test('every catalog instrument has a bundled, attributed image with matching UI metadata', () => {
+test('every instrument course has a bundled, attributed image with matching UI metadata', () => {
   const root = new URL('../public/instruments/', import.meta.url);
   const ledger = JSON.parse(readFileSync(new URL('credits.json', root), 'utf8'));
   const credits = readFileSync(new URL('../public/image-credits.html', import.meta.url), 'utf8');
-  assert.deepEqual(instrumentImages, ledger, 'Regenerate the image data with scripts/sync-instrument-images.mjs');
+  const uiLedger = Object.fromEntries(Object.entries(ledger).map(([id, { download: _download, ...item }]: [string, any]) => [id, item]));
+  assert.deepEqual(instrumentImages, uiLedger, 'Regenerate the image data with scripts/sync-instrument-images.mjs');
   const catalog = [...traditionalCatalog, ...worldCatalog];
-  assert.deepEqual(Object.keys(ledger).sort(), catalog.map(item => item.id).sort());
-  for (const item of catalog) {
+  const instrumentCourses = courses.filter(course => course.family !== 'foundation');
+  assert.deepEqual(Object.keys(ledger).sort(), instrumentCourses.map(course => course.id).sort());
+  const names = new Map<string, string>(catalog.map(item => [item.id, item.name]));
+  for (const course of instrumentCourses) {
+    const item = { id: course.id, name: names.get(course.id) ?? instrumentImages[course.id].name };
     const image = instrumentImages[item.id];
     assert.equal(image.name, item.name);
     assert.match(image.file, new RegExp(`^${item.id}\\.(png|jpg|jpeg|webp|svg)$`));

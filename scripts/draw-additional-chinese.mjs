@@ -1,7 +1,7 @@
 // Original explanatory vectors, not traced photographs or fabrication plans.
 // Sources and representative traditions: src/additional-chinese-catalog.ts.
 // This script writes only its twelve SVG files, never the shared image ledger.
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 
 const out = new URL('../public/instruments/', import.meta.url);
 const wood = '#aa7853', pale = '#dfbd86', dark = '#48584c', metal = '#b8c8bd';
@@ -98,8 +98,10 @@ const drawings = {
     +label('垂挂铁环',394,320,311,304)+label('击具',426,118,398,141)},
 };
 
+const ledger = JSON.parse(readFileSync(new URL('credits.json', out), 'utf8'));
 for (const [id,{name,note,body}] of Object.entries(drawings)) {
+  if ((ledger[id]?.kind ?? 'diagram') !== 'diagram') continue; // keep verified photos
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 380" width="600" height="380"><title>${esc(name)} · 原创外形结构示意</title><desc>${esc(note)}</desc><rect width="600" height="380" fill="#f3f0e8"/>${body}${text(`${name} · 代表外形`,300,340,14,'middle')}${text(note,300,358,10,'middle')}${text('原创示意 · 不作为尺寸、指法或制器依据',300,375,10,'middle')}</svg>`;
   writeFileSync(new URL(`${id}.svg`,out),svg);
 }
-console.log(`Rendered ${Object.keys(drawings).length} additional Chinese instrument diagrams.`);
+console.log(`Rendered ${Object.keys(drawings).filter(id => (ledger[id]?.kind ?? 'diagram') === 'diagram').length} additional Chinese instrument diagrams.`);

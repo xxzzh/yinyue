@@ -6,7 +6,7 @@ export const audioSamples: Record<string, AudioSample> = {
     "path": "Woodwinds/Flute/susNV/LDFlute_susNV_C4_v3_1.wav",
     "blob": "850db1f598b5ba7a88ec2f929f8b832fb83cdd66",
     "label": "长笛独奏长音",
-    "file": "flute.wav",
+    "file": "flute.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -14,15 +14,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "391a615a43d0c4a562cf6a186218cf2b23571646a65ae3bdf04da910c80ef29e"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "9d1aec5b5a3f78f32fb8140aab40a7c090fc012eed820066826bd16be258912d"
   },
   "clarinet": {
     "track": "clarinet",
     "path": "Woodwinds/Clarinet/susLong/DCClar_susLong_F#5_v2_rr1_sum.wav",
     "blob": "5e103799bb30ef1afa405511230c852b942a9d7c",
     "label": "单簧管独奏长音",
-    "file": "clarinet.wav",
+    "file": "clarinet.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -30,15 +30,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "aa81b5c96157d8dc4ceee8db444312a7411557d8f3be188e47f0cfb394603863"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "10a5c9f0765a77647c57e69da75555d387bee50b07e9184b64209c9d981adce9"
   },
   "oboe": {
     "track": "oboe",
     "path": "Woodwinds/Oboe/Sus/Oboe_Sus_F4_v3_Main.wav",
     "blob": "4f2c0ca39a4604d8493367eaf953e8756bc0bf90",
     "label": "双簧管独奏长音",
-    "file": "oboe.wav",
+    "file": "oboe.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -46,15 +46,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "e3a525f9a3e44db394f58758c3b2978a35205737fd38fdb5398ea9a8105803fb"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "4730f970f2f0a43014f9e6d7a5870a96443cfb7c72b32d47b3a58c3b9e774ef3"
   },
   "bassoon": {
     "track": "bassoon",
     "path": "Woodwinds/Bassoon/sus/PSBassoon_C3_v2_1.wav",
     "blob": "7778b0fa352d6466272f2e0a7b053ca38ac1e35f",
     "label": "大管独奏长音",
-    "file": "bassoon.wav",
+    "file": "bassoon.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -62,15 +62,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "032a039a5e69088829a94a4693f368d8d2194d1bb68bdc015d6ca509746ff6fc"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "a7b931b6902b51bf15324c29f4747989bf853cbf3cc818f2fe836b12a3e50de6"
   },
   "violin": {
     "track": "violin",
     "path": "Strings/Solo Violin/Arco Vib/LLVln_ArcoVib_C4_f.wav",
     "blob": "8a700075b7ae2f19c1c56108738324dfba6959e8",
     "label": "小提琴独奏颤音长音",
-    "file": "violin.wav",
+    "file": "violin.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -78,15 +78,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "7f411b5e0dcdce665d3d95e572581dad2d87a85958178d5c7560c618cc8021ef"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "ff08aa2122581f84539ecb02be4350a107721ff250b06ce05a907fc1a5a42ca1"
   },
   "viola": {
     "track": "viola",
     "path": "Strings/Viola Section/susvib/ViolaEns_susvib_C4_v2_1.wav",
     "blob": "4561f010d9b6de44b121246731042d1879d38ab7",
     "label": "中提琴组颤音长音",
-    "file": "viola.wav",
+    "file": "viola.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -94,15 +94,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "83be3fdc4d0f6d3413df9bda4f1fa3ef765ebf833d76e446cb9526f71500cef4"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "f4083a0f2a5bd78731c6e0e81f8de46329f7a7a5252fc263df507429a57b6343"
   },
   "cello": {
     "track": "cello",
     "path": "Strings/Cello Section/susvib/susvib_C3_v1_1.wav",
     "blob": "73ccb5dc2cc2a07926a1c41aa3c5621b19f420bf",
     "label": "大提琴组颤音长音",
-    "file": "cello.wav",
+    "file": "cello.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -110,15 +110,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "3dbc84caf958b4d621dac8e7e23e4c07bd403ff39c73e6d373dc3e0585cebc38"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "8a8d7cd401017aa70eb446c134107cf6ebca63254486448b5e34de2a8f952796"
   },
   "doublebass": {
     "track": "doublebass",
     "path": "Strings/Solo Contrabass/SusNV/BKCtbss_SusNV_C#2_v1_rr1.wav",
     "blob": "6c81a4f26d83527e775f705a8888cde24224e75e",
     "label": "低音提琴独奏长音",
-    "file": "doublebass.wav",
+    "file": "doublebass.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -126,15 +126,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "d0700fb903504deff6b9ffffaafab37f079e75b97ac219dee635c4e0ab96945c"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "4a2715e28a7664fe39711f551f5b3dcb037afe87dac1386ca33ad65df17c8939"
   },
   "harp": {
     "track": "harp",
     "path": "Strings/Harp/KSHarp_C3_mf.wav",
     "blob": "20e91e167e86132bb16601f682c90444779d8a23",
     "label": "竖琴拨弦单音",
-    "file": "harp.wav",
+    "file": "harp.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -142,15 +142,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "686065b9df9dc0fb70cbf9d260c742072c64876f8668b377db16b185a9727b86"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "30aca36ca667e01a1a8f2a004f85f254ad374f3cfa24696f3c96b83b1438cab1"
   },
   "frenchhorn": {
     "track": "frenchhorn",
     "path": "Brass/F Horn/sus/MOHorn_sus_C3_v2_1.wav",
     "blob": "9f89dc248404a1a1e0240035ac5fa55c89e9c9cd",
     "label": "圆号独奏长音",
-    "file": "frenchhorn.wav",
+    "file": "frenchhorn.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -158,15 +158,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "f11e49549c4451c624240a445c74283896f5ffc6365a1d98cc7d8af05e6cc331"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "eb6c671650d1db7b928fb3e8e072277264deb87155aaffa2e97ee78a7ea6a98d"
   },
   "trumpet": {
     "track": "trumpet",
     "path": "Brass/Trumpet/sus/Sum_SHTrumpet_sus_C3_v3_rr1.wav",
     "blob": "d5490467cf68db010843924b975fd71edfc41273",
     "label": "小号独奏长音",
-    "file": "trumpet.wav",
+    "file": "trumpet.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -174,15 +174,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "56fcc19fe41247ba1f3b043037903f82f83c05f7b784208ffb35b18d664dc39a"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "89b7e21d9569bc877f53b293244864f1c1a46d5fe25d6ef316353a515216a391"
   },
   "trombone": {
     "track": "trombone",
     "path": "Brass/Tenor Trombone/sus/tenortbn_sus_C3_v2_1.wav",
     "blob": "dbb030c2fdcfddf56ec0cbd1cc9cc2c03eb3aa33",
     "label": "次中音长号独奏长音",
-    "file": "trombone.wav",
+    "file": "trombone.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -190,15 +190,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "3ee74e802264b0a36e7ea10a3e0dc6eb4814f43b1538393bfdf70d9f7f6e81c5"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "a6629b222871064bdfc6a0abeb278aa91d9c921f9602a44ed18943b24d35f56b"
   },
   "tuba": {
     "track": "tuba",
     "path": "Brass/Tuba/sus/Tuba3_sus_D#1_v2_rr1_Mid.wav",
     "blob": "05b0d63ed94c2e597e954e94560b9ee8e7734769",
     "label": "大号独奏长音",
-    "file": "tuba.wav",
+    "file": "tuba.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -206,15 +206,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "0e4158554c010dc531930059ba5fefe913db12ac2a836800d61743d52b18570b"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "cbb88b408e4c91f1516b439d5010631ec031d651006dcb5507068bdabdb096dc"
   },
   "marimba": {
     "track": "marimba",
     "path": "Percussion/Marimba/Marimba_hit_Outrigger_C4_loud_01.wav",
     "blob": "fe3ec22b99ed4afdd007d0107d925669e7e1d4c9",
     "label": "马林巴槌击单音",
-    "file": "marimba.wav",
+    "file": "marimba.mp3",
     "seconds": 3.842,
     "sampleRate": 44100,
     "channels": 1,
@@ -222,15 +222,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "f944826f1bc7b0cb50e8197fd49e37ad5946ff64f502a6d080507dc45cb39d80"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "0e9f1a6f0275b307bb1f89ef7e87ce04f60b2421ec21f72d720751fc2e55865c"
   },
   "glockenspiel": {
     "track": "glockenspiel",
     "path": "Percussion/Glock/glock_medium_C7.wav",
     "blob": "a0f4aff9ef7d73e49a16f4054ead1369a78572b0",
     "label": "钟琴槌击单音",
-    "file": "glockenspiel.wav",
+    "file": "glockenspiel.mp3",
     "seconds": 2.791,
     "sampleRate": 44100,
     "channels": 1,
@@ -238,15 +238,15 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "93bd98c8efa2dfc78c9ca80768bd492fb59352240a7305e4166478fad26a2ad4"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "39049a85bdc1d0f99b49f4159d9d681b64d3ba9fd9d00701371b10d27ced09cd"
   },
   "piccolo": {
     "track": "piccolo",
     "path": "Woodwinds/Piccolo/Sus/piccolo_G4_sustain1.wav",
     "blob": "e2f56b2c8691ccda1d60a2f0eeff73dd7bf23e32",
     "label": "短笛独奏长音",
-    "file": "piccolo.wav",
+    "file": "piccolo.mp3",
     "seconds": 5.0,
     "sampleRate": 44100,
     "channels": 1,
@@ -254,7 +254,7 @@ export const audioSamples: Record<string, AudioSample> = {
     "license": "CC0-1.0",
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "author": "Versilian Studios / VSCO 2 Community Edition contributors",
-    "modification": "原录音节选至最多5秒，转换为单声道16位PCM，末尾淡出；未变调、未替换音色。",
-    "sha256": "06c8c7de434b4bce675fef6ce59813e4e1e6770d0ee3bcfa6609f710691208e1"
+    "modification": "原录音节选至最多5秒，转为单声道并在末尾淡出，再编码为128kbps MP3；未变调、未替换音色。",
+    "sha256": "3547a427033d38cb4e96c7d25fc5bb40a737437b155c677e026a408ef973ea5c"
   }
 };
