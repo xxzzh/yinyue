@@ -34,6 +34,13 @@ def validate():
             raise ValueError(f"Missing compiled asset: {asset}")
     if not (DIST / "third-party-notices.txt").is_file():
         raise ValueError("Dependency license notices are missing")
+    images = json.loads((DIST / "instruments" / "credits.json").read_text(encoding="utf-8"))
+    for image in images.values():
+        path = (DIST / "instruments" / image["file"]).resolve()
+        if not path.is_relative_to(DIST.resolve()) or not path.is_file():
+            raise ValueError(f"Missing instrument image: {image['file']}")
+    if not (DIST / "image-credits.html").is_file():
+        raise ValueError("Instrument image attribution page is missing")
     print(f"Validated {len(parser.assets)} relative entry assets and dependency notices.", flush=True)
 
 
@@ -101,6 +108,7 @@ macOS / Linux：安装 Node.js 18+ 后，在解压目录运行 node serve.mjs。
 无需登录；不要直接双击 index.html，请使用启动器或在线网址。
 
 项目许可证见 LICENSE，网页依赖许可证见 third-party-notices.txt（免安装版在 web/ 内）。
+乐器图片已包含在包内；第三方图片按各自授权使用，详情见 image-credits.html（免安装版在 web/ 内），不统一适用代码的 MIT 许可证。
 {runtime_notice}
 """
 

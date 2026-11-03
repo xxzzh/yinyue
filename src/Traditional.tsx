@@ -3,19 +3,8 @@ import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, Compass, Search }
 import { courses, findCourse } from './data';
 import type { Lesson } from './data';
 import { filterTraditional, traditionalAreas, traditionalCatalog, traditionalFamilies } from './traditional-catalog';
-import type { TraditionalFamily } from './traditional-catalog';
+import { InstrumentImage } from './InstrumentImage';
 import { useLearning } from './learning';
-
-export function TraditionalEmblem({ family }: { family: TraditionalFamily }) {
-  const text = { plucked: '丝', bowed: '弓', wind: '竹', percussion: '韵', other: '簧' }[family];
-  return <svg className="course-art heritage-emblem" viewBox="0 0 400 240" fill="none" aria-hidden="true">
-    <circle cx="200" cy="120" r="83" fill="currentColor" opacity=".10" />
-    <circle cx="200" cy="120" r="68" stroke="currentColor" opacity=".25" />
-    {[0, 1, 2, 3, 4].map(n => <path key={n} d={`M65 ${102 + n * 13}Q150 ${70 + n * 13} 230 ${105 + n * 13}T338 ${100 + n * 13}`} stroke="currentColor" opacity=".14" />)}
-    <text x="200" y="153" textAnchor="middle" fill="currentColor" fontSize="93" fontFamily="Georgia, 'Noto Serif SC', serif">{text}</text>
-    <path d="M303 48v22m-11-11h22" stroke="currentColor" opacity=".4" />
-  </svg>;
-}
 
 export function CatalogPager({ page, pages, onChange }: { page: number; pages: number; onChange: (page: number) => void }) {
   if (pages < 2) return null;
@@ -55,11 +44,11 @@ export function TraditionalPage({ go, query, setQuery }: { go: (path: string) =>
         const completed = course.lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
         return <button className={`heritage-card ${course.color}`} key={item.id} onClick={() => go(`/courses/${item.id}`)}>
           <div className="heritage-card-top"><span className="heritage-number">{String(traditionalCatalog.indexOf(item as typeof traditionalCatalog[number]) + 1).padStart(2, '0')}</span><span>{traditionalFamilies.find(group => group.id === item.family)?.title}</span></div>
-          <div className="heritage-card-name"><h3>{item.name}</h3><span>{item.pinyin}</span></div><p className="heritage-tradition">{item.tradition}</p><p className="heritage-alias">{item.aliases.length ? `别名 / 相关形制：${item.aliases.join('、')}` : `${item.area} · 从结构与声音认识`}</p><div className="heritage-card-foot"><span>{course.lessons.length} 课 · {course.level ? '认识与启蒙' : '演奏入门'}</span><span>{completed ? <><Check size={12} />{completed}/{course.lessons.length}</> : <ArrowRight size={18} />}</span></div>
+          <InstrumentImage track={item.id} className="heritage-card-picture" /><div className="heritage-card-name"><h3>{item.name}</h3><span>{item.pinyin}</span></div><p className="heritage-tradition">{item.tradition}</p><p className="heritage-alias">{item.aliases.length ? `别名 / 相关形制：${item.aliases.join('、')}` : `${item.area} · 从结构与声音认识`}</p><div className="heritage-card-foot"><span>{course.lessons.length} 课 · {course.level ? '认识与启蒙' : '演奏入门'}</span><span>{completed ? <><Check size={12} />{completed}/{course.lessons.length}</> : <ArrowRight size={18} />}</span></div>
         </button>;
       })}</div>
       {!matches.length && <div className="empty-state"><Search size={30} /><h3>这个组合暂时没有找到乐器</h3><p>试试别名、拼音，或重置地域与类别。</p><button className="button outline" onClick={() => { setQuery(''); setFamily('all'); setArea('全部地域'); }}>查看全部传统乐器</button></div>}
-      <CatalogPager page={current} pages={pages} onChange={changePage} />
+      <CatalogPager page={current} pages={pages} onChange={changePage} /><p className="image-directory-note">图片展示代表性形制；少数条目使用历史图像或外形示意，均已标注。点击乐器可放大观察。<a href="./image-credits.html" target="_blank" rel="noreferrer">图片来源与授权 ↗</a></p>
     </section>
     <details className="eight-tones"><summary>再认识一种分类：古人的“八音”<span>金 · 石 · 土 · 革 · 丝 · 木 · 匏 · 竹</span></summary><p>八音主要依据制器材料分类，与上面的演奏方式分类角度不同。现代乐器常使用多种材料，不能只看外壳来判断真正的发声体。</p><div>{[['金', '钟'], ['石', '磬'], ['土', '埙'], ['革', '鼓'], ['丝', '琴瑟'], ['木', '柷敔'], ['匏', '笙竽'], ['竹', '箫笛']].map(([name, example]) => <span key={name}><strong>{name}</strong><small>{example}</small></span>)}</div></details>
   </div>;

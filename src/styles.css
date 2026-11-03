@@ -114,3 +114,23 @@
   .sidebar-quote>span{font-size:28px}
   .sidebar-quote p{line-height:1.8}
 }
+
+/* Instrument photographs and clearly labelled educational diagrams. */
+.instrument-image{position:relative;display:flex;align-items:center;justify-content:center;background:#f3f0e8;overflow:hidden;min-width:0;isolation:isolate}
+.instrument-image img{display:block;width:100%;height:100%;object-fit:contain;max-width:100%}
+.image-kind{position:absolute;left:9px;bottom:8px;background:#fffdf3ed;color:#5b6651;padding:4px 7px;border-radius:4px;font-size:9px;line-height:1.3;letter-spacing:.5px}
+.image-unavailable{padding:24px;font-size:12px;color:#637152}
+.heritage-card-picture{width:calc(100% + 44px);height:180px;margin:17px -22px 0;border-top:1px solid #e5e7dd;border-bottom:1px solid #e5e7dd}
+.heritage-card-picture img{padding:10px}.heritage-card-name{margin-top:18px}.heritage-card:hover .instrument-image img{transform:scale(1.025);transition:transform .2s ease}
+.image-directory-note{font-size:11px;color:#7b866f;line-height:1.9;margin:22px 0}.image-directory-note a{margin-left:10px;color:#4d704e;text-decoration:underline;text-underline-offset:3px}
+.course-cover .instrument-image{height:100%;width:100%;padding:28px 14px 19px}.course-cover .image-kind{bottom:5px;font-size:8px}.course-cover .cover-label,.course-cover .cover-corner{z-index:2}.course-cover .cover-label{background:#fffdf3df;padding:3px 6px;border-radius:3px}
+.reader-sidebar>.instrument-image{height:155px;width:100%;margin:20px 0;border-radius:8px;padding:8px}
+.instrument-figure{margin:0;min-width:0;width:100%;border:1px solid #dedfcf;border-radius:9px;overflow:hidden;background:#fffdf7}
+.instrument-enlarge{display:block;position:relative;width:100%;background:#f3f0e8;padding:0;cursor:zoom-in}
+.instrument-enlarge>.instrument-image{height:280px;padding:14px 18px 28px}.enlarge-label{position:absolute;right:10px;bottom:9px;display:flex;gap:5px;align-items:center;font-size:10px;line-height:1.4;background:#fffdf3ed;border-radius:4px;padding:4px 7px;color:#50634a}
+.instrument-figure figcaption{padding:16px 18px;color:#68745d;font-size:12px;line-height:1.8}.instrument-figure figcaption>strong{color:#435d3d;font-weight:500;font-size:14px}.instrument-figure figcaption>p{margin:7px 0 9px;font-size:12px;line-height:1.8}.instrument-figure details{font-size:10px;overflow-wrap:anywhere}.instrument-figure summary{cursor:pointer;color:#68815a}.instrument-figure details>span{display:block;margin-top:8px}.instrument-figure details>p{margin:4px 0 0}.instrument-figure a,.lightbox-credit a{color:#4f7344;text-decoration:underline;text-underline-offset:3px}
+.course-banner>.instrument-figure{flex:0 1 340px;max-width:340px}.course-banner .instrument-enlarge>.instrument-image{height:235px}.course-banner .instrument-figure figcaption{padding:12px 15px}.course-banner .instrument-figure figcaption>p{font-size:11px}.lesson-article>.instrument-figure{margin:24px 0 32px}
+.instrument-lightbox{padding:22px;border:1px solid #d5dacb;border-radius:12px;background:#fffdf7;color:#526447;width:min(850px,calc(100vw - 32px));max-height:92dvh;overflow:auto;margin:auto;box-shadow:0 20px 100px #17231370}.instrument-lightbox::backdrop{background:#182318b3}.lightbox-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:15px}.lightbox-heading h2{font:500 20px var(--serif)}.lightbox-heading button{flex-shrink:0}.instrument-lightbox>.instrument-image{height:min(60dvh,600px);padding:18px;border-radius:7px}.instrument-lightbox>p{font-size:13px;line-height:1.9;margin:13px 0}.lightbox-credit{font-size:11px;line-height:1.8;overflow-wrap:anywhere}
+@media(max-width:760px){.heritage-card-picture{width:calc(100% + 24px);height:140px;margin:12px -12px 0}.heritage-card-picture img{padding:7px}.image-kind{font-size:8px;left:5px;bottom:5px;padding:3px 4px}.heritage-card-name{margin-top:14px}.image-directory-note{font-size:10px}.course-banner>.instrument-figure{max-width:none;flex:auto}.course-banner .instrument-enlarge>.instrument-image{height:220px}.instrument-enlarge>.instrument-image{height:240px}.instrument-figure figcaption{padding:13px}.instrument-figure figcaption>p{font-size:12px}.instrument-lightbox{padding:14px;width:calc(100vw - 20px)}.lightbox-heading h2{font-size:17px}.instrument-lightbox>.instrument-image{height:55dvh;padding:10px}.reader-sidebar>.instrument-image{display:none}}
+
+@media(max-width:760px){.course-banner{flex-direction:column;align-items:stretch;gap:22px}.course-banner>.instrument-figure{width:100%}}

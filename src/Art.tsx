@@ -1,4 +1,4 @@
-import { TraditionalEmblem } from './Traditional';
+import { InstrumentImage } from './InstrumentImage';
 import { traditionalInstrument } from './traditional-catalog';
 import type { Track } from './data';
 
@@ -7,7 +7,7 @@ export function BrandMark() {
 }
 export function CourseArt({ track, hero = false }: { track: Track; hero?: boolean }) {
   const traditional = traditionalInstrument(track);
-  if (traditional && track !== 'guzheng' && track !== 'erhu') return <TraditionalEmblem family={traditional.family} />;
+  if (traditional) return <InstrumentImage track={track} className="course-art" />;
   const id = `${track}-${hero ? 'hero' : 'card'}`;
   return <svg className={`course-art ${hero ? 'hero-art' : ''}`} viewBox="0 0 400 240" fill="none" aria-hidden="true">
     <defs>
