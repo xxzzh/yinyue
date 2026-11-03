@@ -3246,7 +3246,7 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 
 ========================================================================
-opensheetmusicdisplay 1.9.9
+opensheetmusicdisplay 2.2.1
 License: BSD-3-Clause
 https://github.com/opensheetmusicdisplay/opensheetmusicdisplay
 
