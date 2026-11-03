@@ -1,3 +1,4 @@
+import { additionalChineseCatalog } from './additional-chinese-catalog.ts';
 /** Original introductory notes. Names describe representative traditions, not exclusive origins.
  * Regional variants and historical reconstructions do not share one universal tuning/fingering.
  */
@@ -571,6 +572,7 @@ export const traditionalCatalog = [
     step: '先看虎形木体、背齿和籈，观察一次集体停止的信号；用轻拍与停顿模拟收束，不自行规定历史击奏次数。',
     listen: '看一段礼乐演出，注意敔在乐曲结束附近的动作，并记录其资料注明的时代与场景。',
     contrast: '敔不是簧管乐器竽；也不能只凭虎形把它当作普通摆件。', refs: ['ritual', 'museum'] },
+  ...additionalChineseCatalog,
 ] as const satisfies readonly TraditionalInstrument[];
 
 export type TraditionalTrack = typeof traditionalCatalog[number]['id'];

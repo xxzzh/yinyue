@@ -40,7 +40,7 @@ export const worldCourses: Course[] = worldCatalog.map((item, order) => {
         intro: `从“${item.tradition}”找一段注明演奏者的示范，记录自己实际听到的声音。`,
         sections: [{ title: '带着发声线索去听', body: `${item.voice}听赏时用这一线索观察一次起音、一次延续和一次结束；必要时对照演奏画面。` },
           { title: '在合奏中找到它', body: '先找一段短乐句，判断这件乐器在演奏旋律、伴奏、持续音还是节奏；再听它怎样与其他声部接续。不要只凭“明亮”“低沉”等形容词判断乐器。' },
-          { title: '查阅资料与下一步', body: `下方提供“${worldSources[item.ref].title}”作为延伸入口，部分内容为外语。本站本路线提供认识与启蒙任务，尚未内置该乐器的真实录音；资料及示范需要联网，离线时可先完成结构观察和测验。` }],
+          { title: '查阅资料与下一步', body: `下方提供“${worldSources[item.ref].title}”作为延伸入口，部分内容为外语。本站路线提供认识与启蒙任务；部分乐器在课程首页有真实录音节选，其他演奏示范需从外部资料查找。离线时可完成图文观察、已内置的录音试听与测验。` }],
         takeaway: '记下乐器名称、演奏者、具体形制和一条实际观察，比只记音色形容词更有帮助。', widget: 'discovery',
         activity: { title: '做一张听赏记录', steps: [{ task: '记录曲名、演奏者与所用形制', hint: `先查阅课程资料，寻找${item.tradition}的演奏；暂时无法播放就标记“待听”。` }, { task: '描述一次起音或停顿', hint: item.voice }, { task: '选出下一次观察的小目标', hint: item.step }] },
         quiz: quiz(`本课把${item.name}放在哪种代表音乐场景中认识？`, item.tradition, [...new Set(others.map(other => other.tradition))].slice(0, 3), order + 2),

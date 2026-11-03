@@ -198,6 +198,7 @@ export const courses: Course[] = [
 
 for (const course of courses) {
   const traditional = traditionalInstrument(course.id);
+  if (course.id === 'guitar') course.aliases = ['木吉他', '民谣吉他', 'Acoustic Guitar'];
   if (traditional) {
     course.traditional = true;
     course.aliases = [...traditional.aliases];
@@ -208,7 +209,7 @@ export const courseFamilies = [
   { id: 'all', tag: '全部课程' }, { id: 'foundation', tag: '乐理与听觉' },
   { id: 'keyboard', tag: '键盘' }, { id: 'plucked', tag: '弹拨' },
   { id: 'bowed', tag: '弓弦' }, { id: 'wind', tag: '管乐' }, { id: 'percussion', tag: '打击乐' },
-  { id: 'other', tag: '口弦与其他' },
+  { id: 'other', tag: '其他与电子' },
 ];
 export function filterCourses(query: string, family = 'all') {
   const normalized = query.trim().toLowerCase();

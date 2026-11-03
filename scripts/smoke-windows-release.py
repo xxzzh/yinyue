@@ -89,6 +89,14 @@ def main(archive_path):
                     assert response.read() == (image_root / image["file"]).read_bytes(), image["file"]
             with urllib.request.urlopen(base + "image-credits.html", timeout=5) as response:
                 assert "图片来源与授权" in response.read().decode("utf-8")
+            audio_root = unpacked / "web" / "audio"
+            samples = json.loads((audio_root / "credits.json").read_text(encoding="utf-8"))
+            for sample in samples.values():
+                with urllib.request.urlopen(base + "audio/" + sample["file"], timeout=5) as response:
+                    assert response.headers["Content-Type"].startswith("audio/"), sample["file"]
+                    assert response.read() == (audio_root / sample["file"]).read_bytes(), sample["file"]
+            with urllib.request.urlopen(base + "audio-credits.html", timeout=5) as response:
+                assert "真实录音来源与授权" in response.read().decode("utf-8")
             for path in ["runtime/node.exe", "serve.mjs", "README.txt"]:
                 try:
                     urllib.request.urlopen(base + path, timeout=2)
@@ -96,7 +104,7 @@ def main(archive_path):
                     assert error.code == 404
                 else:
                     raise AssertionError(f"Private launcher file was served: {path}")
-            print(f"PASS: {version}, launcher in a Chinese/space path, no system Node.js on PATH, HTML, {len(assets)} assets and {len(images)} instrument images served correctly.")
+            print(f"PASS: {version}, launcher in a Chinese/space path, no system Node.js on PATH, HTML, {len(assets)} assets and {len(images)} instrument images and {len(samples)} real audio samples served correctly.")
         finally:
             if process.poll() is None:
                 subprocess.run(

@@ -41,6 +41,13 @@ def validate():
             raise ValueError(f"Missing instrument image: {image['file']}")
     if not (DIST / "image-credits.html").is_file():
         raise ValueError("Instrument image attribution page is missing")
+    samples = json.loads((DIST / "audio" / "credits.json").read_text(encoding="utf-8"))
+    for sample in samples.values():
+        path = (DIST / "audio" / sample["file"]).resolve()
+        if not path.is_relative_to(DIST.resolve()) or not path.is_file() or checksum(path) != sample["sha256"]:
+            raise ValueError(f"Missing or changed real audio: {sample['file']}")
+    if not (DIST / "audio-credits.html").is_file() or not (DIST / "audio" / "LICENSE-VSCO-CC0.txt").is_file():
+        raise ValueError("Real audio attribution is missing")
     print(f"Validated {len(parser.assets)} relative entry assets and dependency notices.", flush=True)
 
 

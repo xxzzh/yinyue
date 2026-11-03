@@ -4,12 +4,12 @@ import { allLessons, courses, filterCourses, findCourse } from '../src/data.ts';
 import { filterWorld, worldCatalog, worldInstrument, worldSources } from '../src/world-catalog.ts';
 
 test('world expansion has distinct complete routes, image metadata and meaningful quizzes', () => {
-  assert.equal(worldCatalog.length, 50);
-  assert.equal(new Set(worldCatalog.map(item => item.id)).size, 50);
+  assert.equal(worldCatalog.length, 92);
+  assert.equal(new Set(worldCatalog.map(item => item.id)).size, 92);
   assert.equal(new Set(courses.map(course => course.id)).size, courses.length);
   assert.equal(new Set(allLessons.map(lesson => lesson.id)).size, allLessons.length);
-  assert.equal(courses.length, 148);
-  assert.equal(allLessons.length, 456);
+  assert.equal(courses.length, 202);
+  assert.equal(allLessons.length, 618);
   for (const item of worldCatalog) {
     const course = findCourse(item.id)!;
     assert.ok(course, item.id);

@@ -1,3 +1,4 @@
+import { additionalChineseSources } from './additional-chinese-catalog.ts';
 import type { Course, Lesson } from './data.ts';
 import { traditionalCatalog, traditionalFamilies, traditionalSources } from './traditional-catalog.ts';
 import type { TraditionalInstrument } from './traditional-catalog.ts';
@@ -20,7 +21,7 @@ function buildCourse(item: TraditionalInstrument, order: number): Course {
     description: `${item.tradition}。${firstSentence(item.shape)}`, tag: item.name,
     color: item.family === 'plucked' ? 'sand' : item.family === 'bowed' ? 'lavender' : item.family === 'wind' ? 'sage' : item.family === 'other' ? 'sage' : 'peach',
     level: mode, aliases: [...item.aliases],
-    sources: item.refs.map(ref => traditionalSources[ref]),
+    sources: additionalChineseSources[item.id] ?? item.refs.map(ref => traditionalSources[ref]),
     lessons: [
       {
         id: `${item.id}-1`, title: `认识${item.name}的形制`, minutes: 6,

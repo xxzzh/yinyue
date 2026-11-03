@@ -11,6 +11,7 @@ async function website(t) {
   await mkdir(root);
   await writeFile(join(root, 'index.html'), '<h1>音序</h1>');
   await writeFile(join(root, 'app.js'), 'export const ready = true;');
+  await writeFile(join(root, 'sound.wav'), Buffer.from('RIFF-test-audio'));
   await writeFile(join(parent, 'private.txt'), 'outside website');
   t.after(async () => {
     assert.equal(dirname(resolve(parent)), resolve(tmpdir()));
@@ -38,6 +39,9 @@ test('local release serves UTF-8 HTML and JavaScript, supports HEAD and binds on
   const script = await fetch(url + 'app.js?version=1');
   assert.match(script.headers.get('content-type'), /javascript/);
   assert.equal(await script.text(), 'export const ready = true;');
+  const audio = await fetch(url + 'sound.wav');
+  assert.equal(audio.headers.get('content-type'), 'audio/wav');
+  assert.equal(await audio.text(), 'RIFF-test-audio');
   const head = await fetch(url, { method: 'HEAD' });
   assert.equal(head.status, 200);
   assert.equal(await head.text(), '');

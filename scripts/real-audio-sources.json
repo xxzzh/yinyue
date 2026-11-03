@@ -1,0 +1,103 @@
+{
+  "repository": "sgossner/VSCO-2-CE",
+  "commit": "440300901dfe9275fd84e0b7763af1f8443ae62e",
+  "license": "CC0-1.0",
+  "samples": [
+    {
+      "track": "flute",
+      "path": "Woodwinds/Flute/susNV/LDFlute_susNV_C4_v3_1.wav",
+      "blob": "850db1f598b5ba7a88ec2f929f8b832fb83cdd66",
+      "label": "长笛独奏长音"
+    },
+    {
+      "track": "clarinet",
+      "path": "Woodwinds/Clarinet/susLong/DCClar_susLong_F#5_v2_rr1_sum.wav",
+      "blob": "5e103799bb30ef1afa405511230c852b942a9d7c",
+      "label": "单簧管独奏长音"
+    },
+    {
+      "track": "oboe",
+      "path": "Woodwinds/Oboe/Sus/Oboe_Sus_F4_v3_Main.wav",
+      "blob": "4f2c0ca39a4604d8493367eaf953e8756bc0bf90",
+      "label": "双簧管独奏长音"
+    },
+    {
+      "track": "bassoon",
+      "path": "Woodwinds/Bassoon/sus/PSBassoon_C3_v2_1.wav",
+      "blob": "7778b0fa352d6466272f2e0a7b053ca38ac1e35f",
+      "label": "大管独奏长音"
+    },
+    {
+      "track": "violin",
+      "path": "Strings/Solo Violin/Arco Vib/LLVln_ArcoVib_C4_f.wav",
+      "blob": "8a700075b7ae2f19c1c56108738324dfba6959e8",
+      "label": "小提琴独奏颤音长音"
+    },
+    {
+      "track": "viola",
+      "path": "Strings/Viola Section/susvib/ViolaEns_susvib_C4_v2_1.wav",
+      "blob": "4561f010d9b6de44b121246731042d1879d38ab7",
+      "label": "中提琴组颤音长音"
+    },
+    {
+      "track": "cello",
+      "path": "Strings/Cello Section/susvib/susvib_C3_v1_1.wav",
+      "blob": "73ccb5dc2cc2a07926a1c41aa3c5621b19f420bf",
+      "label": "大提琴组颤音长音"
+    },
+    {
+      "track": "doublebass",
+      "path": "Strings/Solo Contrabass/SusNV/BKCtbss_SusNV_C#2_v1_rr1.wav",
+      "blob": "6c81a4f26d83527e775f705a8888cde24224e75e",
+      "label": "低音提琴独奏长音"
+    },
+    {
+      "track": "harp",
+      "path": "Strings/Harp/KSHarp_C3_mf.wav",
+      "blob": "20e91e167e86132bb16601f682c90444779d8a23",
+      "label": "竖琴拨弦单音"
+    },
+    {
+      "track": "frenchhorn",
+      "path": "Brass/F Horn/sus/MOHorn_sus_C3_v2_1.wav",
+      "blob": "9f89dc248404a1a1e0240035ac5fa55c89e9c9cd",
+      "label": "圆号独奏长音"
+    },
+    {
+      "track": "trumpet",
+      "path": "Brass/Trumpet/sus/Sum_SHTrumpet_sus_C3_v3_rr1.wav",
+      "blob": "d5490467cf68db010843924b975fd71edfc41273",
+      "label": "小号独奏长音"
+    },
+    {
+      "track": "trombone",
+      "path": "Brass/Tenor Trombone/sus/tenortbn_sus_C3_v2_1.wav",
+      "blob": "dbb030c2fdcfddf56ec0cbd1cc9cc2c03eb3aa33",
+      "label": "次中音长号独奏长音"
+    },
+    {
+      "track": "tuba",
+      "path": "Brass/Tuba/sus/Tuba3_sus_D#1_v2_rr1_Mid.wav",
+      "blob": "05b0d63ed94c2e597e954e94560b9ee8e7734769",
+      "label": "大号独奏长音"
+    },
+    {
+      "track": "marimba",
+      "path": "Percussion/Marimba/Marimba_hit_Outrigger_C4_loud_01.wav",
+      "blob": "fe3ec22b99ed4afdd007d0107d925669e7e1d4c9",
+      "label": "马林巴槌击单音"
+    },
+    {
+      "track": "glockenspiel",
+      "path": "Percussion/Glock/glock_medium_C7.wav",
+      "blob": "a0f4aff9ef7d73e49a16f4054ead1369a78572b0",
+      "label": "钟琴槌击单音"
+    },
+    {
+      "track": "piccolo",
+      "path": "Woodwinds/Piccolo/Sus/piccolo_G4_sustain1.wav",
+      "blob": "e2f56b2c8691ccda1d60a2f0eeff73dd7bf23e32",
+      "label": "短笛独奏长音"
+    }
+  ]
+}

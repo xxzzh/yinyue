@@ -39,3 +39,7 @@ v0.3.1 为 84 个传统乐器条目补充配图：64 张实物照片、2 幅历�
 新增 54 幅原创 SVG 外形示意：50 种世界乐器和革胡、京二胡、柷、敔。与原有配图合计 138 幅：64 张实物照片、2 幅历史图像、72 幅结构示意。新增图不冒充实物照片，部件为代表外形，不能作为精确弦数、尺寸、持奏和指法依据。原有常见乐器保留页面内矢量插画。
 
 生成器：`node --experimental-strip-types scripts/draw-world-diagrams.mjs`；再执行 `node scripts/sync-instrument-images.mjs` 同步显示信息与署名页。生成器与原图均以项目 MIT 许可提供；不影响第三方照片原有许可。
+
+## v0.5.0 选学扩展
+
+再增42幅世界乐器及12幅中国地方乐器原创SVG，合计192幅外部素材（64照片、2历史图、126原创示意），另8种原有常见乐器使用页面内矢量插画。世界扩展图由 draw-world-diagrams.mjs 生成，新增中国图由 draw-additional-chinese.mjs 生成；后者的账本合并用 sync-additional-chinese-images.mjs，最终运行 sync-instrument-images.mjs。

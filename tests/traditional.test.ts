@@ -5,11 +5,11 @@ import { filterTraditional, traditionalCatalog, traditionalInstrument, tradition
 import { completeLesson, freshProgress, validateProgress } from '../src/progress.ts';
 
 test('traditional directory covers every category and each entry opens a complete learning route', () => {
-  assert.equal(traditionalCatalog.length, 88);
-  assert.equal(new Set(traditionalCatalog.map(item => item.id)).size, 88);
-  assert.equal(new Set(traditionalCatalog.map(item => item.name)).size, 88);
+  assert.equal(traditionalCatalog.length, 100);
+  assert.equal(new Set(traditionalCatalog.map(item => item.id)).size, 100);
+  assert.equal(new Set(traditionalCatalog.map(item => item.name)).size, 100);
   assert.equal(new Set(courses.map(course => course.id)).size, courses.length);
-  assert.equal(courses.filter(course => course.traditional).length, 88);
+  assert.equal(courses.filter(course => course.traditional).length, 100);
   assert.deepEqual([...new Set(traditionalCatalog.map(item => item.family))].sort(), ['bowed', 'other', 'percussion', 'plucked', 'wind']);
   for (const item of traditionalCatalog) {
     const course = findCourse(item.id)!;

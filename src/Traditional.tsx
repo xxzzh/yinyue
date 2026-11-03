@@ -1,3 +1,4 @@
+import { TimbrePreview } from './TimbrePreview';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronRight, Compass, Search } from 'lucide-react';
 import { courses, findCourse } from './data';
@@ -35,6 +36,7 @@ export function TraditionalPage({ go, query, setQuery }: { go: (path: string) =>
     </section>
     <div className="heritage-scope"><Compass size={19} /><p>先建立一张宽广的国乐地图。本版覆盖常见及部分地方、民族、历史乐器，并非所有地域变体的穷尽名录。新路线提供形制、发声、启蒙任务与听赏指引；古筝、二胡保留已有演奏入门课。新课程暂未内置真实录音，延伸资料与部分示范需联网查阅。</p></div>
     <section className="heritage-start" aria-label="推荐入门乐器"><span>不知从哪开始？</span><div>{popular.map(id => { const item = traditionalCatalog.find(item => item.id === id)!; return <button key={id} onClick={() => go(`/courses/${id}`)}>{item.name}<ChevronRight size={12} /></button>; })}</div></section>
+    <button className="atlas-choice-link" onClick={() => go('/choose')}>比较音色与练习条件，选适合的乐器<ArrowRight size={15}/></button>
     <section className="traditional-directory" aria-labelledby="traditional-results">
       <div className="section-title"><div><span className="eyebrow">AN INSTRUMENT, A NEW DISCOVERY</span><h2 id="traditional-results" tabIndex={-1}>中国传统乐器图鉴</h2><p>按演奏方式寻找，也可搜索民族传统、拼音和常见别名。</p></div><label className="heritage-search"><Search size={17} /><input aria-label="搜索中国传统乐器" placeholder="试试：筚篥、冬布拉、侗族…" value={query} onChange={event => setQuery(event.target.value)} /></label></div>
       <div className="heritage-families" role="group" aria-label="传统乐器类别">{traditionalFamilies.map(group => <button key={group.id} aria-pressed={family === group.id} className={family === group.id ? 'selected' : ''} onClick={() => setFamily(group.id)}><strong>{group.title}<small>{group.id === 'all' ? traditionalCatalog.length : traditionalCatalog.filter(item => item.family === group.id).length}</small></strong><span>{group.caption}</span></button>)}</div>
@@ -44,7 +46,7 @@ export function TraditionalPage({ go, query, setQuery }: { go: (path: string) =>
         const completed = course.lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
         return <button className={`heritage-card ${course.color}`} key={item.id} onClick={() => go(`/courses/${item.id}`)}>
           <div className="heritage-card-top"><span className="heritage-number">{String(traditionalCatalog.indexOf(item as typeof traditionalCatalog[number]) + 1).padStart(2, '0')}</span><span>{traditionalFamilies.find(group => group.id === item.family)?.title}</span></div>
-          <InstrumentImage track={item.id} className="heritage-card-picture" /><div className="heritage-card-name"><h3>{item.name}</h3><span>{item.pinyin}</span></div><p className="heritage-tradition">{item.tradition}</p><p className="heritage-alias">{item.aliases.length ? `别名 / 相关形制：${item.aliases.join('、')}` : `${item.area} · 从结构与声音认识`}</p><div className="heritage-card-foot"><span>{course.lessons.length} 课 · {course.level ? '认识与启蒙' : '演奏入门'}</span><span>{completed ? <><Check size={12} />{completed}/{course.lessons.length}</> : <ArrowRight size={18} />}</span></div>
+          <InstrumentImage track={item.id} className="heritage-card-picture" /><div className="heritage-card-name"><h3>{item.name}</h3><span>{item.pinyin}</span></div><p className="heritage-tradition">{item.tradition}</p><p className="heritage-alias">{item.aliases.length ? `别名 / 相关形制：${item.aliases.join('、')}` : `${item.area} · 从结构与声音认识`}</p><TimbrePreview track={item.id} /><div className="heritage-card-foot"><span>{course.lessons.length} 课 · {course.level ? '认识与启蒙' : '演奏入门'}</span><span>{completed ? <><Check size={12} />{completed}/{course.lessons.length}</> : <ArrowRight size={18} />}</span></div>
         </button>;
       })}</div>
       {!matches.length && <div className="empty-state"><Search size={30} /><h3>这个组合暂时没有找到乐器</h3><p>试试别名、拼音，或重置地域与类别。</p><button className="button outline" onClick={() => { setQuery(''); setFamily('all'); setArea('全部地域'); }}>查看全部传统乐器</button></div>}

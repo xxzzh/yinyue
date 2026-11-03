@@ -1,3 +1,4 @@
+import { additionalWorldCatalog } from './additional-world-catalog.ts';
 import type { CourseFamily } from './data.ts';
 
 export const worldSources = {
@@ -79,6 +80,7 @@ export const worldCatalog = [
   instrument('charango', '恰朗戈', 'Charango', 'plucked', '拉丁美洲与加勒比', '安第斯地区弹拨合奏', '小型有品琴颈与琴箱，常见十弦组成五组双弦，现代多有木制琴背。', '手指拨奏或扫奏，弦组中高低音安排会形成特殊的交错音列。', '先数实体弦与弦组，核对教材调弦，不要按吉他从低到高的直觉直接套弦序。', '小琴体不等于尤克里里，恰朗戈常见弦组与调弦另有规则。', 'charango'),
   instrument('berimbau', '贝林包', 'Berimbau', 'plucked', '拉丁美洲与加勒比', '巴西卡波耶拉音乐', '弓形木杆张一根金属弦，附葫芦共鸣体，并配小击棒等附件。', '击棒击弦，石片或硬币接触弦改变声音，葫芦开口与身体距离影响共鸣。', '在图上找弦与葫芦，再观察击棒、接弦物与共鸣体开口怎样配合。', '虽为弓形却不是拉弦琴，主要发声动作是击弦。', 'berimbau', 'museum', ['巴西弓琴']),
   instrument('taiko', '日本太鼓', 'Taiko', 'percussion', '东亚', '日本祭典与现代组鼓', '鼓体与鼓皮构成主体，长胴、桶胴等多种形制可见于不同支架和编组。', '鼓棒击皮，节奏与身体动作、队形和合奏呼应共同构成表演。', '先用软垫练四次左右交替，观察演奏者的击后回弹和全组一起停止的信号。', '太鼓是含多种形制的称呼，不能用一套尺寸与站姿概括所有太鼓。', 'taiko'),
+  ...additionalWorldCatalog,
 ] as const;
 
 export const worldAreas = ['全部地域', ...new Set(worldCatalog.map(item => item.area))];
