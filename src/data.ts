@@ -1,9 +1,11 @@
 import { instrumentCourses } from './instrument-courses.ts';
 import { traditionalCourses } from './traditional-courses.ts';
+import { worldCourses } from './world-courses.ts';
+import type { WorldTrack } from './world-catalog.ts';
 import { traditionalInstrument } from './traditional-catalog.ts';
 import type { TraditionalTrack } from './traditional-catalog.ts';
 
-export type Track = 'theory' | 'ear' | 'piano' | 'guitar' | 'ukulele' | 'bass' | 'violin' | 'drums' | 'flute' | 'saxophone' | TraditionalTrack;
+export type Track = 'theory' | 'ear' | 'piano' | 'guitar' | 'ukulele' | 'bass' | 'violin' | 'drums' | 'flute' | 'saxophone' | TraditionalTrack | WorldTrack;
 export type Widget = 'score' | 'scale' | 'interval' | 'rhythm' | 'piano' | 'guitar' | 'chord' | 'sing' | 'instrument' | 'drums' | 'discovery';
 export type CourseFamily = 'foundation' | 'keyboard' | 'plucked' | 'bowed' | 'wind' | 'percussion' | 'other';
 export interface Lesson {
@@ -191,6 +193,7 @@ export const courses: Course[] = [
   },
   ...instrumentCourses,
   ...traditionalCourses,
+  ...worldCourses,
 ];
 
 for (const course of courses) {

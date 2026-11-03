@@ -3,6 +3,9 @@
  */
 export type TraditionalFamily = 'plucked' | 'bowed' | 'wind' | 'percussion' | 'other';
 export const traditionalSources = {
+  jingerhu: { title: '教育部国语辞典 · 京二胡', url: 'https://dict.revised.moe.edu.tw/dictView.jsp?ID=95518&q=1&word=%E8%83%A1' },
+  ritual: { title: '台中孔庙 · 礼乐器赏析', url: 'https://www.confucius.taichung.gov.tw/834557/834607/1383196/1391354' },
+  gehu: { title: '上海音乐学院 · 革胡馆藏介绍', url: 'https://xxgk.shcmusic.edu.cn/2026/0719/c914a61846/pagem.htm' },
   orchestra: { title: '澳门中乐团 · 乐器介绍', url: 'https://www.ochm-macau.org/樂器介紹/' },
   musicOffice: { title: '香港康文署音乐事务处 · 中乐', url: 'https://www.lcsd.gov.hk/en/mo/musicguide/sc/chinese_musical.html' },
   plucked: { title: '中国民族音乐资料馆 · 弹拨乐器', url: 'https://chinesemusics.com/en_us/info-db/instrument/樂器彈/' },
@@ -544,6 +547,30 @@ export const traditionalCatalog = [
     step: '先在资料中找槽口、鼓体与击具，记录演奏场景。用桌面轻点模拟“击、离、停、听”，不擅自敲击仪式用品或馆藏。',
     listen: '听木鼓与歌舞的节奏呼应，比较不同木鼓的相对高低。先理解共同参与的场景，再看舞台化改编。',
     contrast: '这里的槽式木鼓主要是木体振动，与木腔蒙皮鼓应按具体结构区分。', refs: ['mugu'] },
+  { id: 'gehu', name: '革胡', pinyin: 'Gehu', family: 'bowed', area: '中原与多地', tradition: '现代民族管弦乐低音声部', aliases: [],
+    shape: '革胡是二十世纪研制的民族低音拉弦乐器，结合胡琴与大提琴的结构探索，有不同型号。',
+    voice: '琴弓擦弦产生振动，经琴桥传到共鸣体，为民族乐队提供低音声部。具体弦序与结构应按型号核对。',
+    step: '先看革胡与二胡、大提琴的对照图，记录琴筒、琴桥与持奏位置。听合奏时追踪一个低音落点。',
+    listen: '听一段民族管弦乐，观察低音声部怎样与中高音旋律配合。用一句话描述它是持续、拨奏还是与节奏一起起落。',
+    contrast: '革胡是现代改良成果，不应因归入中国乐器专区就写成古代原有形制。', refs: ['gehu', 'musicOffice'] },
+  { id: 'jingerhu', name: '京二胡', pinyin: 'Jing Erhu', family: 'bowed', area: '中原与多地', tradition: '京剧唱腔伴奏', aliases: [],
+    shape: '京二胡属于二弦胡琴，琴杆、琴筒与琴弓构成主要轮廓，形制需结合京剧演奏用琴认识。',
+    voice: '弓毛擦弦，左手按弦改变音高，常与京胡等乐器共同衬托唱腔。',
+    step: '先在京剧乐队画面中区分京胡与京二胡，再听同一句唱腔中高低声部的配合，不急着套用普通二胡定弦。',
+    listen: '选一小段有乐队画面的京剧唱段，记录声腔进入前后，京二胡怎样与其他弦乐接续。',
+    contrast: '京二胡与京胡名称相近但并非同一件乐器，也不能只按普通二胡教材概括京剧伴奏。', refs: ['jingerhu', 'bowed'] },
+  { id: 'chuzhu', name: '柷', pinyin: 'Zhu (Ritual Box)', family: 'percussion', area: '中原与多地', tradition: '礼乐中的起乐信号', aliases: ['木柷'],
+    shape: '柷常见方斗形中空木箱，配有击具，历史时期与复原形制存在差别。',
+    voice: '击具敲击木体产生声音，在一些礼乐制度中用于示意音乐开始。它的主要振动体是木。',
+    step: '看结构图找木箱和击具，与“筑”各写一栏；用手势模拟一次起乐信号，观察合奏如何共同进入。',
+    listen: '查阅注明场合的礼乐示范，记录信号和乐队进入的先后。复原演出应按现代复原资料理解。',
+    contrast: '柷与同音的筑不同：柷击木体，筑以弦为主要发声体。', refs: ['ritual', 'museum'] },
+  { id: 'yuscraper', name: '敔', pinyin: 'Yu (Tiger Scraper)', family: 'percussion', area: '中原与多地', tradition: '礼乐中的收束信号', aliases: ['木敔'],
+    shape: '敔常见伏虎形木体，背上有齿状结构，配合称为籈的刮击具。',
+    voice: '刮击木体与齿背发声，在一些礼乐制度中配合音乐结束的信号，具体动作依制度与形制而定。',
+    step: '先看虎形木体、背齿和籈，观察一次集体停止的信号；用轻拍与停顿模拟收束，不自行规定历史击奏次数。',
+    listen: '看一段礼乐演出，注意敔在乐曲结束附近的动作，并记录其资料注明的时代与场景。',
+    contrast: '敔不是簧管乐器竽；也不能只凭虎形把它当作普通摆件。', refs: ['ritual', 'museum'] },
 ] as const satisfies readonly TraditionalInstrument[];
 
 export type TraditionalTrack = typeof traditionalCatalog[number]['id'];

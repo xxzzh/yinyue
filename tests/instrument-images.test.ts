@@ -3,14 +3,16 @@ import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
 import { instrumentImages } from '../src/instrument-images.ts';
 import { traditionalCatalog } from '../src/traditional-catalog.ts';
+import { worldCatalog } from '../src/world-catalog.ts';
 
-test('every traditional instrument has a bundled, attributed image with matching UI metadata', () => {
+test('every catalog instrument has a bundled, attributed image with matching UI metadata', () => {
   const root = new URL('../public/instruments/', import.meta.url);
   const ledger = JSON.parse(readFileSync(new URL('credits.json', root), 'utf8'));
   const credits = readFileSync(new URL('../public/image-credits.html', import.meta.url), 'utf8');
   assert.deepEqual(instrumentImages, ledger, 'Regenerate the image data with scripts/sync-instrument-images.mjs');
-  assert.deepEqual(Object.keys(ledger).sort(), traditionalCatalog.map(item => item.id).sort());
-  for (const item of traditionalCatalog) {
+  const catalog = [...traditionalCatalog, ...worldCatalog];
+  assert.deepEqual(Object.keys(ledger).sort(), catalog.map(item => item.id).sort());
+  for (const item of catalog) {
     const image = instrumentImages[item.id];
     assert.equal(image.name, item.name);
     assert.match(image.file, new RegExp(`^${item.id}\\.(png|jpg|jpeg|webp|svg)$`));
