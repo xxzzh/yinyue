@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ArrowDownToLine,
@@ -62,6 +62,29 @@ const loading = (
     正在加载…
   </div>
 );
+
+// Shows a retry message instead of a blank app when an on-demand page file cannot be loaded
+// (offline, or a file removed by a newer deploy that the one-time reload in main.tsx could not fix).
+class LoadBoundary extends Component<{ children: ReactNode; resetKey: string }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  componentDidUpdate(previous: { resetKey: string }) {
+    if (this.state.failed && previous.resetKey !== this.props.resetKey) this.setState({ failed: false });
+  }
+  render() {
+    if (!this.state.failed) return <Suspense fallback={loading}>{this.props.children}</Suspense>;
+    return (
+      <div className="lazy-loading" role="alert">
+        <p>这部分内容没有加载成功，可能是网络中断或网站刚更新。</p>
+        <button className="button outline small" onClick={() => window.location.reload()}>
+          刷新页面
+        </button>
+      </div>
+    );
+  }
+}
 
 const trackIcons: Partial<Record<Track, LucideIcon>> = {
   theory: BookOpen,
@@ -945,7 +968,7 @@ function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
         <span className="reader-sidebar-foot">一步一步，就会听见不同。</span>
       </aside>
       <article className="lesson-article">
-        <Suspense fallback={loading}>
+        <LoadBoundary resetKey={lesson.id}>
           <div className="reader-breadcrumb">
             {course.tag}
             <ChevronRight size={12} />第 {index + 1} / {course.lessons.length} 课
@@ -1044,7 +1067,7 @@ function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
             </button>
           </div>
           {!correct && <p className="quiz-hint">答对上方小问题后，就可以完成这一课。</p>}
-        </Suspense>
+        </LoadBoundary>
       </article>
     </Dialog>
   );
@@ -1255,7 +1278,7 @@ function Shell() {
           </div>
         </header>
         <main id="main-content">
-          <Suspense fallback={loading}>
+          <LoadBoundary resetKey={route}>
             <div className="date-line">
               <span className="status-dot" />
               属于你的音乐时间<span>{date}</span>
@@ -1283,7 +1306,7 @@ function Shell() {
             ) : (
               <ProgressPage go={go} />
             )}
-          </Suspense>
+          </LoadBoundary>
         </main>
       </div>
       {settings && <SettingsDialog onClose={() => setSettings(false)} />}
