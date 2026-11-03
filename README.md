@@ -28,6 +28,8 @@ npm run dev
 打开终端显示的 `http://127.0.0.1:5173/`。
 
 ```powershell
+npm run lint
+npm run format:check
 npm test
 npm run test:server
 npm run build

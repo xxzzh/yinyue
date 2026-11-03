@@ -22,10 +22,13 @@ async function website(t) {
 
 async function start(t, root, options = {}) {
   const result = await startLocalServer({ root, port: 0, ...options });
-  t.after(() => new Promise(done => {
-    result.server.closeAllConnections();
-    result.server.close(done);
-  }));
+  t.after(
+    () =>
+      new Promise(done => {
+        result.server.closeAllConnections();
+        result.server.close(done);
+      }),
+  );
   return result;
 }
 
@@ -49,7 +52,12 @@ test('local release serves UTF-8 HTML and JavaScript, supports HEAD and binds on
 
 test('local release rejects malformed paths, traversal, missing files and writes without stopping', async t => {
   const { url } = await start(t, await website(t));
-  for (const [path, status] of [['%ZZ', 400], ['..%2fprivate.txt', 403], ['missing.txt', 404], ['runtime/node.exe', 404]]) {
+  for (const [path, status] of [
+    ['%ZZ', 400],
+    ['..%2fprivate.txt', 403],
+    ['missing.txt', 404],
+    ['runtime/node.exe', 404],
+  ]) {
     assert.equal((await fetch(url + path)).status, status, path);
   }
   const write = await fetch(url, { method: 'POST', body: 'test' });

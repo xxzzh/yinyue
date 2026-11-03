@@ -4,30 +4,47 @@ export const noteNames: Record<string, string> = { C: 'do', D: 're', E: 'mi', F:
 export const cMajor = Scale.get('C4 major').notes;
 export const melody = ['C4', 'C4', 'G4', 'G4', 'A4', 'A4', 'G4'];
 export const keyboardKeys = [
-  { note: 'C4', key: 'a' }, { note: 'C#4', key: 'w' }, { note: 'D4', key: 's' },
-  { note: 'D#4', key: 'e' }, { note: 'E4', key: 'd' }, { note: 'F4', key: 'f' },
-  { note: 'F#4', key: 't' }, { note: 'G4', key: 'g' }, { note: 'G#4', key: 'y' },
-  { note: 'A4', key: 'h' }, { note: 'A#4', key: 'u' }, { note: 'B4', key: 'j' }, { note: 'C5', key: 'k' },
+  { note: 'C4', key: 'a' },
+  { note: 'C#4', key: 'w' },
+  { note: 'D4', key: 's' },
+  { note: 'D#4', key: 'e' },
+  { note: 'E4', key: 'd' },
+  { note: 'F4', key: 'f' },
+  { note: 'F#4', key: 't' },
+  { note: 'G4', key: 'g' },
+  { note: 'G#4', key: 'y' },
+  { note: 'A4', key: 'h' },
+  { note: 'A#4', key: 'u' },
+  { note: 'B4', key: 'j' },
+  { note: 'C5', key: 'k' },
 ];
 export const guitarStrings = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'];
 export const guitarChords: Record<string, number[]> = {
-  C: [-1, 3, 2, 0, 1, 0], G: [3, 2, 0, 0, 0, 3], Am: [-1, 0, 2, 2, 1, 0],
-  D: [-1, -1, 0, 2, 3, 2], Em: [0, 2, 2, 0, 0, 0],
+  C: [-1, 3, 2, 0, 1, 0],
+  G: [3, 2, 0, 0, 0, 3],
+  Am: [-1, 0, 2, 2, 1, 0],
+  D: [-1, -1, 0, 2, 3, 2],
+  Em: [0, 2, 2, 0, 0, 0],
 };
 export function fretNote(string: number, fret: number) {
   return Note.fromMidi((Note.midi(guitarStrings[string]) ?? 40) + fret);
 }
 export function chordVoicing(name: string) {
-  return guitarChords[name].flatMap((fret, index) => fret < 0 ? [] : [fretNote(index, fret)]);
+  return guitarChords[name].flatMap((fret, index) => (fret < 0 ? [] : [fretNote(index, fret)]));
 }
-export function theoryChord(name: string) { return Chord.get(name).notes.map(note => `${note}4`); }
+export function theoryChord(name: string) {
+  return Chord.get(name).notes.map(note => `${note}4`);
+}
 export const intervals = [
   { id: '2M', title: '大二度', semitones: 2 },
   { id: '3M', title: '大三度', semitones: 4 },
   { id: '5P', title: '纯五度', semitones: 7 },
   { id: '8P', title: '纯八度', semitones: 12 },
 ];
-export interface EarQuestion { interval: typeof intervals[number]; notes: string[] }
+export interface EarQuestion {
+  interval: (typeof intervals)[number];
+  notes: string[];
+}
 export function earQuestion(random = Math.random): EarQuestion {
   const interval = intervals[Math.min(3, Math.floor(random() * intervals.length))];
   const root = ['C4', 'D4', 'F4', 'G4'][Math.min(3, Math.floor(random() * 4))];

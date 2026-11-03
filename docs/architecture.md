@@ -18,6 +18,11 @@
 
 `App.tsx` 用 `React.lazy` 按需加载中国乐器、世界乐器、选乐器页面，乐器特色区块，以及钢琴、吉他、练耳、节拍器、乐谱等工具；首屏只包含外壳、课程数据与配图数据。Tone.js 与 OpenSheetMusicDisplay 本来就在用户操作时才加载。新增页面或重型组件时沿用这种方式，避免重新并入主包。
 
+## 代码规范
+
+- ESLint（`npm run lint`）与 Prettier（`npm run format:check`，行宽120）在 GitHub Pages 构建中执行；`npm run format` 自动排版。生成文件 `src/instrument-images.ts`、`src/audio-samples.ts` 不参与排版。
+- `react-hooks/set-state-in-effect` 与 `react-hooks/refs` 暂为警告：分页器、筛选重置、图片重载等处在 effect 中同步重置状态。后续可改为在事件处理里重置或用 `key` 重建组件，改完后再把这两条规则恢复为错误。
+
 ## 数据契约
 
 每节课使用稳定的 `lesson.id`。更换内容来源时保留这些标识，避免已有完成记录失效。课程详情需要保存标题、分组、段落、互动类型及测验；由适配层将后台内容转换为 Course／Lesson 数据。现有构建直接使用本地类型化内容，未接入外部 API。

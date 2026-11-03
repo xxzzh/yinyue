@@ -10,7 +10,12 @@ test('every instrument course has a bundled, attributed image with matching UI m
   const root = new URL('../public/instruments/', import.meta.url);
   const ledger = JSON.parse(readFileSync(new URL('credits.json', root), 'utf8'));
   const credits = readFileSync(new URL('../public/image-credits.html', import.meta.url), 'utf8');
-  const uiLedger = Object.fromEntries(Object.entries(ledger).map(([id, { download: _download, ...item }]: [string, any]) => [id, item]));
+  const uiLedger = Object.fromEntries(
+    Object.entries(ledger).map(([id, { download: _download, ...item }]: [string, Record<string, unknown>]) => [
+      id,
+      item,
+    ]),
+  );
   assert.deepEqual(instrumentImages, uiLedger, 'Regenerate the image data with scripts/sync-instrument-images.mjs');
   const catalog = [...traditionalCatalog, ...worldCatalog];
   const instrumentCourses = courses.filter(course => course.family !== 'foundation');
