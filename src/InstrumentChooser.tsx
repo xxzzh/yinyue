@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCatalogPage } from './useCatalogPage';
 import { ArrowRight, BookOpen, Check, Headphones, Music2, Scale, X } from 'lucide-react';
 import { courses, courseFamilies } from './data';
@@ -19,6 +19,10 @@ import { useLearning } from './learning';
 function RealSound({ course }: { course: Course }) {
   const sample = audioSamples[course.id];
   const { progress } = useLearning();
+  const audio = useRef<HTMLAudioElement>(null);
+  useEffect(() => {
+    if (audio.current) audio.current.volume = progress.volume;
+  }, [progress.volume, sample?.file]);
   return (
     <div className="real-sound">
       <div className="character-label">
@@ -31,6 +35,7 @@ function RealSound({ course }: { course: Course }) {
             {sample.label} · {sample.seconds.toFixed(1)} 秒 · 实物采样录音节选
           </p>
           <audio
+            ref={audio}
             controls
             preload="none"
             aria-label={`${course.tag}真实录音`}
