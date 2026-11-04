@@ -9,22 +9,27 @@
 - 图片按条目重建失败状态；初始存储读取提示直接初始化；MIDI 按钮独立维护渲染状态；节拍器和鼓机在启停事件中重置指示，忽略已取消的异步回调。
 - 手机导航点击当前页也会关闭，浏览器前进后退的 hashchange 也会关闭；“跳到主要内容”改为直接聚焦主区域，不再破坏 hash 路由。
 - 更正世界乐器页沿用旧版“均为原创示意图”的文案。
-- 补齐革胡实物照片，并复核第三方图片许可。详见 [图片核查](instrument-image-review.md)。
+- 原来16种待补照片的乐器已补齐7种：革胡、马骨胡、吐良、芒筒、佤族木鼓、排鼓、大广弦；另复核并更换拨浪鼓的自定义授权旧图。200个条目现为184张实物照片、7幅历史图像、9幅示意图。详见 [图片核查](instrument-image-review.md)。
+- 修复 minimatch 的开发依赖漏洞：升级至插件支持的 ESLint 10，固定 minimatch 至修复范围，全量 `npm audit` 为0项。保持严格 Hooks 检查与零警告要求。
 
 ## 后续值得继续处理
 
-1. 15种地方乐器照片仍待作者或馆方提供符合要求的授权和清晰实物图。这是素材缺口，不能通过修改图片种类标签解决。
-2. 开发依赖的 minimatch 公告：[GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249)。本轮 `npm audit` 报11项 moderate，来自同一问题及 ESLint／typescript-eslint 的传递依赖链，并非11个独立漏洞；`npm audit --omit=dev` 为0项。公告补丁为11.0.1，现有依赖使用3.1.5和10.2.6。npm 建议的自动修复包含降级 ESLint 到4.0.0，不适合当前 ESLint 9 配置；未采用自动降级，也未强制跨大版本覆盖依赖。应跟进上游兼容修复，或单独验证依赖升级。
-3. 首屏仍需要整站课程索引与较多正文数据。后续性能优化可先测量首页实际执行与解析成本，再分离目录索引和课程详情数据；保持现有 React.lazy、LoadBoundary 及旧标签页更新恢复机制。
-4. MIDI 本轮核对了状态实现；实际设备的热插拔、踏板、重复音与音域仍应按 architecture.md 的硬件验收清单测试。
+1. 9种地方乐器照片尚未补齐：牛腿琴、侗笛、渔鼓、大筒、姊妹箫、唎咧、京西太平鼓、灼吧、黎族鼻箫。候选存在许可或形制确认缺口，继续保留示意图；这些项不计为完成。
+2. 首屏仍需要整站课程索引与较多正文数据。后续性能优化可先测量首页实际执行与解析成本，再分离目录索引和课程详情数据；保持现有 React.lazy、LoadBoundary 及旧标签页更新恢复机制。
+3. MIDI 本轮核对了状态实现；实际设备的热插拔、踏板、重复音与音域仍应按 architecture.md 的硬件验收清单测试。
+
+## 依赖修复依据
+
+原 `npm audit` 的11项 moderate 来自同一 [minimatch 公告 GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249)及其依赖链。修复版本为11.0.1。ESLint 9 的旧依赖仍使用默认导入，不能直接覆盖到 minimatch 11；升级后的 ESLint 10 依赖使用命名导入，配合 `overrides.minimatch: ^11.0.1` 后运行检查通过。react-hooks 与 typescript-eslint 的 peer 范围均包含 ESLint 10；锁文件已更新，没有使用 npm 建议的 ESLint 4 降级方案。
 
 ## 验证
 
 - `npm run lint`：0错误、0警告；`npm run format:check` 和 `npx tsc -b` 通过。
 - `npm test`：23项通过（含图片许可类型和具体 CC 版本链接检查）；`npm run test:server`：4项通过。
-- `npm run build` 和 `python scripts/package-release.py --validate-only` 通过。首屏入口脚本585.65KB（gzip 193.38KB）；乐谱引擎仍为按需加载。
+- `npm run build` 和 `python scripts/package-release.py --validate-only` 通过。首屏入口脚本587.01KB（gzip 194.48KB）；乐谱引擎仍为按需加载。
 - 在本地生产预览中验证四个目录的跨页搜索、分类／地域筛选、空结果、清空搜索、重置条件、比较清单保留和非法跳转页码保护；跳转输入随上一页／下一页同步。
 - 1440px桌面与390px手机视口核对图片加载、放大及署名；手机导航切页、点击当前页和浏览器返回均收起菜单；跳到主内容后焦点在主区域，hash 路由保留。
 - 节拍器、鼓机启停后指示清零；浏览器控制台未见错误。未申请 MIDI 设备权限，未执行实体键盘验收。
+- 后续新增的6种照片逐件在生产预览核对本地图片、图注、作者与许可链接；390px手机视口逐件测试放大和关闭，均正常加载且无横向溢出。离线署名页的6项与账本一致；控制台无错误或警告。
 
 发版时再更新 `package.json` 和 `docs/release-notes.md`；推送前需用户确认。
