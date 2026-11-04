@@ -13,6 +13,7 @@
 - `src/Art.tsx`：原创 SVG 音乐插画；有配图的乐器课程改用 `InstrumentImage` 显示真实照片。
 - `src/instrument-guides.ts`：每件乐器的使用说明与演奏指南链接，及排序去重规则 `playingGuides`。
 - `src/CatalogPager.tsx`：各目录共用的分页器。
+- `src/useCatalogPage.ts`：共用分页状态；搜索或筛选条件变化时，在渲染结果前条件式重置页码，保留筛选与比较清单等其他状态。也覆盖顶部共享搜索框传入的查询变化。
 
 ## 按需加载
 
@@ -21,7 +22,8 @@
 ## 代码规范
 
 - ESLint（`npm run lint`）与 Prettier（`npm run format:check`，行宽120）在 GitHub Pages 构建中执行；`npm run format` 自动排版。生成文件 `src/instrument-images.ts`、`src/audio-samples.ts` 不参与排版。
-- `react-hooks/set-state-in-effect` 与 `react-hooks/refs` 暂为警告：分页器、筛选重置、图片重载等处在 effect 中同步重置状态。后续可改为在事件处理里重置或用 `key` 重建组件，改完后再把这两条规则恢复为错误。
+- `react-hooks/set-state-in-effect` 与 `react-hooks/refs` 均为错误，lint 不允许警告。页码草稿和图片失败状态通过局部组件的 `key` 重建；节拍器与鼓机在操作时重置显示，并忽略已取消的异步回调；MIDI 按钮使用独立渲染状态。不要在渲染中读取 ref 来决定文案。
+- `useCatalogPage` 只在条件标识变化时调整自身状态，遵循 [React 的局部状态调整模式](https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)。不要用 effect 重置分页，也不要给整个筛选页面加查询 key，避免清空比较清单或其他筛选项。
 
 ## 数据契约
 

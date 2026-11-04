@@ -1,5 +1,6 @@
 import { TimbrePreview } from './TimbrePreview';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useCatalogPage } from './useCatalogPage';
 import { ArrowRight, Check, ChevronRight, Globe2, Search } from 'lucide-react';
 import { courseFamilies, courses } from './data';
 import { worldAreas, worldInstrument } from './world-catalog';
@@ -38,10 +39,7 @@ export function WorldPage({
   const { progress } = useLearning();
   const [family, setFamily] = useState('all');
   const [area, setArea] = useState('全部地域');
-  const [page, setPage] = useState(1);
-  useEffect(() => {
-    setPage(1);
-  }, [query, family, area]);
+  const [page, setPage] = useCatalogPage([query, family, area]);
   const matches = filterWorldDirectory(query, family, area);
   const pages = Math.max(1, Math.ceil(matches.length / 12));
   const current = Math.min(page, pages);
@@ -224,7 +222,7 @@ export function WorldPage({
           }}
         />
         <p className="image-directory-note">
-          新增配图为原创外形示意，帮助辨认代表结构，不作为尺寸或指法依据。图片随离线包提供。
+          图片展示代表性形制，实物照片与历史图像均已标注；不作为尺寸或指法依据。图片随离线包提供。
           <a href="./image-credits.html" target="_blank" rel="noreferrer">
             配图说明与授权 ↗
           </a>

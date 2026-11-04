@@ -4,20 +4,19 @@ import { instrumentImages } from './instrument-images';
 
 const kindLabel = { photo: '实物照片', historical: '历史图像', diagram: '外形示意' };
 
-export function InstrumentImage({
-  track,
-  className = '',
-  eager = false,
-}: {
+type InstrumentImageProps = {
   track: string;
   className?: string;
   eager?: boolean;
-}) {
+};
+
+export function InstrumentImage(props: InstrumentImageProps) {
+  return <ImageContent key={props.track} {...props} />;
+}
+
+function ImageContent({ track, className = '', eager = false }: InstrumentImageProps) {
   const [failed, setFailed] = useState(false);
   const item = instrumentImages[track];
-  useEffect(() => {
-    setFailed(false);
-  }, [track]);
   if (!item) return null;
   return (
     <div className={`instrument-image ${className}`}>

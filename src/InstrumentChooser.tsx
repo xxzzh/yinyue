@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useCatalogPage } from './useCatalogPage';
 import { ArrowRight, BookOpen, Check, Headphones, Music2, Scale, X } from 'lucide-react';
 import { courses, courseFamilies } from './data';
 import type { Course } from './data';
@@ -163,11 +164,8 @@ export function InstrumentChooser({
     [portability, setPortability] = useState('all'),
     [start, setStart] = useState('all'),
     [tone, setTone] = useState('all');
-  const [page, setPage] = useState(1),
-    [comparison, setComparison] = useState<string[]>([]);
-  useEffect(() => {
-    setPage(1);
-  }, [query, family, origin, practice, portability, start, tone]);
+  const [page, setPage] = useCatalogPage([query, family, origin, practice, portability, start, tone]);
+  const [comparison, setComparison] = useState<string[]>([]);
   const matches = filterInstrumentChoices(query, { family, origin, practice, portability, start, tone });
   const pages = Math.max(1, Math.ceil(matches.length / 12)),
     current = Math.min(page, pages);

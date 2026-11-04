@@ -18,9 +18,8 @@ export default tseslint.config(
       ],
       // Chinese UI copy uses full-width spaces on purpose.
       'no-irregular-whitespace': ['error', { skipJSXText: true }],
-      // Existing "reset state when filters change" effects; tracked as cleanup work, see docs/architecture.md.
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/refs': 'warn',
+      'react-hooks/set-state-in-effect': 'error',
+      'react-hooks/refs': 'error',
     },
   },
   {

@@ -38,6 +38,7 @@ import type { Progress } from './progress';
 import { BrandMark, CourseArt } from './Art';
 import { LearningProvider } from './state';
 import { CatalogPager } from './CatalogPager';
+import { useCatalogPage } from './useCatalogPage';
 import { traditionalCatalog } from './traditional-catalog';
 import { InstrumentFigure } from './InstrumentImage';
 import { instrumentImages } from './instrument-images';
@@ -520,10 +521,7 @@ function CoursesPage({
 }) {
   const { progress } = useLearning();
   const [filter, setFilter] = useState('all');
-  const [page, setPage] = useState(1);
-  useEffect(() => {
-    setPage(1);
-  }, [query, filter]);
+  const [page, setPage] = useCatalogPage([query, filter]);
   if (course) {
     const completed = course.lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
     const next = course.lessons.find(lesson => !progress.completed.includes(lesson.id)) ?? course.lessons[0];
@@ -1124,7 +1122,7 @@ function SettingsDialog({ onClose }: { onClose: () => void }) {
 }
 
 function Shell() {
-  const { route, go } = useRoute();
+  const { route, go: navigate } = useRoute();
   const { progress } = useLearning();
   const [query, setQuery] = useState('');
   const [settings, setSettings] = useState(false);
@@ -1150,12 +1148,27 @@ function Shell() {
     document.title = `${lesson?.title ?? navItems.find(item => item.id === activePage)?.title ?? '音序'} · 音序音乐学习`;
   }, [activePage, lesson]);
   useEffect(() => {
+    const closeMenu = () => setMobileMenu(false);
+    window.addEventListener('hashchange', closeMenu);
+    return () => window.removeEventListener('hashchange', closeMenu);
+  }, []);
+  function go(path: string) {
     setMobileMenu(false);
-  }, [route]);
+    navigate(path);
+  }
   const date = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
   return (
     <div className="app-layout">
-      <a className="skip-link" href="#main-content">
+      <a
+        className="skip-link"
+        href="#main-content"
+        onClick={event => {
+          event.preventDefault();
+          const main = document.getElementById('main-content');
+          main?.focus();
+          main?.scrollIntoView({ block: 'start', behavior: 'instant' });
+        }}
+      >
         跳到主要内容
       </a>
       {mobileMenu && <button className="mobile-backdrop" aria-label="关闭导航" onClick={() => setMobileMenu(false)} />}
@@ -1277,7 +1290,7 @@ function Shell() {
             </button>
           </div>
         </header>
-        <main id="main-content">
+        <main id="main-content" tabIndex={-1}>
           <LoadBoundary resetKey={route}>
             <div className="date-line">
               <span className="status-dot" />

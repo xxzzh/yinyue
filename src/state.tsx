@@ -7,7 +7,7 @@ import { LearningContext } from './learning';
 export function LearningProvider({ children }: { children: ReactNode }) {
   const [initial] = useState(readProgress);
   const [progress, setProgress] = useState(initial.progress);
-  const [toast, setToast] = useState('');
+  const [toast, setToast] = useState(initial.warning ?? '');
   const [dirty, setDirty] = useState(false);
   const [activeIds, setActiveIds] = useState<Set<string>>(() => new Set());
   const lastWarning = useRef('');
@@ -39,9 +39,6 @@ export function LearningProvider({ children }: { children: ReactNode }) {
     }, 1000);
     return () => clearInterval(timer);
   }, [studying, update]);
-  useEffect(() => {
-    if (initial.warning) setToast(initial.warning);
-  }, [initial]);
   useEffect(() => {
     setVolume(progress.volume);
     if (!dirty) return;

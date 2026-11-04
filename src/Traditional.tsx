@@ -1,5 +1,6 @@
 import { TimbrePreview } from './TimbrePreview';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useCatalogPage } from './useCatalogPage';
 import { ArrowRight, BookOpen, Check, ChevronRight, Compass, Search } from 'lucide-react';
 import { courses, findCourse } from './data';
 import type { Lesson } from './data';
@@ -21,10 +22,7 @@ export function TraditionalPage({
   const { progress } = useLearning();
   const [family, setFamily] = useState('all');
   const [area, setArea] = useState('全部地域');
-  const [page, setPage] = useState(1);
-  useEffect(() => {
-    setPage(1);
-  }, [query, family, area]);
+  const [page, setPage] = useCatalogPage([query, family, area]);
   const matches = filterTraditional(query, family, area);
   const pages = Math.max(1, Math.ceil(matches.length / 12));
   const current = Math.min(page, pages);

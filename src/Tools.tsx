@@ -70,6 +70,7 @@ export function PianoTool({ compact = false }: { compact?: boolean }) {
   const [step, setStep] = useState(0);
   const [message, setMessage] = useState('');
   const [midiStatus, setMidiStatus] = useState('');
+  const [midiConnected, setMidiConnected] = useState(false);
   const toolRef = useRef<HTMLDivElement>(null);
   const midiRef = useRef<MIDIAccess | null>(null);
   const midiCleanup = useRef<(() => void) | null>(null);
@@ -145,6 +146,7 @@ export function PianoTool({ compact = false }: { compact?: boolean }) {
     if (midiRef.current) {
       midiCleanup.current?.();
       midiRef.current = null;
+      setMidiConnected(false);
       setMidiStatus('键盘已断开');
       return;
     }
@@ -155,6 +157,7 @@ export function PianoTool({ compact = false }: { compact?: boolean }) {
     try {
       const access = await navigator.requestMIDIAccess({ sysex: false });
       midiRef.current = access;
+      setMidiConnected(true);
       const bindInputs = () => {
         access.inputs.forEach(input => {
           input.onmidimessage = event => {
@@ -189,7 +192,7 @@ export function PianoTool({ compact = false }: { compact?: boolean }) {
           </div>
           <button className="button subtle small" onClick={connectMidi}>
             <Cable size={15} />
-            {midiRef.current ? '断开 MIDI' : '连接 MIDI 键盘'}
+            {midiConnected ? '断开 MIDI' : '连接 MIDI 键盘'}
           </button>
         </div>
       )}
@@ -574,18 +577,19 @@ export function RhythmTool({ compact = false }: { compact?: boolean }) {
   const saved = useRef(false);
   useStudyClock(running);
   useEffect(() => {
-    if (!running) {
-      setBeat(-1);
-      return;
-    }
+    if (!running) return;
     let cancelled = false;
     let stop: (() => void) | undefined;
-    metronome(bpm, setBeat)
+    metronome(bpm, beat => {
+      if (!cancelled) setBeat(beat);
+    })
       .then(dispose => {
         if (cancelled) dispose();
         else stop = dispose;
       })
       .catch(() => {
+        if (cancelled) return;
+        setBeat(-1);
         setRunning(false);
         notify('暂时无法启动节拍器，请重试。');
       });
@@ -639,7 +643,13 @@ export function RhythmTool({ compact = false }: { compact?: boolean }) {
             <i key={index} className={beat === index ? 'active' : ''} />
           ))}
         </div>
-        <button className="button primary" onClick={() => setRunning(value => !value)}>
+        <button
+          className="button primary"
+          onClick={() => {
+            setBeat(-1);
+            setRunning(value => !value);
+          }}
+        >
           {running ? <Square size={15} /> : <Play size={15} />}
           {running ? '停止节拍器' : '开始节拍器'}
         </button>

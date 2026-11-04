@@ -136,18 +136,19 @@ export function DrumTool() {
   const { notify, exercise } = useLearning();
   useStudyClock(running);
   useEffect(() => {
-    if (!running) {
-      setStep(-1);
-      return;
-    }
+    if (!running) return;
     let cancelled = false;
     let stop: (() => void) | undefined;
-    drumLoop(pattern, bpm, setStep)
+    drumLoop(pattern, bpm, step => {
+      if (!cancelled) setStep(step);
+    })
       .then(dispose => {
         if (cancelled) dispose();
         else stop = dispose;
       })
       .catch(() => {
+        if (cancelled) return;
+        setStep(-1);
         setRunning(false);
         notify('鼓机暂时无法播放，请重试。');
       });
@@ -182,6 +183,7 @@ export function DrumTool() {
           className="button primary small"
           onClick={() => {
             if (!running) exercise();
+            setStep(-1);
             setRunning(value => !value);
           }}
         >
