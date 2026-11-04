@@ -9,6 +9,7 @@
 - `src/state.tsx`：本地持久化、统一活跃计时、提示信息；一处计时，避免课程与内嵌工具重复累计。
 - `src/learning.ts`：稳定的 React Context 与 hooks，和组件导出分离以支持开发热更新。
 - `src/Tools.tsx`：钢琴、吉他、听音、节拍器、视唱、乐谱等工具。
+- `src/midi.ts`：可独立测试的 MIDI 连接生命周期；合并等待中的权限请求，卸载后忽略返回结果，按设备状态增删本页事件监听，不覆盖其他监听者。
 - `src/App.tsx`：页面导航、课程窗口、搜索、记录导入导出、个人学习设置。
 - `src/Art.tsx`：原创 SVG 音乐插画；有配图的乐器课程改用 `InstrumentImage` 显示真实照片。
 - `src/instrument-guides.ts`：每件乐器的使用说明与演奏指南链接，及排序去重规则 `playingGuides`。
@@ -24,6 +25,7 @@
 - ESLint（`npm run lint`）与 Prettier（`npm run format:check`，行宽120）在 GitHub Pages 构建中执行；`npm run format` 自动排版。生成文件 `src/instrument-images.ts`、`src/audio-samples.ts` 不参与排版。
 - `react-hooks/set-state-in-effect` 与 `react-hooks/refs` 均为错误，lint 不允许警告。页码草稿和图片失败状态通过局部组件的 `key` 重建；节拍器与鼓机在操作时重置显示，并忽略已取消的异步回调；MIDI 按钮使用独立渲染状态。不要在渲染中读取 ref 来决定文案。
 - `useCatalogPage` 只在条件标识变化时调整自身状态，遵循 [React 的局部状态调整模式](https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes)。不要用 effect 重置分页，也不要给整个筛选页面加查询 key，避免清空比较清单或其他筛选项。
+- 浏览器外设权限属于异步操作：组件卸载后不得继续注册监听或更新页面；权限等待期间禁用重复连接。MIDI 模拟回归测试不替代实体设备验收。真实录音播放器在音量或素材变化时同步媒体元素音量，避免只在首次播放时设置。
 
 ## 数据契约
 
