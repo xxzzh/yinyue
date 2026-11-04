@@ -18,6 +18,7 @@ import {
 } from './music';
 import { metronome, playNote, playSequence } from './audio';
 import { useLearning, useStudyClock } from './learning';
+import { createMidiConnection } from './midi';
 
 export function ScorePreview() {
   const element = useRef<HTMLDivElement>(null);
@@ -71,16 +72,15 @@ export function PianoTool({ compact = false }: { compact?: boolean }) {
   const [message, setMessage] = useState('');
   const [midiStatus, setMidiStatus] = useState('');
   const [midiConnected, setMidiConnected] = useState(false);
+  const [midiConnecting, setMidiConnecting] = useState(false);
   const toolRef = useRef<HTMLDivElement>(null);
-  const midiRef = useRef<MIDIAccess | null>(null);
-  const midiCleanup = useRef<(() => void) | null>(null);
+  const midiConnection = useRef<ReturnType<typeof createMidiConnection> | null>(null);
   const highlightTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const [playing, setPlaying] = useState(false);
   useStudyClock(playing);
   useEffect(
     () => () => {
       highlightTimers.current.forEach(clearTimeout);
-      midiCleanup.current?.();
     },
     [],
   );
@@ -142,44 +142,38 @@ export function PianoTool({ compact = false }: { compact?: boolean }) {
   useEffect(() => {
     latestPress.current = press;
   }, [press]);
-  async function connectMidi() {
-    if (midiRef.current) {
-      midiCleanup.current?.();
-      midiRef.current = null;
-      setMidiConnected(false);
-      setMidiStatus('键盘已断开');
-      return;
-    }
+  useEffect(() => {
+    const connection = createMidiConnection(
+      () => navigator.requestMIDIAccess({ sysex: false }),
+      note => latestPress.current(Note.fromMidi(note)),
+      state => {
+        setMidiConnected(state.phase === 'connected');
+        setMidiConnecting(state.phase === 'connecting');
+        setMidiStatus(
+          state.phase === 'connecting'
+            ? '正在等待 MIDI 访问权限…'
+            : state.phase === 'denied'
+              ? '未获得 MIDI 访问权限。仍可使用屏幕键盘。'
+              : state.phase === 'disconnected'
+                ? '键盘已断开'
+                : state.inputCount
+                  ? `已连接 ${state.inputCount} 个键盘，可直接弹奏`
+                  : '尚未发现键盘，请插入 MIDI 设备',
+        );
+      },
+    );
+    midiConnection.current = connection;
+    return () => {
+      connection.dispose();
+      midiConnection.current = null;
+    };
+  }, []);
+  function connectMidi() {
     if (!navigator.requestMIDIAccess) {
       setMidiStatus('当前浏览器不支持 MIDI，请使用支持 Web MIDI 的浏览器。');
       return;
     }
-    try {
-      const access = await navigator.requestMIDIAccess({ sysex: false });
-      midiRef.current = access;
-      setMidiConnected(true);
-      const bindInputs = () => {
-        access.inputs.forEach(input => {
-          input.onmidimessage = event => {
-            const data = event.data;
-            if (data && (data[0] & 0xf0) === 0x90 && data[2] > 0) latestPress.current(Note.fromMidi(data[1]));
-          };
-        });
-        setMidiStatus(
-          access.inputs.size ? `已连接 ${access.inputs.size} 个键盘，可直接弹奏` : '尚未发现键盘，请插入 MIDI 设备',
-        );
-      };
-      bindInputs();
-      access.onstatechange = bindInputs;
-      midiCleanup.current = () => {
-        access.onstatechange = null;
-        access.inputs.forEach(input => {
-          input.onmidimessage = null;
-        });
-      };
-    } catch {
-      setMidiStatus('未获得 MIDI 访问权限。仍可使用屏幕键盘。');
-    }
+    void midiConnection.current?.toggle();
   }
   const whiteKeys = keyboardKeys.filter(key => !key.note.includes('#'));
   return (
@@ -190,9 +184,9 @@ export function PianoTool({ compact = false }: { compact?: boolean }) {
             <span className="eyebrow">YOUR FIRST MELODY</span>
             <h2>每一个音，都从指尖开始</h2>
           </div>
-          <button className="button subtle small" onClick={connectMidi}>
+          <button className="button subtle small" onClick={connectMidi} disabled={midiConnecting}>
             <Cable size={15} />
-            {midiConnected ? '断开 MIDI' : '连接 MIDI 键盘'}
+            {midiConnecting ? '正在连接…' : midiConnected ? '断开 MIDI' : '连接 MIDI 键盘'}
           </button>
         </div>
       )}
