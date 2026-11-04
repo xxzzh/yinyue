@@ -34,5 +34,18 @@ test('every instrument course has a bundled, attributed image with matching UI m
     assert.equal(new URL(image.licenseUrl).protocol, 'https:');
     assert.ok(credits.includes(`id="${item.id}"`) && credits.includes(image.file), item.id);
     if (image.kind === 'diagram') assert.match(image.note, /不作为.*指法/);
+    else {
+      assert.match(image.license, /^(CC0|Public domain|CC BY(?:-SA)? \d+\.\d+(?: [a-z]+)?)$/, item.id);
+      if (image.license.startsWith('CC BY')) {
+        const [, variant, version] = image.license.match(/^CC (BY(?:-SA)?) (\d+\.\d+)/)!;
+        const licenseUrl = new URL(image.licenseUrl);
+        const licensePath = `/licenses/${variant.toLowerCase()}/${version}`;
+        assert.ok(
+          licenseUrl.origin === 'https://creativecommons.org' &&
+            (licenseUrl.pathname === licensePath || licenseUrl.pathname.startsWith(`${licensePath}/`)),
+          `${item.id}: link the specific image license, not a general licensing page`,
+        );
+      }
+    }
   }
 });
