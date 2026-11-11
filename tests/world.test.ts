@@ -27,7 +27,8 @@ test('world expansion has distinct complete routes, image metadata and meaningfu
       assert.equal(lesson.quiz.options.length, 4);
       assert.equal(new Set(lesson.quiz.options).size, 4, lesson.id);
       assert.ok(lesson.quiz.answer >= 0 && lesson.quiz.answer < 4, lesson.id);
-      assert.equal(lesson.quiz.options[lesson.quiz.answer], lesson.quiz.explanation);
+      assert.ok(lesson.quiz.explanation.startsWith(lesson.quiz.options[lesson.quiz.answer]), lesson.id);
+      assert.match(lesson.quiz.explanation, /其余选项依次对应：.+、.+、.+。$/, lesson.id);
       assert.ok(
         lesson.sections.every(section => section.body.length >= 15),
         lesson.id,

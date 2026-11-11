@@ -3,31 +3,45 @@ export interface DayLog {
   lessons: number;
   exercises: number;
 }
+export interface Placement {
+  /** Number of main-line stages passed by the placement test: 2 means L0 and L1. */
+  stage: number;
+  date: string;
+}
 export interface Progress {
-  version: 1;
+  version: 2;
   completed: string[];
   dailyGoal: number;
   volume: number;
   days: Record<string, DayLog>;
   lastLesson: string | null;
+  /** Passed stage tests, e.g. `core-l0`. */
+  passedTests: string[];
+  placement: Placement | null;
+  /** Instrument line the learner follows next to the main line, e.g. `piano`. */
+  instrument: string | null;
 }
+// The key keeps its original name so that version 1 records are read and upgraded in place.
 export const STORAGE_KEY = 'yinxu.progress.v1';
 export const freshProgress = (): Progress => ({
-  version: 1,
+  version: 2,
   completed: [],
   dailyGoal: 15,
   volume: 0.6,
   days: {},
   lastLesson: null,
+  passedTests: [],
+  placement: null,
+  instrument: null,
 });
 export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 export function validateProgress(value: unknown): Progress {
   if (!value || typeof value !== 'object') throw new Error('这不是有效的音序学习记录。');
-  const p = value as Partial<Progress>;
+  const p = value as Partial<Omit<Progress, 'version'>> & { version?: unknown };
   if (
-    p.version !== 1 ||
+    (p.version !== 1 && p.version !== 2) ||
     !Array.isArray(p.completed) ||
     !p.completed.every(id => typeof id === 'string' && id.length < 80) ||
     !p.days ||
@@ -44,14 +58,57 @@ export function validateProgress(value: unknown): Progress {
       throw new Error('学习记录包含无效的日期或数值。');
     }
   }
+  const shortIds = (list: unknown) =>
+    Array.isArray(list) ? [...new Set(list.filter(id => typeof id === 'string' && id.length < 80) as string[])] : [];
+  const placement = p.placement as Partial<Placement> | null | undefined;
   return {
-    version: 1,
+    version: 2,
     completed: [...new Set(p.completed)],
     days: { ...p.days },
     dailyGoal: typeof p.dailyGoal === 'number' && [10, 15, 20, 30].includes(p.dailyGoal) ? p.dailyGoal : 15,
     volume: typeof p.volume === 'number' && Number.isFinite(p.volume) ? Math.min(1, Math.max(0, p.volume)) : 0.6,
     lastLesson: typeof p.lastLesson === 'string' ? p.lastLesson : null,
+    passedTests: shortIds(p.passedTests),
+    placement:
+      placement &&
+      typeof placement.stage === 'number' &&
+      Number.isInteger(placement.stage) &&
+      placement.stage >= 0 &&
+      placement.stage <= 6 &&
+      typeof placement.date === 'string' &&
+      /^\d{4}-\d{2}-\d{2}$/.test(placement.date)
+        ? { stage: placement.stage, date: placement.date }
+        : null,
+    instrument: typeof p.instrument === 'string' && p.instrument.length < 40 ? p.instrument : null,
   };
+}
+/** Merges an imported backup into the current record without losing anything already earned. */
+export function mergeProgress(current: Progress, imported: Progress, knownLesson: (id: string) => boolean): Progress {
+  const merged: Progress = {
+    ...current,
+    completed: [...new Set([...current.completed, ...imported.completed])].filter(knownLesson),
+    days: { ...current.days },
+    passedTests: [...new Set([...current.passedTests, ...imported.passedTests])],
+    placement:
+      (imported.placement?.stage ?? -1) > (current.placement?.stage ?? -1) ? imported.placement : current.placement,
+    instrument: current.instrument ?? imported.instrument,
+  };
+  for (const [date, day] of Object.entries(imported.days)) {
+    const old = current.days[date] ?? { seconds: 0, lessons: 0, exercises: 0 };
+    merged.days[date] = {
+      seconds: Math.max(day.seconds, old.seconds),
+      lessons: Math.max(day.lessons, old.lessons),
+      exercises: Math.max(day.exercises, old.exercises),
+    };
+  }
+  return merged;
+}
+export function passStageTest(progress: Progress, testId: string, date = localDate()): Progress {
+  const passedTests = progress.passedTests.includes(testId) ? progress.passedTests : [...progress.passedTests, testId];
+  return addActivity({ ...progress, passedTests }, { exercises: 1 }, date);
+}
+export function recordPlacement(progress: Progress, stage: number, date = localDate()): Progress {
+  return addActivity({ ...progress, placement: { stage, date } }, { exercises: 1 }, date);
 }
 export function readProgress(): { progress: Progress; warning?: string } {
   try {

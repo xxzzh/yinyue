@@ -1,15 +1,8 @@
-import type { Course, Lesson } from './data.ts';
+import { catalogQuiz } from './catalog-quiz.ts';
+import type { Course } from './data.ts';
 import { worldCatalog, worldSources } from './world-catalog.ts';
 
-function quiz(question: string, correct: string, incorrect: string[], order: number): Lesson['quiz'] {
-  const answer = order % 4;
-  const options = incorrect.slice(0, 3);
-  options.splice(answer, 0, correct);
-  return { question, options, answer, explanation: correct };
-}
-
-export const worldCourses: Course[] = worldCatalog.map((item, order) => {
-  const others = worldCatalog.filter(other => other.family !== item.family);
+export const worldCourses: Course[] = worldCatalog.map(item => {
   return {
     id: item.id,
     family: item.family,
@@ -52,12 +45,7 @@ export const worldCourses: Course[] = worldCatalog.map((item, order) => {
             { task: '记下它的代表音乐场景', hint: item.tradition },
           ],
         },
-        quiz: quiz(
-          `哪项符合本课${item.name}的结构？`,
-          item.shape,
-          others.slice(0, 3).map(other => other.shape),
-          order,
-        ),
+        quiz: catalogQuiz(`哪项符合本课${item.name}的结构？`, item, worldCatalog, other => other.shape, 'shape'),
       },
       {
         id: `${item.id}-2`,
@@ -82,16 +70,7 @@ export const worldCourses: Course[] = worldCatalog.map((item, order) => {
             { task: '记录一项需要继续核对的地方', hint: item.contrast },
           ],
         },
-        quiz: quiz(
-          `学习${item.name}，哪种起步方式更合适？`,
-          item.step,
-          [
-            '不用看形制，所有型号都采用同一张指法表。',
-            '第一次就用最大力度与最快速度。',
-            '把另一件乐器的定弦与持奏直接搬过来。',
-          ],
-          order + 1,
-        ),
+        quiz: catalogQuiz(`${item.name}的声音主要怎样产生？`, item, worldCatalog, other => other.voice, 'voice'),
       },
       {
         id: `${item.id}-3`,
@@ -125,11 +104,13 @@ export const worldCourses: Course[] = worldCatalog.map((item, order) => {
             { task: '选出下一次观察的小目标', hint: item.step },
           ],
         },
-        quiz: quiz(
+        quiz: catalogQuiz(
           `本课把${item.name}放在哪种代表音乐场景中认识？`,
-          item.tradition,
-          [...new Set(others.map(other => other.tradition))].slice(0, 3),
-          order + 2,
+          item,
+          worldCatalog,
+          other => other.tradition,
+          'tradition',
+          false,
         ),
       },
     ],

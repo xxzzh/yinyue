@@ -1,18 +1,12 @@
 import { additionalChineseSources } from './additional-chinese-catalog.ts';
-import type { Course, Lesson } from './data.ts';
+import { catalogQuiz } from './catalog-quiz.ts';
+import type { Course } from './data.ts';
 import { traditionalCatalog, traditionalFamilies, traditionalSources } from './traditional-catalog.ts';
 import type { TraditionalInstrument } from './traditional-catalog.ts';
 
-function check(question: string, correct: string, others: string[], offset: number): Lesson['quiz'] {
-  const answer = offset % 4;
-  const options = others.slice(0, 3);
-  options.splice(answer, 0, correct);
-  return { question, options, answer, explanation: correct };
-}
+const firstSentence = (value: string) => `${value.split('。')[0]}。`;
 
-function buildCourse(item: TraditionalInstrument, order: number): Course {
-  const others = traditionalCatalog.filter(other => other.family !== item.family).slice(0, 3);
-  const firstSentence = (value: string) => `${value.split('。')[0]}。`;
+function buildCourse(item: TraditionalInstrument): Course {
   const family = traditionalFamilies.find(family => family.id === item.family)!.title;
   const mode = '形制认识 · 基础启蒙';
   return {
@@ -63,11 +57,12 @@ function buildCourse(item: TraditionalInstrument, order: number): Course {
             },
           ],
         },
-        quiz: check(
+        quiz: catalogQuiz(
           `下面哪项符合本课介绍的${item.name}？`,
-          firstSentence(item.shape),
-          others.map(other => firstSentence(other.shape)),
-          order,
+          item,
+          traditionalCatalog,
+          other => firstSentence(other.shape),
+          'shape',
         ),
       },
       {
@@ -96,15 +91,12 @@ function buildCourse(item: TraditionalInstrument, order: number): Course {
             },
           ],
         },
-        quiz: check(
-          `初次接触${item.name}，哪项做法更合适？`,
-          firstSentence(item.step),
-          [
-            '不看具体形制，所有乐器都使用同一张指法表。',
-            '先把速度提到最快，再回头辨认结构。',
-            '只看名称，直接套用另一件乐器的持奏与定弦。',
-          ],
-          order + 1,
+        quiz: catalogQuiz(
+          `${item.name}的声音主要怎样产生？`,
+          item,
+          traditionalCatalog,
+          other => firstSentence(other.voice),
+          'voice',
         ),
       },
       {
@@ -139,14 +131,13 @@ function buildCourse(item: TraditionalInstrument, order: number): Course {
             },
           ],
         },
-        quiz: check(
+        quiz: catalogQuiz(
           `本课把${item.name}放在哪个代表传统中认识？`,
-          item.tradition,
-          traditionalCatalog
-            .filter(other => other.tradition !== item.tradition && other.family !== item.family)
-            .slice(-3)
-            .map(other => other.tradition),
-          order + 2,
+          item,
+          traditionalCatalog,
+          other => other.tradition,
+          'tradition',
+          false,
         ),
       },
     ],

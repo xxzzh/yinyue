@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ArrowDownToLine,
@@ -21,6 +21,7 @@ import {
   Music2,
   Piano,
   Play,
+  Route,
   Search,
   Settings2,
   SlidersHorizontal,
@@ -33,8 +34,7 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import { allLessons, courseFamilies, courses, filterCourses, findCourse, findLesson, lessonCourse } from './data';
 import type { Course, Lesson, Track } from './data';
-import { localDate, streak, validateProgress } from './progress';
-import type { Progress } from './progress';
+import { localDate, mergeProgress, streak, validateProgress } from './progress';
 import { BrandMark, CourseArt } from './Art';
 import { LearningProvider } from './state';
 import { CatalogPager } from './CatalogPager';
@@ -43,6 +43,9 @@ import { traditionalCatalog } from './traditional-catalog';
 import { InstrumentFigure } from './InstrumentImage';
 import { instrumentImages } from './instrument-images';
 import { useLearning, useStudyClock } from './learning';
+import { Dialog } from './Dialog';
+import { findLine, lessonPlace, nextStep, stageLabel, stepPath } from './curriculum';
+import type { NextStep } from './curriculum';
 
 // Pages and interactive tools load on demand so the first screen only ships the shell and course data.
 const PianoTool = lazy(() => import('./Tools').then(m => ({ default: m.PianoTool })));
@@ -58,6 +61,7 @@ const TraditionalPage = lazy(() => import('./Traditional').then(m => ({ default:
 const WorldPage = lazy(() => import('./World').then(m => ({ default: m.WorldPage })));
 const InstrumentChooser = lazy(() => import('./InstrumentChooser').then(m => ({ default: m.InstrumentChooser })));
 const InstrumentCharacter = lazy(() => import('./InstrumentChooser').then(m => ({ default: m.InstrumentCharacter })));
+const PathPage = lazy(() => import('./Path').then(m => ({ default: m.PathPage })));
 const loading = (
   <div className="lazy-loading" role="status">
     正在加载…
@@ -103,6 +107,7 @@ const trackIcons: Partial<Record<Track, LucideIcon>> = {
 };
 const navItems = [
   { id: 'overview', title: '学习概览', icon: LayoutDashboard },
+  { id: 'path', title: '学习路线', icon: Route },
   { id: 'courses', title: '探索课程', icon: BookOpen },
   { id: 'traditional', title: '中国传统乐器', icon: Music2 },
   { id: 'world', title: '世界乐器', icon: Globe2 },
@@ -126,64 +131,6 @@ function useRoute() {
   return { route, go };
 }
 type Go = (path: string) => void;
-
-function Dialog({
-  children,
-  title,
-  onClose,
-  className = '',
-}: {
-  children: ReactNode;
-  title: string;
-  onClose: () => void;
-  className?: string;
-}) {
-  const ref = useRef<HTMLDialogElement>(null);
-  const titleId = useId();
-  useEffect(() => {
-    const element = ref.current;
-    const focused = document.activeElement as HTMLElement | null;
-    element?.showModal();
-    const oldOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      element?.close();
-      document.body.style.overflow = oldOverflow;
-      focused?.focus();
-    };
-  }, []);
-  return (
-    <dialog
-      ref={ref}
-      className={`dialog ${className}`}
-      aria-labelledby={titleId}
-      onCancel={event => {
-        event.preventDefault();
-        onClose();
-      }}
-      onClick={event => {
-        if (event.target === event.currentTarget) {
-          const rect = event.currentTarget.getBoundingClientRect();
-          if (
-            event.clientX < rect.left ||
-            event.clientX > rect.right ||
-            event.clientY < rect.top ||
-            event.clientY > rect.bottom
-          )
-            onClose();
-        }
-      }}
-    >
-      <h2 id={titleId} className="sr-only">
-        {title}
-      </h2>
-      <button className="dialog-close icon-button" aria-label="关闭窗口" onClick={onClose}>
-        <X size={20} />
-      </button>
-      {children}
-    </dialog>
-  );
-}
 
 function GoalRing({ percent, small = false }: { percent: number; small?: boolean }) {
   const value = Math.min(100, Math.max(0, percent));
@@ -247,29 +194,41 @@ function CourseCard({ course, onOpen }: { course: Course; onOpen: () => void }) 
   );
 }
 
+function stepTitle(step: NextStep | undefined, prefix: string) {
+  if (!step) return `${prefix}：先通过主线当前阶段`;
+  if (step.kind === 'lesson') return `${prefix}：${findLesson(step.lesson)?.title ?? '下一课'}`;
+  if (step.kind === 'test') return `${prefix}：${stageLabel(step.stage)} 阶段测验`;
+  return `${prefix}：${stageLabel(step.stage)} 课程编写中`;
+}
+
 function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
   const { progress } = useLearning();
   const today = progress.days[localDate()] ?? { seconds: 0, lessons: 0, exercises: 0 };
-  const next = allLessons.find(lesson => !progress.completed.includes(lesson.id)) ?? allLessons[0];
-  const nextCourse = lessonCourse(next.id)!;
+  const coreStep = nextStep(progress, 'core');
+  const instrumentLine = progress.instrument ? findLine(progress.instrument) : undefined;
+  const instrumentStep = instrumentLine ? nextStep(progress, instrumentLine.id) : undefined;
+  const heroStep = [coreStep, instrumentStep].find(step => step && step.kind !== 'waiting');
+  const heroLesson = heroStep?.kind === 'lesson' ? findLesson(heroStep.lesson) : undefined;
   const totalSeconds = Object.values(progress.days).reduce((sum, day) => sum + day.seconds, 0);
   const now = new Date();
   const hour = now.getHours();
   const greeting = hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
   const tasks = [
     {
-      title: progress.completed.includes('theory-1') ? '继续探索乐理基础' : '认识你的第一组音符',
-      detail: '乐理基础 · 从 C D E 开始',
-      done: progress.completed.includes('theory-1'),
-      path: '/lesson/theory-1',
+      title: stepTitle(coreStep, '主线'),
+      detail: coreStep ? `音乐素养主线 · ${stageLabel(coreStep.stage)}` : '音乐素养主线',
+      done: today.lessons > 0,
+      path: coreStep ? stepPath(coreStep) : '/path/core',
     },
+    instrumentLine
+      ? {
+          title: stepTitle(instrumentStep, instrumentLine.name),
+          detail: instrumentStep ? `我的乐器 · ${stageLabel(instrumentStep.stage)}` : `我的乐器 · 先通过主线当前阶段`,
+          done: false,
+          path: instrumentStep ? stepPath(instrumentStep) : `/path/${instrumentLine.id}`,
+        }
+      : { title: '选一件乐器同行', detail: '钢琴、吉他、声乐、古筝、口笛', done: false, path: '/path/piano' },
     { title: '听一听，两个音有多远', detail: '听觉训练 · 音程听辨', done: today.exercises > 0, path: '/practice/ear' },
-    {
-      title: '在键盘上弹出一点快乐',
-      detail: '钢琴练习 · 自由探索',
-      done: progress.completed.includes('piano-1'),
-      path: '/practice/piano',
-    },
   ];
   return (
     <>
@@ -306,16 +265,24 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
               <br />
               你的音乐旅程，就从这一刻开始。
             </p>
-            <button className="button dark" onClick={() => go(`/lesson/${next.id}`)}>
+            <button className="button dark" onClick={() => go(heroStep ? stepPath(heroStep) : '/path')}>
               <Play size={14} fill="currentColor" />
-              {progress.completed.length ? '继续我的学习' : '开始第一节课'}
+              {!heroStep
+                ? '查看学习路线'
+                : heroStep.kind === 'test'
+                  ? '参加阶段测验'
+                  : progress.completed.length
+                    ? '继续我的学习'
+                    : '开始第一节课'}
               <ArrowRight size={16} />
             </button>
             <div className="hero-caption">
               <span className="tiny-badge">
                 <Music2 size={10} />
               </span>
-              {nextCourse.tag} · {next.title}
+              {heroStep
+                ? `${stageLabel(heroStep.stage)} · ${heroLesson ? heroLesson.title : '阶段测验'}`
+                : '已上线的阶段都完成了，新课程编写中'}
             </div>
           </div>
           <div className="hero-visual">
@@ -346,7 +313,7 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
           </div>
           <div className="daily-tasks">
             {tasks.map(task => (
-              <button key={task.path} onClick={() => go(task.path)}>
+              <button key={task.title} onClick={() => go(task.path)}>
                 <span className={`task-check ${task.done ? 'checked' : ''}`}>{task.done && <Check size={11} />}</span>
                 <span>
                   <strong>{task.title}</strong>
@@ -670,10 +637,10 @@ function CoursesPage({
         <CircleHelp size={20} />
         <div>
           <strong>不知道从哪里开始？</strong>
-          <p>先从“读懂音乐的语言”开始，再搭配一门你喜欢的乐器。每次学一点，再亲手试一试。</p>
+          <p>按“音乐素养主线 + 一件乐器”的学习路线走：从 L0 启蒙开始，学完一个阶段、通过测验再往上。</p>
         </div>
-        <button className="text-button" onClick={() => go('/lesson/theory-1')}>
-          开始乐理基础
+        <button className="text-button" onClick={() => go('/path')}>
+          查看学习路线
           <ArrowRight size={15} />
         </button>
       </div>
@@ -782,22 +749,7 @@ function ProgressPage({ go }: { go: Go }) {
     try {
       if (file.size > 1024 * 1024) throw new Error('请选择小于 1 MB 的学习记录文件。');
       const imported = validateProgress(JSON.parse(await file.text()));
-      update(current => {
-        const merged: Progress = {
-          ...current,
-          completed: [...new Set([...current.completed, ...imported.completed])].filter(id => !!findLesson(id)),
-          days: { ...current.days },
-        };
-        for (const [date, day] of Object.entries(imported.days)) {
-          const old = current.days[date] ?? { seconds: 0, lessons: 0, exercises: 0 };
-          merged.days[date] = {
-            seconds: Math.max(day.seconds, old.seconds),
-            lessons: Math.max(day.lessons, old.lessons),
-            exercises: Math.max(day.exercises, old.exercises),
-          };
-        }
-        return merged;
-      });
+      update(current => mergeProgress(current, imported, id => !!findLesson(id)));
       notify('备份已合并，现有记录已保留。');
     } catch (error) {
       notify(error instanceof Error ? error.message : '无法读取这份记录，请选择音序导出的 JSON 文件。');
@@ -938,6 +890,7 @@ function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
   const course = lessonCourse(lesson.id)!;
   const index = course.lessons.indexOf(lesson);
   const correct = answer === lesson.quiz.answer;
+  const place = lessonPlace(lesson.id);
   useStudyClock(true);
   function finish() {
     complete(lesson.id);
@@ -977,7 +930,14 @@ function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
               <Clock3 size={14} />
               建议 {lesson.minutes} 分钟
             </span>
-            <span>{progress.completed.includes(lesson.id) ? '已完成 · 复习中' : '零基础入门'}</span>
+            {place && (
+              <span>
+                {findLine(place.line)!.name} · {stageLabel(place.stage)}
+              </span>
+            )}
+            <span>
+              {progress.completed.includes(lesson.id) ? '已完成 · 复习中' : place ? '学习路线课程' : '零基础入门'}
+            </span>
           </div>
           <p className="lesson-intro">{lesson.intro}</p>
           {instrumentImages[course.id] && <InstrumentFigure track={course.id} />}
@@ -1298,6 +1258,8 @@ function Shell() {
             </div>
             {activePage === 'overview' ? (
               <Overview go={go} onSettings={() => setSettings(true)} />
+            ) : activePage === 'path' ? (
+              <PathPage go={go} route={route} />
             ) : activePage === 'courses' ? (
               <CoursesPage go={go} query={query} setQuery={setQuery} course={course} />
             ) : activePage === 'traditional' ? (

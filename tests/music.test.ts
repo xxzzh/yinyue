@@ -164,7 +164,7 @@ test('backup import rejects malformed, unsupported and non-finite data', () => {
   for (const value of [
     null,
     {},
-    { ...freshProgress(), version: 2 },
+    { ...freshProgress(), version: 3 },
     { ...freshProgress(), days: { invalid: { seconds: 0, lessons: 0, exercises: 0 } } },
     { ...freshProgress(), days: { '2026-11-02': { seconds: Infinity, lessons: 0, exercises: 0 } } },
     { ...freshProgress(), days: [] },

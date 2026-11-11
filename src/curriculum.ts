@@ -1,0 +1,508 @@
+// Graded learning path (docs/curriculum-outline.md). Units reference existing lessons by their stable
+// `lesson.id`; titles that are planned but not yet written are kept as `plan` items so the route can show
+// the whole ladder honestly. Lesson content itself stays in data.ts and the course modules.
+import { findLesson } from './data.ts';
+import type { Progress } from './progress.ts';
+
+export type Stage = 0 | 1 | 2 | 3 | 4 | 5;
+export type Skill = 'rh' | 'nt' | 'th' | 'ea' | 'pf' | 'cr' | 'ls';
+export type LineId = 'core' | 'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi';
+export type UnitItem = { lesson: string } | { plan: string };
+
+export interface StageInfo {
+  stage: Stage;
+  name: string;
+  title: string;
+  goal: string;
+  level: string;
+  duration: string;
+}
+export interface Unit {
+  id: string;
+  line: LineId;
+  stage: Stage;
+  skill: Skill;
+  title: string;
+  items: UnitItem[];
+  /** Planned lessons that do not have a working title yet (instrument lines). */
+  extraPlanned?: number;
+}
+export interface LineInfo {
+  id: LineId;
+  name: string;
+  english: string;
+  description: string;
+}
+export interface InstrumentStagePlan {
+  technique: string;
+  repertoire: string;
+}
+export interface Question {
+  id: string;
+  skill: Skill;
+  prompt: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+}
+export interface StageTest {
+  id: string;
+  line: LineId;
+  stage: Stage;
+  title: string;
+  questions: Question[];
+}
+
+export const STAGES: Stage[] = [0, 1, 2, 3, 4, 5];
+export const PASS_RATE = 0.8;
+
+export const stages: StageInfo[] = [
+  {
+    stage: 0,
+    name: '启蒙',
+    title: '打开耳朵',
+    goal: '跟着音乐稳定拍手；分辨高低、长短、强弱；跟唱 do re mi sol la；在键盘上找到音名。',
+    level: '零基础',
+    duration: '2–4 周',
+  },
+  {
+    stage: 1,
+    name: '入门',
+    title: '读懂与发声',
+    goal: '读简谱和高音谱表的简单旋律；理解 C、G、F 大调与 2/4、3/4、4/4；听辨大小三和弦；在所选乐器上弹或唱出一首短曲。',
+    level: '考级前',
+    duration: '2–3 个月',
+  },
+  {
+    stage: 2,
+    name: '初级',
+    title: '稳定演奏',
+    goal: '读大谱表；调号到两个升降号；理解小调、三和弦转位与 I–IV–V；做 2 小节节奏和旋律听写；给旋律配简单和弦。',
+    level: '约音协 1–3 级 / ABRSM 1–2',
+    duration: '6–12 个月',
+  },
+  {
+    stage: 3,
+    name: '中级',
+    title: '理解和声',
+    goal: '掌握全部调号与五度圈、七和弦、终止式、近关系转调；听辨和弦进行；4 小节旋律听写；用五声或布鲁斯音阶即兴。',
+    level: '约音协 4–6 级 / ABRSM 3–5',
+    duration: '1–2 年',
+  },
+  {
+    stage: 4,
+    name: '高级',
+    title: '风格与表现',
+    goal: '写四部和声；理解副属、借用、增六和弦与远关系转调；分析奏鸣曲式；按风格演奏；编配小乐队。',
+    level: '约音协 7–10 级 / ABRSM 6–8',
+    duration: '2–3 年',
+  },
+  {
+    stage: 5,
+    name: '专业',
+    title: '个人语言',
+    goal: '写对位与赋格；了解 20 世纪技法与配器；策划独奏会；完成并发布原创作品；能把会的教给别人。',
+    level: '演奏文凭 / 音乐院校本科核心课程',
+    duration: '长期',
+  },
+];
+
+export const skillNames: Record<Skill, string> = {
+  rh: '节奏',
+  nt: '读谱',
+  th: '乐理与和声',
+  ea: '练耳与视唱',
+  pf: '演奏',
+  cr: '创作与即兴',
+  ls: '赏析与文化',
+};
+
+export const lines: LineInfo[] = [
+  {
+    id: 'core',
+    name: '音乐素养主线',
+    english: 'CORE MUSICIANSHIP',
+    description: '节奏、读谱、乐理、练耳视唱、创作与赏析。所有人共用的主线，决定你能走多远。',
+  },
+  {
+    id: 'piano',
+    name: '钢琴',
+    english: 'PIANO',
+    description: '从键盘地图到独奏会曲目。屏幕键盘和 MIDI 键盘可以核对音高。',
+  },
+  { id: 'guitar', name: '吉他', english: 'GUITAR', description: '从六根空弦、开放和弦到指弹编曲与即兴。' },
+  {
+    id: 'voice',
+    name: '声乐',
+    english: 'VOICE',
+    description: '不需要买乐器。呼吸、发声、咬字，再到风格演唱。疼痛或嘶哑时立即停止。',
+  },
+  {
+    id: 'guzheng',
+    name: '古筝',
+    english: 'GUZHENG',
+    description: '从二十一弦与 D 调定弦，到摇指、按滑揉颤与各地流派。',
+  },
+  {
+    id: 'koudi',
+    name: '口笛',
+    english: 'KOUDI',
+    description: '小巧明亮的中国吹管乐器。先确定两孔或五孔形制，再练口风、吐音与装饰。',
+  },
+];
+export const instrumentLines = lines.filter(line => line.id !== 'core');
+export const findLine = (id: string) => lines.find(line => line.id === id);
+
+/** Planned lessons per stage for every instrument line (template in the outline, section 5.1). */
+export const instrumentStageSize: Record<Stage, number> = { 0: 4, 1: 10, 2: 16, 3: 20, 4: 20, 5: 15 };
+
+const l = (lesson: string): UnitItem => ({ lesson });
+const p = (plan: string): UnitItem => ({ plan });
+const unit = (line: LineId, stage: Stage, skill: Skill, items: UnitItem[], title = skillNames[skill]): Unit => ({
+  id: `${line}-l${stage}-${skill}`,
+  line,
+  stage,
+  skill,
+  title,
+  items,
+});
+
+const coreUnits: Unit[] = [
+  // L0 启蒙 · 13
+  unit('core', 0, 'rh', [p('找到音乐里的拍子'), p('快与慢：认识 BPM'), l('ear-3'), p('二拍子与三拍子的强弱')]),
+  unit('core', 0, 'nt', [l('theory-1')]),
+  unit('core', 0, 'ea', [
+    l('ear-1'),
+    p('长与短、强与弱'),
+    p('回声游戏：听一句、唱一句'),
+    l('ear-4'),
+    p('五个音的歌：do re mi sol la'),
+  ]),
+  unit('core', 0, 'ls', [p('音乐由什么组成：旋律、节奏、音色'), p('认识乐器家族')]),
+  unit('core', 0, 'pf', [p('怎样练习：每天一点、录下来、慢下来')], '练习方法'),
+  // L1 入门 · 30
+  unit('core', 1, 'rh', [
+    l('theory-2'),
+    p('八分音符：一拍分两半'),
+    p('休止符：音乐里的安静'),
+    p('拍号与小节：2/4、3/4、4/4'),
+    p('附点二分音符与延音线'),
+    p('弱起小节'),
+  ]),
+  unit('core', 1, 'nt', [
+    p('简谱①：数字与高低音点'),
+    p('简谱②：减时线、增时线与附点'),
+    p('简谱③：1=C、休止符 0'),
+    p('五线谱：线、间与高音谱号'),
+    p('加线与中央 C'),
+    p('升号、降号、还原号'),
+    p('速度与力度记号'),
+    p('反复记号'),
+    p('简谱与五线谱互译'),
+  ]),
+  unit('core', 1, 'th', [
+    p('全音与半音'),
+    l('theory-3'),
+    p('G 大调：第一个升号'),
+    p('F 大调：第一个降号'),
+    p('数音程的度数'),
+    l('theory-4'),
+    p('主和弦与属和弦：回家与出发'),
+    p('唱名的两种用法：首调与固定调'),
+  ]),
+  unit('core', 1, 'ea', [
+    l('ear-2'),
+    p('明亮与暗淡：大三和弦和小三和弦'),
+    p('级进与跳进'),
+    p('视唱：C 大调级进旋律（简谱）'),
+    p('听后拍：节奏模仿'),
+  ]),
+  unit('core', 1, 'cr', [p('用五个音写一句旋律')]),
+  unit('core', 1, 'ls', [p('民歌里的重复与变化')]),
+  // L2 初级 · 40
+  unit('core', 2, 'rh', [
+    p('附点四分音符'),
+    p('十六分音符'),
+    p('附点八分加十六分'),
+    p('入门切分节奏'),
+    p('6/8 拍：一拍里有三份'),
+    p('节奏视读：每日 4 小节'),
+  ]),
+  unit('core', 2, 'nt', [
+    p('低音谱号'),
+    p('大谱表：两只手的谱'),
+    p('调号到两个升降号'),
+    p('连线、延音线、断奏与重音'),
+    p('简谱里的 1=G、1=F 与转调'),
+    p('视奏方法：先看什么'),
+  ]),
+  unit('core', 2, 'th', [
+    p('自然小调'),
+    p('和声小调与旋律小调'),
+    p('关系大小调与同主音大小调'),
+    p('音程性质：大、小、纯'),
+    p('增音程与减音程'),
+    p('音程转位'),
+    p('四种三和弦：大、小、增、减'),
+    p('三和弦转位'),
+    p('顺阶三和弦与级数记号'),
+    p('主、下属、属：和声功能'),
+    p('五声调式：宫商角徵羽'),
+    p('乐句、乐段与终止感'),
+  ]),
+  unit('core', 2, 'ea', [
+    p('自然音程：上行与下行'),
+    p('和声音程：两音同时响'),
+    p('四种三和弦性质听辨'),
+    p('大调还是小调'),
+    p('节奏听写：2 小节'),
+    p('旋律听写：2 小节级进'),
+    p('视唱：大调中的主和弦跳进'),
+    p('视唱：小调旋律'),
+    p('五声调式首调视唱'),
+    p('听辨完全终止与半终止'),
+  ]),
+  unit('core', 2, 'cr', [
+    p('用 I–IV–V 给旋律配和弦'),
+    p('伴奏型：柱式与分解'),
+    p('写一个 8 小节乐段'),
+    p('五声音阶即兴'),
+  ]),
+  unit('core', 2, 'ls', [p('巴洛克与古典：听懂时代的声音'), p('江南丝竹与广东音乐：民族器乐合奏')]),
+  // L3 中级 · 40
+  unit('core', 3, 'rh', [
+    p('三连音与二连音'),
+    p('复拍子：6/8、9/8、12/8'),
+    p('混合拍子：5/4、7/8'),
+    p('摇摆（swing）与律动'),
+    p('板眼：一板一眼与一板三眼'),
+    p('散板：没有固定拍子的音乐'),
+  ]),
+  unit('core', 3, 'nt', [
+    p('全部调号与五度圈'),
+    p('装饰音：倚音、波音、颤音、回音'),
+    p('移调乐器与移调'),
+    p('和弦符号与六线谱'),
+    p('中音谱号与总谱初读'),
+  ]),
+  unit('core', 3, 'th', [
+    p('属七和弦与解决'),
+    p('五种七和弦'),
+    p('七和弦转位'),
+    p('顺阶七和弦'),
+    p('终止式全览：正格、变格、半终止、阻碍终止'),
+    p('和弦外音：经过音、辅助音、倚音、挂留'),
+    p('转调到近关系调'),
+    p('副属和弦入门：V/V'),
+    p('流行和弦进行：I–V–vi–IV 与 ii–V–I'),
+    p('一段、二段与三段曲式'),
+    p('中国五声性调式：六声与七声'),
+    p('布鲁斯音阶与 12 小节布鲁斯'),
+  ]),
+  unit('core', 3, 'ea', [
+    p('复合音程与音程综合听辨'),
+    p('七和弦性质听辨'),
+    p('三和弦转位听辨'),
+    p('和弦进行听辨：I、IV、V、vi'),
+    p('终止式听辨'),
+    p('旋律听写：4 小节含跳进'),
+    p('节奏听写：切分与三连音'),
+    p('视唱：变化音与临时记号'),
+    p('两声部听辨'),
+  ]),
+  unit('core', 3, 'cr', [
+    p('布鲁斯即兴'),
+    p('给旋律配和声（加入 ii 与 vi）'),
+    p('简单编曲：旋律加伴奏'),
+    p('写一首 16 小节小品'),
+    p('数字音频工作站（DAW）入门'),
+  ]),
+  unit('core', 3, 'ls', [p('浪漫主义：情感与民族风格'), p('中国近现代音乐的发展'), p('爵士与流行音乐简史')]),
+  // L4 高级 · 35
+  unit('core', 4, 'rh', [p('复节奏：2 对 3、3 对 4'), p('变拍子与非对称律动')]),
+  unit('core', 4, 'nt', [p('读总谱：从室内乐到乐队'), p('风格与演奏惯例：巴洛克装饰与数字低音记谱')]),
+  unit('core', 4, 'th', [
+    p('四部和声：声部排列'),
+    p('声部进行规则与平行五八度'),
+    p('数字低音（通奏低音）'),
+    p('副属和弦系统'),
+    p('借用和弦与调式交替'),
+    p('那不勒斯六和弦'),
+    p('增六和弦'),
+    p('远关系转调：共同和弦与等音'),
+    p('七种教会调式与调式和声'),
+    p('爵士和声：扩展和弦与张力音'),
+    p('三全音替代与重配和声'),
+    p('变奏曲、回旋曲与奏鸣曲式'),
+  ]),
+  unit('core', 4, 'ea', [
+    p('低音线与级数听写'),
+    p('转调听辨'),
+    p('调式听辨'),
+    p('旋律听写：8 小节含变化音'),
+    p('两声部听写'),
+    p('视唱：中音谱号与低音谱号'),
+    p('听辨副属和弦与借用和弦'),
+  ]),
+  unit('core', 4, 'cr', [
+    p('动机发展：从一个想法写成一首曲子'),
+    p('歌曲创作：词与曲'),
+    p('为小乐队编配'),
+    p('弦乐四重奏写作入门'),
+    p('爵士即兴：ii–V–I 与引导音'),
+    p('混音基础'),
+  ]),
+  unit('core', 4, 'ls', [
+    p('二十世纪音乐：新的声音'),
+    p('中国戏曲音乐：板式与唱腔'),
+    p('中国当代作曲概览'),
+    p('世界音乐：拉格、木卡姆与非洲节奏'),
+    p('比较同一首曲子的不同演绎'),
+    p('写一段曲目说明'),
+  ]),
+  // L5 专业 · 30
+  unit('core', 5, 'th', [
+    p('类别对位：一至五类'),
+    p('二部创意曲写作'),
+    p('赋格的结构与写作'),
+    p('半音化和声'),
+    p('完整作品的和声分析'),
+    p('申克分析入门'),
+    p('全音阶、八声音阶与音级集合'),
+    p('十二音技法'),
+    p('复调性、微分音与频谱音乐概览'),
+    p('极简主义与当代技法'),
+  ]),
+  unit('core', 5, 'ea', [
+    p('无调性音程与音组听辨'),
+    p('复杂和声听写'),
+    p('总谱听读'),
+    p('无调性视唱'),
+    p('内心听觉：不出声地读谱'),
+  ]),
+  unit('core', 5, 'cr', [
+    p('配器法：各乐器组的写法'),
+    p('为管弦乐队配器'),
+    p('艺术歌曲写作'),
+    p('室内乐作品创作'),
+    p('影视与游戏配乐基础'),
+    p('自由即兴'),
+    p('完成并发布一部作品'),
+  ]),
+  unit(
+    'core',
+    5,
+    'pf',
+    [
+      p('独奏会曲目策划'),
+      p('舞台表现与演出焦虑'),
+      p('练习方法论：刻意练习与录音复盘'),
+      p('教学法：把会的教给别人'),
+      p('民族音乐学：怎样做田野记录'),
+      p('历史演奏实践'),
+      p('写乐评与作品分析'),
+      p('建立个人音乐语言'),
+    ],
+    '演奏、教学与研究',
+  ),
+];
+
+const instrumentPublished: Record<Exclude<LineId, 'core'>, Partial<Record<Stage, string[]>>> = {
+  piano: { 0: ['piano-1'], 1: ['piano-2', 'piano-3', 'piano-4'] },
+  guitar: { 0: ['guitar-1'], 1: ['guitar-2', 'guitar-3', 'guitar-4'] },
+  voice: {},
+  guzheng: { 0: ['guzheng-1'], 1: ['guzheng-2', 'guzheng-3', 'guzheng-4'] },
+  koudi: { 0: ['koudi-1', 'koudi-2', 'koudi-3'] },
+};
+
+const instrumentUnits: Unit[] = instrumentLines.flatMap(line =>
+  STAGES.map(stage => {
+    const id = line.id as Exclude<LineId, 'core'>;
+    const published = instrumentPublished[id][stage] ?? [];
+    return {
+      ...unit(id, stage, 'pf', published.map(l), `${line.name} ${stageLabel(stage)}`),
+      extraPlanned: instrumentStageSize[stage] - published.length,
+    };
+  }),
+);
+
+export const units: Unit[] = [...coreUnits, ...instrumentUnits];
+
+export function stageLabel(stage: Stage) {
+  return `L${stage} ${stages[stage].name}`;
+}
+export const unitsOf = (line: LineId, stage: Stage) => units.filter(item => item.line === line && item.stage === stage);
+export const publishedLessons = (line: LineId, stage: Stage) =>
+  unitsOf(line, stage).flatMap(item => item.items.flatMap(entry => ('lesson' in entry ? [entry.lesson] : [])));
+export function plannedSize(line: LineId, stage: Stage) {
+  return unitsOf(line, stage).reduce((sum, item) => sum + item.items.length + (item.extraPlanned ?? 0), 0);
+}
+/** Where a lesson sits on the graded path, if it is part of it. */
+export function lessonPlace(lessonId: string): { line: LineId; stage: Stage } | undefined {
+  const found = units.find(item => item.items.some(entry => 'lesson' in entry && entry.lesson === lessonId));
+  return found && { line: found.line, stage: found.stage };
+}
+
+/** Which stages have a test. The questions live in curriculum-content.ts, loaded with the path page. */
+export const stageTestIndex: { id: string; line: LineId; stage: Stage }[] = [
+  { id: 'core-l0', line: 'core', stage: 0 },
+  { id: 'core-l1', line: 'core', stage: 1 },
+];
+export const testFor = (line: LineId, stage: Stage) =>
+  stageTestIndex.find(test => test.line === line && test.stage === stage);
+
+export type StageStatus = 'passed' | 'placed' | 'open' | 'locked';
+
+/** A stage counts as passed by its test, by placement (main line only) or, for instrument lines without
+ * a performance check yet, by finishing every lesson already published in it. */
+export function stagePassed(progress: Progress, line: LineId, stage: Stage): boolean {
+  if (progress.passedTests.includes(`${line}-l${stage}`)) return true;
+  if (line === 'core') return (progress.placement?.stage ?? 0) > stage;
+  const published = publishedLessons(line, stage);
+  return published.length > 0 && published.every(id => progress.completed.includes(id));
+}
+export function stageStatus(progress: Progress, line: LineId, stage: Stage): StageStatus {
+  if (line === 'core' && !progress.passedTests.includes(`core-l${stage}`) && (progress.placement?.stage ?? 0) > stage)
+    return 'placed';
+  if (stagePassed(progress, line, stage)) return 'passed';
+  return stageUnlocked(progress, line, stage) ? 'open' : 'locked';
+}
+export function stageUnlocked(progress: Progress, line: LineId, stage: Stage): boolean {
+  if (stage === 0) return true;
+  const previous = (stage - 1) as Stage;
+  if (line === 'core') return stagePassed(progress, 'core', previous);
+  return stagePassed(progress, line, previous) && stagePassed(progress, 'core', previous);
+}
+/** Explains what is still needed to open a stage. */
+export function unlockHint(line: LineId, stage: Stage) {
+  if (stage === 0) return '';
+  const previous = stageLabel((stage - 1) as Stage);
+  if (line === 'core') return `通过 ${previous} 阶段测验或定级测验后解锁。`;
+  return `学完${findLine(line)!.name} ${previous}，并通过主线 ${previous} 后解锁。`;
+}
+
+export type NextStep =
+  | { kind: 'lesson'; line: LineId; stage: Stage; lesson: string }
+  | { kind: 'test'; line: LineId; stage: Stage; test: string }
+  | { kind: 'waiting'; line: LineId; stage: Stage };
+
+/** The next thing to do on a line: first unfinished lesson of the lowest open stage, then its test. */
+export function nextStep(progress: Progress, line: LineId): NextStep | undefined {
+  for (const stage of STAGES) {
+    if (stagePassed(progress, line, stage)) continue;
+    if (!stageUnlocked(progress, line, stage)) return undefined;
+    const lesson = publishedLessons(line, stage).find(id => !progress.completed.includes(id) && findLesson(id));
+    if (lesson) return { kind: 'lesson', line, stage, lesson };
+    const test = testFor(line, stage);
+    if (test) return { kind: 'test', line, stage, test: test.id };
+    return { kind: 'waiting', line, stage };
+  }
+  return undefined;
+}
+export function stepPath(step: NextStep) {
+  return step.kind === 'lesson'
+    ? `/lesson/${step.lesson}`
+    : step.kind === 'test'
+      ? `/path/test/${step.test}`
+      : `/path/${step.line}`;
+}
