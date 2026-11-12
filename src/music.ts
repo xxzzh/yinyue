@@ -19,12 +19,33 @@ export const keyboardKeys = [
   { note: 'C5', key: 'k' },
 ];
 export const guitarStrings = ['E2', 'A2', 'D3', 'G3', 'B3', 'E4'];
+// Frets from the 6th string (low E) to the 1st; -1 = not played.
 export const guitarChords: Record<string, number[]> = {
   C: [-1, 3, 2, 0, 1, 0],
   G: [3, 2, 0, 0, 0, 3],
   Am: [-1, 0, 2, 2, 1, 0],
   D: [-1, -1, 0, 2, 3, 2],
   Em: [0, 2, 2, 0, 0, 0],
+  E: [0, 2, 2, 1, 0, 0],
+  A: [-1, 0, 2, 2, 2, 0],
+  Dm: [-1, -1, 0, 2, 3, 1],
+  G7: [3, 2, 0, 0, 0, 1],
+  C7: [-1, 3, 2, 3, 1, 0],
+  D7: [-1, -1, 0, 2, 1, 2],
+  E7: [0, 2, 0, 1, 0, 0],
+  A7: [-1, 0, 2, 0, 2, 0],
+  F: [-1, -1, 3, 2, 1, 1],
+  'F-barre': [1, 3, 3, 2, 1, 1],
+  Bm: [-1, 2, 4, 4, 3, 2],
+};
+/** The default chord set of the guitar tool. */
+export const basicGuitarChords = ['C', 'G', 'Am', 'D', 'Em'];
+export const chordLabels: Record<string, string> = { F: 'F（小横按）', 'F-barre': 'F（大横按）' };
+/** Index finger laid across several strings: fret and string indexes (0 = 6th string). */
+export const chordBarres: Record<string, { fret: number; from: number; to: number }> = {
+  F: { fret: 1, from: 4, to: 5 },
+  'F-barre': { fret: 1, from: 0, to: 5 },
+  Bm: { fret: 2, from: 1, to: 5 },
 };
 export function fretNote(string: number, fret: number) {
   return Note.fromMidi((Note.midi(guitarStrings[string]) ?? 40) + fret);

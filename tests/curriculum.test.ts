@@ -44,7 +44,7 @@ test('the graded path matches the outline and references every mapped lesson onc
   for (const course of ['theory', 'ear', 'piano', 'guitar', 'guzheng'])
     for (const lesson of courses.find(item => item.id === course)!.lessons)
       assert.ok(lessonPlace(lesson.id), lesson.id);
-  assert.deepEqual(publishedLessons('koudi', 0), ['koudi-1', 'koudi-2', 'koudi-3']);
+  assert.deepEqual(publishedLessons('koudi', 0), ['koudi-1', 'koudi-2', 'koudi-3', 'koudi-l0-04']);
   assert.deepEqual(publishedLessons('core', 0), [
     'rh0-01',
     'rh0-02',
@@ -104,10 +104,15 @@ test('stages unlock by test, placement or finished instrument lessons', () => {
 
   // An instrument's stage 1 needs both its own stage 0 and the main line's stage 0.
   assert.equal(stageUnlocked(progress, 'piano', 1), false);
-  progress = completeLesson(progress, 'piano-1');
+  progress = finish(progress, publishedLessons('piano', 0));
   assert.equal(stageUnlocked(progress, 'piano', 1), true);
-  assert.equal(stageUnlocked(completeLesson(freshProgress(), 'piano-1'), 'piano', 1), false);
-  assert.equal(nextStep(freshProgress(), 'voice')?.kind, 'waiting');
+  assert.equal(stageUnlocked(finish(freshProgress(), publishedLessons('piano', 0)), 'piano', 1), false);
+  assert.deepEqual(nextStep(freshProgress(), 'voice'), {
+    kind: 'lesson',
+    line: 'voice',
+    stage: 0,
+    lesson: 'voice-l0-01',
+  });
 
   const placed = recordPlacement(freshProgress(), 2, '2026-11-12');
   assert.equal(stageStatus(placed, 'core', 0), 'placed');
@@ -167,7 +172,9 @@ test('generated catalog quizzes vary per instrument and do not reveal the subjec
   const generated = courses
     .filter(course => course.level)
     .flatMap(course =>
-      course.lessons.filter(lesson => lesson.widget === 'discovery').map(lesson => ({ course, lesson })),
+      course.lessons
+        .filter(lesson => lesson.widget === 'discovery' && /^[a-z]+-[123]$/.test(lesson.id))
+        .map(lesson => ({ course, lesson })),
     );
   assert.ok(generated.length > 500);
   const positions = [0, 0, 0, 0];

@@ -17,6 +17,7 @@ import { useLearning, useStudyClock } from './learning';
 import { passStageTest, recordPlacement } from './progress';
 import { stableHash } from './catalog-quiz';
 import { findStageTest, instrumentPlans, passMark, stageTests } from './curriculum-content';
+import { instrumentLessonPlans } from './instrument-lesson-plans';
 import {
   findLine,
   lines,
@@ -34,6 +35,13 @@ import {
 import type { LineId, Question, Stage, StageStatus, StageTest } from './curriculum';
 
 type Go = (path: string) => void;
+
+/** Working titles of an instrument stage's unwritten lessons; a count stands in for any that lack a title. */
+function plannedTitles(line: LineId, stage: Stage, count = 0) {
+  if (!count || line === 'core') return [];
+  const titles = (instrumentLessonPlans[line]?.[stage] ?? []).slice(0, count);
+  return titles.length < count ? [...titles, `另有 ${count - titles.length} 节课程规划中`] : titles;
+}
 
 const statusText: Record<StageStatus, string> = {
   passed: '已通过',
@@ -205,18 +213,21 @@ function StageCard({ line, stage, current, go }: { line: LineId; stage: Stage; c
                   </button>
                 );
               })}
-              {unit.extraPlanned ? (
-                <div className="planned-row">
-                  <span className="lesson-number">+</span>
-                  <span className="lesson-title">
-                    <strong>另有 {unit.extraPlanned} 节课程规划中</strong>
-                  </span>
-                  <span className="planned-tag">
-                    <PenLine size={11} />
-                    编写中
-                  </span>
-                </div>
-              ) : null}
+              {plannedTitles(unit.line, unit.stage, unit.extraPlanned).map(title => {
+                number++;
+                return (
+                  <div className="planned-row" key={title}>
+                    <span className="lesson-number">{String(number).padStart(2, '0')}</span>
+                    <span className="lesson-title">
+                      <strong>{title}</strong>
+                    </span>
+                    <span className="planned-tag">
+                      <PenLine size={11} />
+                      编写中
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}

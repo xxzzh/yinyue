@@ -92,11 +92,11 @@ test('catalog distinguishes ambiguous names and unconventional sound production'
 });
 
 test('expansion preserves original guzheng and erhu lessons and backup progress', () => {
+  // The original guzheng and erhu lessons keep their IDs; the guzheng line adds more around them.
   for (const id of ['guzheng', 'erhu']) {
-    assert.deepEqual(
-      findCourse(id)!.lessons.map(lesson => lesson.id),
-      [1, 2, 3, 4].map(index => `${id}-${index}`),
-    );
+    const ids = findCourse(id)!.lessons.map(lesson => lesson.id);
+    assert.equal(ids[0], `${id}-1`);
+    for (const index of [1, 2, 3, 4]) assert.ok(ids.includes(`${id}-${index}`), `${id}-${index}`);
     assert.ok(findCourse(id)!.lessons.some(lesson => lesson.widget === 'instrument'));
   }
   const old = { ...freshProgress(), completed: ['theory-1', 'guzheng-2', 'erhu-1'], lastLesson: 'erhu-1' };

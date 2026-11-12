@@ -8,8 +8,8 @@ test('world expansion has distinct complete routes, image metadata and meaningfu
   assert.equal(new Set(worldCatalog.map(item => item.id)).size, 92);
   assert.equal(new Set(courses.map(course => course.id)).size, courses.length);
   assert.equal(new Set(allLessons.map(lesson => lesson.id)).size, allLessons.length);
-  assert.equal(courses.length, 202);
-  assert.equal(allLessons.length, 653);
+  assert.equal(courses.length, 203);
+  assert.equal(allLessons.length, 788);
   for (const item of worldCatalog) {
     const course = findCourse(item.id)!;
     assert.ok(course, item.id);
@@ -73,8 +73,8 @@ test('added Chinese names stay distinct from historical homophones and current r
   assert.equal(findCourse('zhu')?.tag, '筑');
   assert.equal(findCourse('yuscraper')?.tag, '敔');
   assert.equal(findCourse('yu')?.tag, '竽');
-  assert.deepEqual(
-    findCourse('piano')!.lessons.map(lesson => lesson.id),
-    ['piano-1', 'piano-2', 'piano-3', 'piano-4'],
-  );
+  // The original piano lessons keep their IDs; the graded path adds more around them.
+  const piano = findCourse('piano')!.lessons.map(lesson => lesson.id);
+  assert.equal(piano[0], 'piano-1');
+  for (const id of ['piano-1', 'piano-2', 'piano-3', 'piano-4']) assert.ok(piano.includes(id), id);
 });

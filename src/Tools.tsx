@@ -5,6 +5,9 @@ import {
   cMajor,
   chordVoicing,
   earQuestion,
+  basicGuitarChords,
+  chordBarres,
+  chordLabels,
   fretNote,
   guitarChords,
   guitarStrings,
@@ -41,6 +44,7 @@ export function ScorePreview({
           drawTitle: false,
           drawComposer: false,
           drawMeasureNumbers: false,
+          autoBeam: true,
         });
         display = osmd;
         await osmd.load(xml);
@@ -318,9 +322,10 @@ export function PianoTool({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function GuitarTool({ compact = false }: { compact?: boolean }) {
+export function GuitarTool({ compact = false, chords = basicGuitarChords }: { compact?: boolean; chords?: string[] }) {
   const { notify } = useLearning();
-  const [chord, setChord] = useState('Am');
+  const [chord, setChord] = useState(chords === basicGuitarChords ? 'Am' : chords[0]);
+  const barre = chordBarres[chord];
   const [active, setActive] = useState('');
   const [started, setStarted] = useState(false);
   useStudyClock(started);
@@ -380,9 +385,9 @@ export function GuitarTool({ compact = false }: { compact?: boolean }) {
         <div>
           <h3>从一个开放和弦开始</h3>
           <div className="chord-options">
-            {Object.keys(guitarChords).map(name => (
+            {chords.map(name => (
               <button key={name} className={name === chord ? 'selected' : ''} onClick={() => setChord(name)}>
-                {name}
+                {chordLabels[name] ?? name}
               </button>
             ))}
           </div>
@@ -399,10 +404,15 @@ export function GuitarTool({ compact = false }: { compact?: boolean }) {
             }}
           >
             <Volume2 size={16} />
-            听听 {chord} 和弦
+            听听 {chordLabels[chord] ?? chord} 和弦
           </button>
         </div>
-        <svg className="chord-diagram" viewBox="0 0 180 170" role="img" aria-label={`${chord} 和弦图`}>
+        <svg
+          className="chord-diagram"
+          viewBox="0 0 180 170"
+          role="img"
+          aria-label={`${chordLabels[chord] ?? chord} 和弦图`}
+        >
           {Array.from({ length: 5 }, (_, i) => (
             <line
               key={i}
@@ -414,6 +424,17 @@ export function GuitarTool({ compact = false }: { compact?: boolean }) {
               strokeWidth={i === 0 ? 4 : 1}
             />
           ))}
+          {barre && (
+            <rect
+              x={35 + barre.from * 22 - 9}
+              y={35 + (barre.fret - 0.5) * 29 - 7}
+              width={(barre.to - barre.from) * 22 + 18}
+              height="14"
+              rx="7"
+              fill="#486253"
+              opacity="0.55"
+            />
+          )}
           {shape.map((position, index) => (
             <g key={index}>
               <line x1={35 + index * 22} y1="35" x2={35 + index * 22} y2="151" stroke="#8f9b8d" />

@@ -18,7 +18,8 @@
 - `src/Path.tsx`：学习路线页、阶段测验与定级测验窗口（按需加载）。
 - `src/core-lessons.ts`：主线 L0、L1 的课程正文与题目，以及原有 8 节主线课的追加题目；乐理、视唱练耳两门课程按路线顺序排列这些课。
 - `src/jianpu.ts`：简谱文本格式的解析、播放事件与 MusicXML 转换，以及听辨示例的简短音序格式。均为纯函数，课程里的每段简谱都由测试检查小节拍数。
-- `src/LessonWidgets.tsx`：简谱卡片（播放高亮、慢速、五线谱对照）、听辨示例列表和题目试听按钮（按需加载）。
+- `src/piano-lessons.ts`、`src/guitar-lessons.ts`、`src/voice-lessons.ts`、`src/guzheng-lessons.ts`、`src/koudi-lessons.ts`：五条乐器线 L0–L2 的课程；`src/pitch.ts`：单音音高检测（YIN）与音名换算，纯函数，用合成音测试；`src/tab.ts`：六线谱文本格式的解析与播放事件（纯函数，测试检查每小节拍数）；`src/instrument-lesson-plans.ts`：各乐器线尚未编写课程的逐节工作标题（只随学习路线页加载）；`src/instrument-order.ts`：各乐器线每阶段已上线课程的 ID 顺序（只含 ID，供首屏的学习路线使用，`data.ts` 也按它排列乐器课程）。
+- `src/LessonWidgets.tsx`：简谱卡片（播放高亮、慢速、五线谱对照、左右手大谱表）、听辨示例列表、题目试听按钮、跟弹关卡（按音域加宽的键盘，屏幕与 MIDI 输入，逐音核对音高并计算节奏比例吻合度）与视奏练习、麦克风音准表、录音回放（按需加载；麦克风声音只在页面内处理，录音不上传）。视奏旋律由 `jianpu.ts` 的 `sightReading` 按种子生成，同一编号总是同一条旋律。
 - `src/catalog-quiz.ts`：中国与世界乐器认识课的测验生成：错误选项按乐器分别挑选、来自其他演奏类别、隐去乐器自身名称，解析说明每个错误选项对应的乐器。
 - `src/Dialog.tsx`：共用的原生模态窗口。
 - `src/CatalogPager.tsx`：各目录共用的分页器。

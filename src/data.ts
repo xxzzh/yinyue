@@ -4,6 +4,13 @@ import { traditionalCourses } from './traditional-courses.ts';
 import { worldCourses } from './world-courses.ts';
 import type { WorldTrack } from './world-catalog.ts';
 import { traditionalInstrument } from './traditional-catalog.ts';
+import { pianoLessons } from './piano-lessons.ts';
+import { guitarLessons } from './guitar-lessons.ts';
+import { voiceLessons } from './voice-lessons.ts';
+import { guzhengLessons } from './guzheng-lessons.ts';
+import { koudiLessons } from './koudi-lessons.ts';
+import { instrumentLessonOrder, lineLessons } from './instrument-order.ts';
+import type { SightOptions } from './jianpu.ts';
 import type { TraditionalTrack } from './traditional-catalog.ts';
 import { courseFamilies, courseMatches } from './course-meta.ts';
 
@@ -18,6 +25,7 @@ export type Track =
   | 'drums'
   | 'flute'
   | 'saxophone'
+  | 'voice'
   | TraditionalTrack
   | WorldTrack;
 export type Widget =
@@ -33,7 +41,12 @@ export type Widget =
   | 'drums'
   | 'discovery'
   | 'jianpu'
-  | 'listen';
+  | 'listen'
+  | 'play'
+  | 'sight'
+  | 'tab'
+  | 'pitch'
+  | 'record';
 export type CourseFamily = 'foundation' | 'keyboard' | 'plucked' | 'bowed' | 'wind' | 'percussion' | 'other';
 export interface QuizItem {
   question: string;
@@ -47,7 +60,47 @@ export interface QuizItem {
 export interface JianpuExample {
   title: string;
   score: string;
+  /** Left-hand part for a grand staff; bars must line up with `score`. */
+  left?: string;
+  clef?: 'treble' | 'bass';
+  /** Play octaves away from the written pitch: guitar music sounds an octave lower (-1). */
+  playOctave?: number;
+  instrument?: 'piano' | 'guitar' | 'wind';
   view?: 'jianpu' | 'staff' | 'both';
+  tempo?: number;
+  note?: string;
+}
+/** A melody to play along on the keyboard; pitches are checked note by note. */
+export interface PlayTarget {
+  title: string;
+  score: string;
+  tempo?: number;
+  note?: string;
+}
+/** Live pitch from the microphone; with targets, each note must be held in tune to move on. */
+export interface PitchTask {
+  title: string;
+  targets?: string[];
+  /** Accept the target in any octave (singing). */
+  anyOctave?: boolean;
+  /** Allowed deviation in cents (default 25). */
+  tolerance?: number;
+  /** Seconds to hold each target (default 1). */
+  hold?: number;
+  instrument?: 'piano' | 'guitar' | 'wind';
+  note?: string;
+}
+/** Record a take and play it back; nothing leaves the page. */
+export interface RecordTask {
+  title: string;
+  prompt: string;
+  seconds?: number;
+  reference?: ListenClip;
+}
+/** Guitar tablature (format in tab.ts) with playback. */
+export interface TabExample {
+  title: string;
+  score: string;
   tempo?: number;
   note?: string;
 }
@@ -57,7 +110,7 @@ export interface ListenClip {
   seq: string;
   tempo?: number;
   click?: boolean;
-  instrument?: 'piano' | 'guitar';
+  instrument?: 'piano' | 'guitar' | 'wind';
   note?: string;
 }
 export interface Lesson {
@@ -78,6 +131,13 @@ export interface Lesson {
   meter?: number;
   /** Interval ids (music.ts) offered by the interval widget. */
   intervals?: string[];
+  play?: PlayTarget[];
+  sight?: SightOptions;
+  tab?: TabExample[];
+  pitch?: PitchTask;
+  record?: RecordTask;
+  /** Chord names (music.ts) shown by the guitar widget. */
+  chords?: string[];
 }
 export interface Course {
   id: Track;
@@ -527,6 +587,17 @@ export const courses: Course[] = [
       },
     ],
   },
+  {
+    id: 'voice',
+    family: 'foundation',
+    title: '让声音自由歌唱',
+    english: 'VOICE & SINGING',
+    description: '从呼吸、哼鸣和咬字开始，用健康的方法唱准、唱稳、唱出风格。',
+    tag: '声乐',
+    color: 'peach',
+    aliases: ['唱歌', '歌唱', '声乐入门', 'Singing'],
+    lessons: [],
+  },
   ...instrumentCourses,
   ...traditionalCourses,
   ...worldCourses,
@@ -555,6 +626,19 @@ for (const [id, order] of [
 ] as const)
   courses.find(course => course.id === id)!.lessons = order.map(lessonId => coreById.get(lessonId)!);
 for (const [id, extra] of Object.entries(coreLessonExtras)) Object.assign(coreById.get(id)!, extra);
+
+// Instrument courses with graded-path lessons list them in path order (instrument-order.ts).
+for (const [id, added] of [
+  ['piano', pianoLessons],
+  ['guitar', guitarLessons],
+  ['voice', voiceLessons],
+  ['guzheng', guzhengLessons],
+  ['koudi', koudiLessons],
+] as const) {
+  const course = courses.find(item => item.id === id)!;
+  const byId = new Map([...course.lessons, ...added].map(lesson => [lesson.id, lesson]));
+  course.lessons = lineLessons(instrumentLessonOrder[id]).map(lessonId => byId.get(lessonId)!);
+}
 
 export { courseFamilies };
 export function filterCourses(query: string, family = 'all') {

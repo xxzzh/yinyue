@@ -13,7 +13,7 @@ test('the generated lesson index matches the lesson content', () => {
     courses.map(course => toCourseMeta(course, traditionalInstrument(course.id)?.tradition)),
     'The lesson index is out of date: run `npm run index` and commit src/lesson-index.ts',
   );
-  assert.equal(allLessons.length, 653);
+  assert.equal(allLessons.length, 788);
   assert.equal(findLesson('rh1-05')?.title, '附点二分音符与延音线');
   assert.equal(lessonCourse('rh1-05')?.id, 'ear');
   // The index keeps what lists need and leaves lesson bodies to the full content.

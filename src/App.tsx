@@ -18,6 +18,7 @@ import {
   Headphones,
   LayoutDashboard,
   Menu,
+  Mic,
   Music2,
   Piano,
   Play,
@@ -75,6 +76,11 @@ const InstrumentFigure = lazy(() => import('./InstrumentFigure').then(m => ({ de
 const JianpuWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.JianpuWidget })));
 const ListenWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.ListenWidget })));
 const QuestionSound = lazy(() => import('./LessonWidgets').then(m => ({ default: m.QuestionSound })));
+const PlayCheck = lazy(() => import('./LessonWidgets').then(m => ({ default: m.PlayCheck })));
+const SightReading = lazy(() => import('./LessonWidgets').then(m => ({ default: m.SightReading })));
+const TabWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.TabWidget })));
+const PitchWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.PitchWidget })));
+const RecordWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.RecordWidget })));
 const loading = (
   <div className="lazy-loading" role="status">
     正在加载…
@@ -695,6 +701,8 @@ const practiceTabs = [
   { id: 'ear', title: '音程听辨', icon: Headphones },
   { id: 'rhythm', title: '节拍器', icon: AudioLines },
   { id: 'sing', title: '跟唱音阶', icon: Music2 },
+  { id: 'sight', title: '视奏练习', icon: BookOpen },
+  { id: 'tuner', title: '音准与调音', icon: Mic },
   { id: 'instruments', title: '乐器参考音', icon: Music2 },
   { id: 'drums', title: '八步鼓机', icon: AudioLines },
 ];
@@ -738,6 +746,26 @@ function PracticePage({ go, tool }: { go: Go; tool: string }) {
           <InstrumentPractice />
         ) : selected === 'drums' ? (
           <DrumTool />
+        ) : selected === 'tuner' ? (
+          <>
+            <div className="tool-heading">
+              <div>
+                <span className="eyebrow">HOW IN TUNE AM I?</span>
+                <h2>唱一个音，或者拨一根弦</h2>
+              </div>
+            </div>
+            <PitchWidget task={{ title: '音准与调音', note: '可以用来检查唱的长音，也可以给吉他、古筝逐弦调音。' }} />
+          </>
+        ) : selected === 'sight' ? (
+          <>
+            <div className="tool-heading">
+              <div>
+                <span className="eyebrow">READ, THEN PLAY</span>
+                <h2>每天读几条新旋律</h2>
+              </div>
+            </div>
+            <SightReading choose />
+          </>
         ) : (
           <>
             <div className="tool-heading">
@@ -1066,10 +1094,20 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
               <JianpuWidget examples={lesson.jianpu ?? []} />
             ) : lesson.widget === 'listen' ? (
               <ListenWidget clips={lesson.listen ?? []} />
+            ) : lesson.widget === 'play' ? (
+              <PlayCheck targets={lesson.play ?? []} />
+            ) : lesson.widget === 'sight' ? (
+              <SightReading options={lesson.sight} />
+            ) : lesson.widget === 'tab' ? (
+              <TabWidget examples={lesson.tab ?? []} />
+            ) : lesson.widget === 'pitch' ? (
+              <PitchWidget task={lesson.pitch ?? { title: '音准' }} />
+            ) : lesson.widget === 'record' ? (
+              <RecordWidget task={lesson.record ?? { title: '录音回放', prompt: '录下来，再听一遍。' }} />
             ) : lesson.widget === 'piano' ? (
               <PianoTool compact />
             ) : lesson.widget === 'guitar' ? (
-              <GuitarTool compact />
+              <GuitarTool compact chords={lesson.chords} />
             ) : lesson.widget === 'interval' ? (
               <EarTool compact pool={lesson.intervals} />
             ) : lesson.widget === 'rhythm' ? (

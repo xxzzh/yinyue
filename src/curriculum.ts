@@ -2,6 +2,7 @@
 // `lesson.id`; titles that are planned but not yet written are kept as `plan` items so the route can show
 // the whole ladder honestly. Lesson content itself stays in data.ts and the course modules.
 import { findLesson } from './course-index.ts';
+import { instrumentLessonOrder } from './instrument-order.ts';
 import type { Progress } from './progress.ts';
 
 export type Stage = 0 | 1 | 2 | 3 | 4 | 5;
@@ -388,13 +389,7 @@ const coreUnits: Unit[] = [
   ),
 ];
 
-const instrumentPublished: Record<Exclude<LineId, 'core'>, Partial<Record<Stage, string[]>>> = {
-  piano: { 0: ['piano-1'], 1: ['piano-2', 'piano-3', 'piano-4'] },
-  guitar: { 0: ['guitar-1'], 1: ['guitar-2', 'guitar-3', 'guitar-4'] },
-  voice: {},
-  guzheng: { 0: ['guzheng-1'], 1: ['guzheng-2', 'guzheng-3', 'guzheng-4'] },
-  koudi: { 0: ['koudi-1', 'koudi-2', 'koudi-3'] },
-};
+const instrumentPublished = instrumentLessonOrder;
 
 const instrumentUnits: Unit[] = instrumentLines.flatMap(line =>
   STAGES.map(stage => {

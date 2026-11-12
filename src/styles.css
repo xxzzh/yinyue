@@ -1661,11 +1661,14 @@ input[type='range'] {
 }
 .chord-options {
   display: flex;
+  flex-wrap: wrap;
   gap: 7px;
   margin-bottom: 15px;
 }
 .chord-options > button {
-  width: 38px;
+  min-width: 38px;
+  padding: 0 8px;
+  white-space: nowrap;
   height: 33px;
   font: 15px Georgia;
   border: 1px solid #dce2cf;
@@ -6612,4 +6615,251 @@ input[type='range'] {
   background: #fefefa;
   border: 1px solid #e1e6d6;
   box-shadow: 0 20px 60px #24331c33;
+}
+
+/* Two-hand 简谱, play-along check and sight reading */
+.jp-hands {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  column-gap: 12px;
+}
+.jp-hand-label {
+  font-size: 10px;
+  color: #98a68a;
+}
+.play-check,
+.sight-reading .jianpu-card {
+  background: #fefefa;
+  border: 1px solid #e6ebdc;
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.play-check .jp-line {
+  margin-bottom: 12px;
+}
+.range-keyboard {
+  height: 150px;
+}
+.range-keyboard .black-key {
+  height: 88px;
+}
+.range-keyboard .white-key > span {
+  font-size: 10px;
+}
+.white-key.next {
+  background: linear-gradient(110deg, #f4f9ec, #e1edd3);
+  box-shadow: inset 0 -5px 0 #b9cfa4;
+}
+.black-key.next {
+  background: linear-gradient(90deg, #4f6a46, #6f8d60);
+}
+.sight-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+@media (max-width: 760px) {
+  .range-keyboard {
+    height: 120px;
+  }
+  .range-keyboard .black-key {
+    height: 70px;
+  }
+}
+
+/* Guitar tablature (TabWidget) */
+.tab-staff {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  padding: 4px 0 6px;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+.tab-labels,
+.tab-col {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+.tab-labels {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  padding-right: 6px;
+  background: #fefefa;
+}
+.tab-labels > span,
+.tab-col > span {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: #98a68a;
+}
+.tab-col > span {
+  background: linear-gradient(
+    transparent calc(50% - 0.5px),
+    #9fab93 calc(50% - 0.5px),
+    #9fab93 calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+}
+.tab-col > span > b {
+  padding: 0 3px;
+  background: #fefefa;
+  color: #3f5235;
+  font-size: 13px;
+  font-weight: 600;
+}
+.tab-col.active > span > b {
+  background: #d8e7c8;
+  border-radius: 3px;
+}
+.tab-col.up > span:first-child::after {
+  content: '↑';
+  position: absolute;
+  margin-top: -18px;
+  font-size: 10px;
+  color: #98a68a;
+}
+.tab-bar {
+  flex-shrink: 0;
+  width: 1.5px;
+  margin: 10px 4px;
+  background: #6c805f;
+}
+.tab-bar.final {
+  width: 4px;
+  border-left: 1.5px solid #6c805f;
+  border-right: 2.5px solid #6c805f;
+  background: none;
+}
+
+/* Microphone tools: pitch meter and recorder */
+.pitch-widget,
+.record-widget {
+  background: #fefefa;
+  border: 1px solid #e6ebdc;
+  border-radius: 8px;
+  padding: 16px 18px;
+}
+.pitch-targets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.pitch-targets > span {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  background: #f2f4ec;
+  color: #98a68a;
+}
+.pitch-targets > span.current {
+  background: #e3edd6;
+  color: #3f5235;
+  font-weight: 600;
+}
+.pitch-targets > span.done {
+  background: #7d9a69;
+  color: #f4f8ee;
+}
+.pitch-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 0 6px;
+}
+.pitch-display > strong {
+  font:
+    500 40px/1.2 'Segoe UI',
+    Arial,
+    sans-serif;
+  color: #6c805f;
+}
+.pitch-display > strong.in-tune {
+  color: #4f7a3c;
+}
+.pitch-display.idle > strong {
+  color: #c4cab9;
+}
+.pitch-display > span {
+  font-size: 11px;
+  color: #8f9d80;
+}
+.pitch-gauge {
+  position: relative;
+  width: min(320px, 100%);
+  height: 10px;
+  margin-top: 6px;
+  border-radius: 5px;
+  background: #eef1e6;
+}
+.pitch-gauge::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -3px;
+  width: 1.5px;
+  height: 16px;
+  background: #8fa57a;
+}
+.pitch-gauge .band {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  border-radius: 5px;
+  background: #d8e7c8;
+}
+.pitch-gauge b {
+  position: absolute;
+  top: -4px;
+  width: 6px;
+  height: 18px;
+  margin-left: -3px;
+  border-radius: 3px;
+  background: #4f6a46;
+  transition: left 0.1s;
+}
+.pitch-hold {
+  width: min(320px, 100%);
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: #eef1e6;
+  overflow: hidden;
+}
+.pitch-hold > span {
+  display: block;
+  height: 100%;
+  background: #8fae78;
+}
+.button.recording {
+  background: #b96e54;
+  color: #fff;
+}
+.record-takes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0 8px;
+  padding: 0;
+  list-style: none;
+}
+.record-takes > li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 11px;
+  color: #8f9d80;
+}
+.record-takes audio {
+  flex: 1;
+  min-width: 0;
+  height: 34px;
 }
