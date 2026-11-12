@@ -82,8 +82,5 @@ test('every instrument page links to at least one specific playing guide or refe
       assert.ok(link.title.trim(), course.id);
     }
   }
-  assert.equal(
-    playingGuides(findCourse('bass')!)[0].title,
-    'Fender · 贝斯使用手册',
-  );
+  assert.equal(playingGuides(findCourse('bass')!)[0].title, 'Fender · 贝斯使用手册');
 });
