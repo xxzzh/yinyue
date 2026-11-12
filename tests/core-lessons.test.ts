@@ -4,6 +4,8 @@ import { findCourse, findLesson } from '../src/data.ts';
 import { coreL0Lessons, coreL1Lessons, coreLessonExtras } from '../src/core-lessons.ts';
 import { coreL2Lessons } from '../src/core-l2-lessons.ts';
 import { coreL3Lessons } from '../src/core-l3-lessons.ts';
+import { coreL4Lessons } from '../src/core-l4-lessons.ts';
+import { checkChorale, chordName, choraleSequence, satb, stringQuartet } from '../src/voice-leading.ts';
 import { circleOfFifths, degreeChords, majorScaleSequence, progressionQuestion } from '../src/harmony.ts';
 import { parseTab, tabEvents } from '../src/tab.ts';
 import { beatCells, melodyQuestion, rhythmQuestion, rhythmScore } from '../src/dictation.ts';
@@ -22,7 +24,9 @@ import type { JianpuNote } from '../src/jianpu.ts';
 import { allIntervals, earQuestion, intervalSet } from '../src/music.ts';
 import { Note } from 'tonal';
 
-const mainLine = ([0, 1, 2, 3] as const).flatMap(stage => publishedLessons('core', stage)).map(id => findLesson(id)!);
+const mainLine = ([0, 1, 2, 3, 4] as const)
+  .flatMap(stage => publishedLessons('core', stage))
+  .map(id => findLesson(id)!);
 
 test('jianpu parses pitch, octave dots, lengths, ties and repeats', () => {
   const g = parseJianpu("1=G 4/4 | 1 2 3 4 | 5 6 7 1' ||");
@@ -78,12 +82,13 @@ test('interval sets add minor third and perfect fourth without changing the defa
   );
 });
 
-test('main-line L0–L3 lessons are complete, checkable and playable', () => {
+test('main-line L0–L4 lessons are complete, checkable and playable', () => {
   assert.equal(coreL0Lessons.length + coreL1Lessons.length, 35);
   assert.equal(coreL2Lessons.length, 40);
   assert.equal(coreL3Lessons.length, 40);
-  assert.equal(mainLine.length, 123);
-  assert.equal(findCourse('ear')!.lessons.length + findCourse('theory')!.lessons.length, 123);
+  assert.equal(coreL4Lessons.length, 35);
+  assert.equal(mainLine.length, 158);
+  assert.equal(findCourse('ear')!.lessons.length + findCourse('theory')!.lessons.length, 158);
   const answerSlots = new Set<number>();
   for (const lesson of mainLine) {
     assert.ok(lesson, 'lesson exists');
@@ -125,6 +130,13 @@ test('main-line L0–L3 lessons are complete, checkable and playable', () => {
     }
     if (lesson.widget === 'interval' && lesson.intervals) assert.ok(intervalSet(lesson.intervals).length >= 4);
     if (lesson.widget === 'dictation') assert.ok(lesson.dictation, lesson.id);
+    if (lesson.widget === 'chorale') assert.ok(lesson.chorale?.solution, lesson.id);
+    for (const example of lesson.jianpu ?? [])
+      for (const mark of example.marks ?? [])
+        assert.ok(
+          mark.bar >= 1 && mark.bar <= measures(parseJianpu(example.score)).length,
+          `${lesson.id}: ${mark.label}`,
+        );
     if (lesson.widget === 'progression') assert.ok(lesson.progression?.pool?.includes('V'), lesson.id);
     if (lesson.widget === 'tab') {
       assert.ok(lesson.tab?.length, lesson.id);
@@ -141,7 +153,7 @@ test('main-line L0–L3 lessons are complete, checkable and playable', () => {
 test('L2 and L3 lessons sit in the right course and the ear course covers dictation and all intervals', () => {
   const ear = findCourse('ear')!.lessons.map(lesson => lesson.id);
   const theory = findCourse('theory')!.lessons.map(lesson => lesson.id);
-  for (const id of [...publishedLessons('core', 2), ...publishedLessons('core', 3)]) {
+  for (const id of [...publishedLessons('core', 2), ...publishedLessons('core', 3), ...publishedLessons('core', 4)]) {
     const listening = id.startsWith('rh') || id.startsWith('ea');
     assert.ok((listening ? ear : theory).includes(id), id);
   }
@@ -296,4 +308,130 @@ test('rhythm dictation can ask triplets and syncopation; melody dictation can le
   assert.ok(leaps > 50, `${leaps} leaps`);
   // Without leaps the melody is unchanged from before (seeded sight-reading stays stable).
   assert.equal(melodyQuestion(5).score, melodyQuestion(5, { leaps: false }).score);
+});
+
+const columns = (rows: string[][]) => rows[0].map((_, c) => rows.map(row => row[c]));
+
+test('the voice-leading checker finds the classic errors and passes a correct chorale', () => {
+  const kinds = (rows: string[][], voices = satb) => checkChorale(columns(rows), voices).map(issue => issue.kind);
+  const good = [
+    ['E4', 'F4', 'D4', 'C4'],
+    ['C4', 'C4', 'B3', 'C4'],
+    ['G3', 'A3', 'G3', 'E3'],
+    ['C3', 'F2', 'G2', 'C3'],
+  ];
+  assert.deepEqual(kinds(good), []);
+  // Parallel fifths and octaves in a block-chord step.
+  assert.deepEqual(
+    kinds([
+      ['G4', 'A4'],
+      ['E4', 'F4'],
+      ['C4', 'D4'],
+      ['C3', 'D3'],
+    ]).filter(kind => kind === 'parallel').length,
+    3,
+  );
+  // Contrary octaves are a warning, not an error.
+  const contrary = checkChorale(
+    columns([
+      ['C5', 'D5'],
+      ['E4', 'F4'],
+      ['G3', 'A3'],
+      ['C3', 'D2'],
+    ]),
+  );
+  assert.ok(contrary.some(issue => issue.kind === 'contrary' && issue.severity === 'warning'));
+  // Crossing, spacing, range and leaps.
+  assert.deepEqual(kinds([['C4'], ['E4'], ['G3'], ['C3']]), ['crossing']);
+  assert.deepEqual(kinds([['G5'], ['E4'], ['C4'], ['C3']]), ['spacing']);
+  assert.deepEqual(kinds([['A5'], ['E5'], ['C5'], ['C3']]), ['range', 'range', 'range']);
+  assert.ok(
+    kinds([
+      ['C4', 'D5'],
+      ['G3', 'B4'],
+      ['E3', 'G4'],
+      ['C3', 'G2'],
+    ]).includes('leap'),
+  );
+  // Hidden octave: outer voices in similar motion into an octave, soprano leaping.
+  assert.ok(
+    kinds([
+      ['E4', 'G4'],
+      ['C4', 'D4'],
+      ['G3', 'B3'],
+      ['C3', 'G3'],
+    ]).includes('hidden'),
+  );
+  assert.equal(checkChorale([['X4', 'C4', 'G3', 'C3']])[0].kind, 'invalid');
+  // Chord names, including inversions, fifth-less chords and common names first.
+  assert.deepEqual(
+    [
+      ['C4', 'C4', 'E3', 'C3'],
+      ['G4', 'D4', 'B3', 'F2'],
+      ['C4', 'G3', 'E3', 'E2'],
+      ['Db4', 'F3', 'Ab3', 'F2'],
+    ].map(chordName),
+    ['C', 'G7/F', 'C/E', 'D♭/F'],
+  );
+  assert.equal(parseSequence(choraleSequence(columns(good))).length, 4);
+});
+
+test('every four-part exercise has a model answer that passes the checker', () => {
+  const chorales = coreL4Lessons.filter(lesson => lesson.chorale);
+  assert.ok(chorales.length >= 5);
+  for (const { id, chorale } of chorales) {
+    const task = chorale!;
+    const voices = task.voices === 'quartet' ? stringQuartet : satb;
+    const width = task.given[0].length;
+    assert.equal(task.given.length, 4, id);
+    assert.ok(
+      task.given.every(row => row.length === width),
+      id,
+    );
+    if (task.labels) assert.equal(task.labels.length, width, id);
+    const errors = checkChorale(columns(task.solution!), voices).filter(issue => issue.severity === 'error');
+    assert.deepEqual(errors, [], id);
+    // Given notes are part of the model answer, and the learner has something to write.
+    task.given.forEach((row, r) => row.forEach((note, c) => note && assert.equal(note, task.solution![r][c], id)));
+    assert.ok(
+      task.given.flat().some(note => !note),
+      id,
+    );
+    if (task.draft) {
+      const draft = task.given.map((row, r) => row.map((note, c) => note || task.draft![r][c]));
+      assert.ok(
+        checkChorale(columns(draft), voices).some(issue => issue.severity === 'error'),
+        `${id}: the draft has mistakes to find`,
+      );
+    }
+  }
+});
+
+test('form labels reach the staff as rehearsal marks', () => {
+  const xml = jianpuToMusicXml(parseJianpu('1=C 2/4 | 1 2 | 3 4 | 5 - ||'), '', {
+    marks: [
+      { bar: 1, label: 'A' },
+      { bar: 3, label: 'B' },
+    ],
+  });
+  assert.deepEqual(xml.match(/<rehearsal>\w<\/rehearsal>/g), ['<rehearsal>A</rehearsal>', '<rehearsal>B</rehearsal>']);
+});
+
+test('chromatic melody dictation adds leading notes that resolve by step', () => {
+  let altered = 0;
+  for (let seed = 1; seed <= 200; seed++) {
+    const { answer, score } = melodyQuestion(seed, { bars: 8, range: [-3, 7], eighths: true, chromatic: true });
+    assert.deepEqual(new Set(measures(parseJianpu(score)).map(measureBeats)), new Set([4]), score);
+    answer.forEach((note, i) => {
+      if (!/^[#b]/.test(note)) return;
+      altered++;
+      assert.ok(i > 0 && i < answer.length - 1, `seed ${seed}: altered note at an end`);
+      const step = Number(answer[i + 1].replace(/[#b',]/g, '')) - Number(note.replace(/[#b',]/g, ''));
+      assert.equal(step, note.startsWith('#') ? 1 : -1, `seed ${seed}: ${note} → ${answer[i + 1]}`);
+    });
+    assert.ok(answer.filter(note => /^[#b]/.test(note)).length <= 2, `seed ${seed}`);
+  }
+  assert.ok(altered > 150, `${altered} altered notes`);
+  // Without the option nothing is altered, so existing questions stay the same.
+  assert.equal(melodyQuestion(5, { bars: 4 }).score, melodyQuestion(5, { bars: 4, chromatic: false }).score);
 });

@@ -2,6 +2,7 @@ import { baseCourses, baseLessons } from './catalog-content.ts';
 import { coreL0Lessons, coreL1Lessons, earCourseOrder, theoryCourseOrder } from './core-lessons.ts';
 import { coreL2Lessons, earCourseOrderL2, theoryCourseOrderL2 } from './core-l2-lessons.ts';
 import { coreL3Lessons, earCourseOrderL3, theoryCourseOrderL3 } from './core-l3-lessons.ts';
+import { coreL4Lessons, earCourseOrderL4, theoryCourseOrderL4 } from './core-l4-lessons.ts';
 import type { WorldTrack } from './world-catalog.ts';
 import { traditionalInstrument } from './traditional-catalog.ts';
 import { pianoLessons } from './piano-lessons.ts';
@@ -56,7 +57,8 @@ export type Widget =
   | 'record'
   | 'dictation'
   | 'progression'
-  | 'circle';
+  | 'circle'
+  | 'chorale';
 export type CourseFamily = 'foundation' | 'keyboard' | 'plucked' | 'bowed' | 'wind' | 'percussion' | 'other';
 export interface QuizItem {
   question: string;
@@ -74,6 +76,8 @@ export interface JianpuExample {
   left?: string;
   /** Labels of the two parts when `left` is given (default 右手, 左手), e.g. 高声部, 低声部. */
   parts?: [string, string];
+  /** Section labels above bars (1-based), e.g. A, B, A′ for form; highlighted during playback. */
+  marks?: { bar: number; label: string }[];
   clef?: 'treble' | 'bass' | 'alto';
   /** Play octaves away from the written pitch: guitar music sounds an octave lower (-1). */
   playOctave?: number;
@@ -115,6 +119,23 @@ export interface DictationTask {
   /** Melody dictation: allow leaps of a fourth and a fifth, and eighth notes. */
   leaps?: boolean;
   eighths?: boolean;
+  /** Melody dictation: add altered notes that lead by step (♯4→5, ♭7→6 …). */
+  chromatic?: boolean;
+}
+/** Four-part writing checked by voice-leading.ts. */
+export interface ChoraleTask {
+  title: string;
+  /** Rows from the highest voice down, one column per chord; '' marks a note for the learner to write. */
+  given: string[][];
+  /** Chord symbols, Roman numerals or figures shown above the columns. */
+  labels?: string[];
+  /** A model answer in the same shape as `given`. */
+  solution?: string[][];
+  /** Starting values for the learner's cells (same shape), e.g. a draft with mistakes to correct. */
+  draft?: string[][];
+  voices?: 'satb' | 'quartet';
+  tempo?: number;
+  note?: string;
 }
 /** Chord-progression listening (questions generated in harmony.ts). */
 export interface ProgressionTask {
@@ -172,6 +193,7 @@ export interface Lesson {
   record?: RecordTask;
   dictation?: DictationTask;
   progression?: ProgressionTask;
+  chorale?: ChoraleTask;
   /** Chord names (music.ts) shown by the guitar widget. */
   chords?: string[];
 }
@@ -198,6 +220,7 @@ const lineLessonsById = new Map(
     ...coreL1Lessons,
     ...coreL2Lessons,
     ...coreL3Lessons,
+    ...coreL4Lessons,
     ...pianoLessons,
     ...pianoL3Lessons,
     ...guitarLessons,
@@ -212,8 +235,8 @@ const lineLessonsById = new Map(
   ].map(lesson => [lesson.id, lesson]),
 );
 const courseOrder: Partial<Record<Track, string[]>> = {
-  theory: [...theoryCourseOrder, ...theoryCourseOrderL2, ...theoryCourseOrderL3],
-  ear: [...earCourseOrder, ...earCourseOrderL2, ...earCourseOrderL3],
+  theory: [...theoryCourseOrder, ...theoryCourseOrderL2, ...theoryCourseOrderL3, ...theoryCourseOrderL4],
+  ear: [...earCourseOrder, ...earCourseOrderL2, ...earCourseOrderL3, ...earCourseOrderL4],
   piano: lineLessons(instrumentLessonOrder.piano),
   guitar: lineLessons(instrumentLessonOrder.guitar),
   voice: lineLessons(instrumentLessonOrder.voice),

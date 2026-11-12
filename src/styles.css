@@ -6425,6 +6425,7 @@ input[type='range'] {
   color: #3f5235;
 }
 .jp-measure {
+  position: relative;
   display: inline-flex;
   align-items: stretch;
 }
@@ -7050,4 +7051,93 @@ input[type='range'] {
 }
 .circle-info p {
   margin: 0 0 10px;
+}
+
+/* Form labels above jianpu bars */
+.jp-line.has-marks {
+  padding-top: 24px;
+  row-gap: 34px;
+}
+.jp-mark {
+  position: absolute;
+  top: -22px;
+  left: 0;
+  padding: 0 6px;
+  border: 1px solid #b9cda6;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  color: #5d7650;
+  background: #f7f9f1;
+}
+.jp-mark.current {
+  background: #5d7650;
+  border-color: #5d7650;
+  color: #fff;
+}
+
+/* Four-part writing (ChoraleWidget) */
+.chorale-grid {
+  display: grid;
+  gap: 6px;
+  align-items: center;
+  margin: 8px 0 12px;
+  overflow-x: auto;
+}
+.chorale-label,
+.chorale-chord {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5d7650;
+}
+.chorale-chord {
+  min-height: 18px;
+  font-weight: 500;
+  color: #8f9d80;
+}
+.chorale-voice {
+  font-size: 12px;
+  color: #6c805f;
+}
+.chorale-given,
+.chorale-grid input {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 6px 4px;
+  border-radius: 6px;
+  text-align: center;
+  font:
+    500 14px 'Segoe UI',
+    Arial,
+    sans-serif;
+}
+.chorale-given {
+  background: #eef2e6;
+  color: #3f5235;
+}
+.chorale-grid input {
+  border: 1px solid #d6dfc8;
+  background: #fff;
+  color: #3f5235;
+}
+.chorale-grid input:focus {
+  outline: 2px solid #b9cda6;
+}
+.chorale-grid input.invalid {
+  border-color: #d59a80;
+  background: #fbf0ea;
+}
+.chorale-issues {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+}
+.chorale-issues li.error {
+  color: #a0583d;
+}
+.chorale-issues li.warning {
+  color: #8a7a3d;
 }

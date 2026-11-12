@@ -41,7 +41,7 @@ test('tap tempo needs enough evidence and rejects invalid intervals', () => {
 });
 test('all routes contain complete lessons with valid quiz answers', () => {
   assert.equal(courses.length, 203);
-  assert.equal(allLessons.length, 968);
+  assert.equal(allLessons.length, 1003);
   assert.equal(new Set(allLessons.map(lesson => lesson.id)).size, allLessons.length);
   for (const lesson of allLessons) {
     assert.ok(lesson.sections.length >= 2);

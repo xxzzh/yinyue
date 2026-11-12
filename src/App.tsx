@@ -1,6 +1,7 @@
 import { Component, lazy, Suspense, use, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
+  Layers,
   ArrowDownToLine,
   ArrowLeft,
   ArrowRight,
@@ -85,6 +86,7 @@ const PitchWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m
 const RecordWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.RecordWidget })));
 const DictationWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.DictationWidget })));
 const ProgressionWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.ProgressionWidget })));
+const ChoraleWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.ChoraleWidget })));
 const CircleOfFifthsWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.CircleOfFifthsWidget })));
 const loading = (
   <div className="lazy-loading" role="status">
@@ -709,6 +711,7 @@ const practiceTabs = [
   { id: 'sight', title: '视奏练习', icon: BookOpen },
   { id: 'tuner', title: '音准与调音', icon: Mic },
   { id: 'dictation', title: '听写练习', icon: Headphones },
+  { id: 'chorale', title: '四部和声', icon: Layers },
   { id: 'instruments', title: '乐器参考音', icon: Music2 },
   { id: 'drums', title: '八步鼓机', icon: AudioLines },
 ];
@@ -752,6 +755,33 @@ function PracticePage({ go, tool }: { go: Go; tool: string }) {
           <InstrumentPractice />
         ) : selected === 'drums' ? (
           <DrumTool />
+        ) : selected === 'chorale' ? (
+          <>
+            <div className="tool-heading">
+              <div>
+                <span className="eyebrow">FOUR-PART WRITING</span>
+                <h2>写四部和声，自动检查</h2>
+              </div>
+            </div>
+            <ChoraleWidget
+              task={{
+                title: 'C 大调 I–IV–V–I：为低音配上三个上方声部',
+                labels: ['I', 'IV', 'V', 'I'],
+                given: [
+                  ['', '', '', ''],
+                  ['', '', '', ''],
+                  ['', '', '', ''],
+                  ['C3', 'F2', 'G2', 'C3'],
+                ],
+                solution: [
+                  ['E4', 'F4', 'D4', 'C4'],
+                  ['C4', 'C4', 'B3', 'C4'],
+                  ['G3', 'A3', 'G3', 'E3'],
+                  ['C3', 'F2', 'G2', 'C3'],
+                ],
+              }}
+            />
+          </>
         ) : selected === 'dictation' ? (
           <>
             <div className="tool-heading">
@@ -1135,6 +1165,8 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
               <TabWidget examples={lesson.tab ?? []} />
             ) : lesson.widget === 'progression' ? (
               <ProgressionWidget task={lesson.progression ?? {}} />
+            ) : lesson.widget === 'chorale' ? (
+              <ChoraleWidget task={lesson.chorale!} />
             ) : lesson.widget === 'circle' ? (
               <CircleOfFifthsWidget />
             ) : lesson.widget === 'dictation' ? (

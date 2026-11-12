@@ -22,6 +22,7 @@ import type {
   PitchTask,
   PlayTarget,
   ProgressionTask,
+  ChoraleTask,
   RecordTask,
   TabExample,
 } from './data';
@@ -34,6 +35,8 @@ import {
   progressionQuestion,
 } from './harmony';
 import type { Degree } from './harmony';
+import { checkChorale, choraleSequence, chordName, satb, stringQuartet } from './voice-leading';
+import type { ChoraleIssue } from './voice-leading';
 import { beatCells, countIn, melodyQuestion, rhythmQuestion, rhythmScore } from './dictation';
 import type { BeatCell } from './dictation';
 import { detectPitch, matchesTarget, nearestNote } from './pitch';
@@ -136,7 +139,15 @@ function wrapTriplets(
   return out;
 }
 
-function JianpuLine({ score, active }: { score: Jianpu; active: number }) {
+function JianpuLine({
+  score,
+  active,
+  marks,
+}: {
+  score: Jianpu;
+  active: number;
+  marks?: { bar: number; label: string }[];
+}) {
   const groups: { tokens: { token: JianpuToken; index: number }[]; bar?: JianpuToken }[] = [{ tokens: [] }];
   score.tokens.forEach((token, index) => {
     if (token.kind === 'bar' && token.style === 'single' && index === 0) return;
@@ -145,13 +156,18 @@ function JianpuLine({ score, active }: { score: Jianpu; active: number }) {
       groups.push({ tokens: [] });
     } else groups[groups.length - 1].tokens.push({ token, index });
   });
+  // The section that holds the note being played (form labels).
+  const activeBar = groups.findIndex(group => group.tokens.some(item => item.index === active));
+  const currentMark = marks?.filter(mark => activeBar >= 0 && mark.bar <= activeBar + 1).at(-1);
   return (
-    <div className="jp-line">
+    <div className={`jp-line${marks?.length ? ' has-marks' : ''}`}>
       {groups.map((group, g) => {
         let position = 0;
         let previousLines = 0;
+        const mark = marks?.find(item => item.bar === g + 1);
         return (
           <span className="jp-measure" key={g}>
+            {mark && <span className={`jp-mark${mark === currentMark ? ' current' : ''}`}>{mark.label}</span>}
             {wrapTriplets(group.tokens, ({ token, index }) => {
               if (token.kind === 'dash') {
                 position += 1;
@@ -261,16 +277,16 @@ function JianpuCard({
         (left ? (
           <div className="jp-hands">
             <span className="jp-hand-label">{example.parts?.[0] ?? '右手'}</span>
-            <JianpuLine score={score} active={activeFor('right')} />
+            <JianpuLine score={score} active={activeFor('right')} marks={example.marks} />
             <span className="jp-hand-label">{example.parts?.[1] ?? '左手'}</span>
             <JianpuLine score={left} active={activeFor('left')} />
           </div>
         ) : (
-          <JianpuLine score={score} active={activeFor()} />
+          <JianpuLine score={score} active={activeFor()} marks={example.marks} />
         ))}
       {view !== 'jianpu' && (
         <ScorePreview
-          xml={jianpuToMusicXml(score, '', { clef: example.clef, left })}
+          xml={jianpuToMusicXml(score, '', { clef: example.clef, left, marks: example.marks })}
           label={`${example.title}（五线谱）`}
           fallback="请对照上方的简谱或直接播放。"
         />
@@ -1050,12 +1066,20 @@ export function DictationWidget({ task }: { task: DictationTask }) {
   const [cells, setCells] = useState<BeatCell[]>([]);
   const [degrees, setDegrees] = useState<string[]>([]);
   const [octave, setOctave] = useState(0);
+  const [accidental, setAccidental] = useState('');
   const [checked, setChecked] = useState(false);
   const [score, setScore] = useState({ right: 0, total: 0 });
   const rhythm = task.kind === 'rhythm';
   const question = rhythm
     ? rhythmQuestion(seed, { meter, bars: task.bars, cells: task.cells })
-    : melodyQuestion(seed, { meter, bars: task.bars, range: task.range, leaps: task.leaps, eighths: task.eighths });
+    : melodyQuestion(seed, {
+        meter,
+        bars: task.bars,
+        range: task.range,
+        leaps: task.leaps,
+        eighths: task.eighths,
+        chromatic: task.chromatic,
+      });
   const target = question.score;
   const answerLength = rhythm ? question.answer.length : (question.answer as string[]).length;
   const filled = rhythm ? cells.length : degrees.length;
@@ -1163,11 +1187,28 @@ export function DictationWidget({ task }: { task: DictationTask }) {
                   checked ? (value === question.answer[i] ? 'right' : 'wrong') : i === degrees.length ? 'current' : ''
                 }
               >
-                {value.replace(/'/g, '·').replace(/,/g, '̣')}
+                {value.replace(/^#/, '♯').replace(/^b/, '♭').replace(/'/g, '·').replace(/,/g, '̣')}
               </span>
             ))}
           </div>
           <div className="dictation-palette" role="group" aria-label="选择音级">
+            {task.chromatic && (
+              <div className="segmented" role="group" aria-label="变化音">
+                {[
+                  ['', '还原'],
+                  ['#', '♯'],
+                  ['b', '♭'],
+                ].map(([value, label]) => (
+                  <button
+                    key={label}
+                    className={accidental === value ? 'selected' : ''}
+                    onClick={() => setAccidental(value)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className="segmented" role="group" aria-label="八度">
               {[
                 [-1, '低音'],
@@ -1187,7 +1228,10 @@ export function DictationWidget({ task }: { task: DictationTask }) {
               <button
                 key={degree}
                 disabled={checked || filled >= answerLength}
-                onClick={() => setDegrees(list => [...list, `${degree}${octave > 0 ? "'" : octave < 0 ? ',' : ''}`])}
+                onClick={() => {
+                  setDegrees(list => [...list, `${accidental}${degree}${octave > 0 ? "'" : octave < 0 ? ',' : ''}`]);
+                  setAccidental('');
+                }}
               >
                 <span className="dictation-cell">{degree}</span>
                 <small>{['do', 're', 'mi', 'fa', 'sol', 'la', 'si'][Number(degree) - 1]}</small>
@@ -1429,6 +1473,147 @@ export function CircleOfFifthsWidget() {
           外圈是大调，内圈是同一调号的关系小调。顺时针每走一格多一个升号（或少一个降号），逆时针每走一格多一个降号。
         </p>
       </div>
+    </div>
+  );
+}
+
+/** Typed notes: ♯/♭ symbols and lower-case letters are accepted (f#4, Bb3, e♭4). */
+const normalizeNote = (value: string) => {
+  const text = value.trim().replace(/♯/g, '#').replace(/♭/g, 'b');
+  return text ? text[0].toUpperCase() + text.slice(1) : '';
+};
+
+/**
+ * Four-part writing: given notes are fixed, empty cells are typed by the learner. “检查” runs the voice-leading
+ * rules (voice-leading.ts); a chorale without errors counts as an exercise.
+ */
+export function ChoraleWidget({ task }: { task: ChoraleTask }) {
+  const { exercise } = useLearning();
+  const player = usePlayer();
+  const voices = task.voices === 'quartet' ? stringQuartet : satb;
+  const columns = task.given[0].length;
+  const start = () => task.given.map((row, r) => row.map((note, c) => note || task.draft?.[r][c] || ''));
+  const [values, setValues] = useState(start);
+  const [issues, setIssues] = useState<ChoraleIssue[] | null>(null);
+  const chords = Array.from({ length: columns }, (_, c) => values.map(row => normalizeNote(row[c])));
+  const valid = (note: string) => note !== '' && Note.midi(note) !== null;
+  const complete = chords.every(chord => chord.every(valid));
+  const errors = issues?.filter(issue => issue.severity === 'error') ?? [];
+  function edit(row: number, column: number, value: string) {
+    setValues(list => list.map((line, r) => (r === row ? line.map((cell, c) => (c === column ? value : cell)) : line)));
+    setIssues(null);
+  }
+  function check() {
+    const found = checkChorale(chords, voices);
+    setIssues(found);
+    if (!found.some(issue => issue.severity === 'error')) exercise();
+  }
+  function play() {
+    if (player.playing === 'chorale') return player.halt();
+    const ready = chords.filter(chord => chord.every(valid));
+    if (ready.length) player.start('chorale', parseSequence(choraleSequence(ready)), task.tempo ?? 66);
+  }
+  return (
+    <div className="dictation-widget chorale-widget">
+      <div className="jp-head">
+        <div>
+          <strong>{task.title}</strong>
+          <span>输入音名（如 C4、F#3、Bb4），从上到下依次是{voices.map(voice => voice.name).join('、')}。</span>
+        </div>
+        <div className="jp-actions">
+          <button className="button primary small" onClick={play} disabled={!chords.some(chord => chord.every(valid))}>
+            {player.playing === 'chorale' ? <Square size={14} /> : <Play size={14} />}
+            {player.playing === 'chorale' ? '停止' : '播放'}
+          </button>
+        </div>
+      </div>
+      <div className="chorale-grid" style={{ gridTemplateColumns: `5.5em repeat(${columns}, minmax(3.6em, 1fr))` }}>
+        <span />
+        {Array.from({ length: columns }, (_, c) => (
+          <span className="chorale-label" key={c}>
+            {task.labels?.[c] ?? c + 1}
+          </span>
+        ))}
+        {voices.map((voice, row) => (
+          <Fragment key={voice.name}>
+            <span className="chorale-voice">{voice.name}</span>
+            {Array.from({ length: columns }, (_, c) =>
+              task.given[row][c] ? (
+                <span className="chorale-given" key={c}>
+                  {task.given[row][c].replace('#', '♯').replace(/(?<=[A-G])b/, '♭')}
+                </span>
+              ) : (
+                <input
+                  key={c}
+                  className={values[row][c] && !valid(normalizeNote(values[row][c])) ? 'invalid' : ''}
+                  value={values[row][c]}
+                  aria-label={`第 ${c + 1} 个和弦的${voice.name}`}
+                  spellCheck={false}
+                  autoCapitalize="characters"
+                  onChange={event => edit(row, c, event.target.value)}
+                />
+              ),
+            )}
+          </Fragment>
+        ))}
+        <span className="chorale-voice muted">和弦</span>
+        {chords.map((chord, c) => (
+          <span className="chorale-chord" key={c}>
+            {chord.every(valid) ? chordName(chord) || '?' : ''}
+          </span>
+        ))}
+      </div>
+      <div className="quiz-runner-actions">
+        <button
+          className="text-button"
+          onClick={() => {
+            setValues(start());
+            setIssues(null);
+          }}
+        >
+          <RotateCcw size={14} />
+          重置
+        </button>
+        {task.solution && (
+          <button
+            className="text-button"
+            onClick={() => {
+              setValues(task.solution!.map(row => [...row]));
+              setIssues(null);
+            }}
+          >
+            <Eye size={14} />
+            参考答案
+          </button>
+        )}
+        <button className="button primary small" disabled={!complete} onClick={check}>
+          检查声部进行
+        </button>
+      </div>
+      {issues && (
+        <div className={`quiz-feedback ${errors.length ? 'retry' : 'success'}`} role="status">
+          <strong>
+            {errors.length
+              ? `发现 ${errors.length} 处错误`
+              : issues.length
+                ? '没有错误，但有几处可以更好'
+                : '没有发现问题，声部进行很规范！'}
+          </strong>
+          {issues.length > 0 && (
+            <ul className="chorale-issues">
+              {issues.map((issue, i) => (
+                <li key={i} className={issue.severity}>
+                  {issue.severity === 'error' ? '错误' : '提示'}：{issue.message}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+      <p className="muted fineprint">
+        {task.note ??
+          '检查项目：音域、相邻声部间距、声部交叉与超越、平行与反向五八度、外声部隐伏五八度、跳进与增音程。'}
+      </p>
     </div>
   );
 }

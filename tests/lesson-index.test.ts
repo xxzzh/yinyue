@@ -22,7 +22,7 @@ test('the generated lesson index matches the lesson content', () => {
     courses.map(course => toCourseMeta(course, traditionalInstrument(course.id)?.tradition)),
     'The lesson index is out of date: run `npm run index` and commit src/lesson-index.ts',
   );
-  assert.equal(allLessons.length, 968);
+  assert.equal(allLessons.length, 1003);
   assert.equal(findLesson('rh1-05')?.title, '附点二分音符与延音线');
   assert.equal(lessonCourse('rh1-05')?.id, 'ear');
   // The index keeps what lists need and leaves lesson bodies to the full content.
@@ -76,7 +76,7 @@ test('each lesson loads from its own chunk with the same content as the full dat
     assert.deepEqual(loaded, lesson, lesson.id);
     counts[lessonChunk(lesson.id)] = (counts[lessonChunk(lesson.id)] ?? 0) + 1;
   }
-  assert.deepEqual(counts, { catalog: 618, core: 115, piano: 46, guitar: 46, voice: 50, guzheng: 46, koudi: 47 });
+  assert.deepEqual(counts, { catalog: 618, core: 150, piano: 46, guitar: 46, voice: 50, guzheng: 46, koudi: 47 });
   assert.equal(lessonChunk('rh2-01'), 'core');
   assert.equal(lessonChunk('piano-l3-05'), 'piano');
   assert.equal(lessonChunk('piano-1'), 'catalog');

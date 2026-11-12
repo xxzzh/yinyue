@@ -23,9 +23,18 @@ export function lessonChunk(id: string): LessonChunk {
 }
 const chunkLoaders: Record<LessonChunk, () => Promise<Lesson[]>> = {
   core: () =>
-    Promise.all([import('./core-lessons.ts'), import('./core-l2-lessons.ts'), import('./core-l3-lessons.ts')]).then(
-      ([l01, l2, l3]) => [...l01.coreL0Lessons, ...l01.coreL1Lessons, ...l2.coreL2Lessons, ...l3.coreL3Lessons],
-    ),
+    Promise.all([
+      import('./core-lessons.ts'),
+      import('./core-l2-lessons.ts'),
+      import('./core-l3-lessons.ts'),
+      import('./core-l4-lessons.ts'),
+    ]).then(([l01, l2, l3, l4]) => [
+      ...l01.coreL0Lessons,
+      ...l01.coreL1Lessons,
+      ...l2.coreL2Lessons,
+      ...l3.coreL3Lessons,
+      ...l4.coreL4Lessons,
+    ]),
   piano: () =>
     Promise.all([import('./piano-lessons.ts'), import('./piano-l3-lessons.ts')]).then(([a, b]) => [
       ...a.pianoLessons,

@@ -68,21 +68,55 @@ export interface MelodyOptions {
   /** Allow leaps of a fourth and a fifth. */
   leaps?: boolean;
   eighths?: boolean;
+  /** Alter up to two notes into leading notes that resolve by step (♯4→5, ♯1→2, ♭7→6, ♭6→5, ♭3→2). */
+  chromatic?: boolean;
 }
 /** A short melody in C, starting on do, mi or sol and ending on do; the rhythm is given, pitches asked. */
 export function melodyQuestion(
   seed: number,
-  { meter = 4, bars = 2, range = [0, 4], leaps = false, eighths = false }: MelodyOptions = {},
+  { meter = 4, bars = 2, range = [0, 4], leaps = false, eighths = false, chromatic = false }: MelodyOptions = {},
 ) {
-  const score = sightReading(seed, { key: 'C', meter, bars, range, leaps, eighths });
+  const plain = sightReading(seed, { key: 'C', meter, bars, range, leaps, eighths });
+  const score = chromatic ? alterNotes(plain, seed) : plain;
   const parsed = parseJianpu(score);
   const notes = parsed.tokens.filter((token): token is JianpuNote => token.kind === 'note');
   return {
     score,
     /** Scale degrees as written in 简谱, with octave marks: 1, 5, 1' … */
-    answer: notes.map(note => `${note.degree}${note.octave > 0 ? "'".repeat(note.octave) : ','.repeat(-note.octave)}`),
+    answer: notes.map(
+      note =>
+        `${note.accidental > 0 ? '#' : note.accidental < 0 ? 'b' : ''}${note.degree}${note.octave > 0 ? "'".repeat(note.octave) : ','.repeat(-note.octave)}`,
+    ),
     events: jianpuEvents(parsed),
   };
+}
+
+// Leading notes: a degree that moves by step to its neighbour can be altered toward it.
+const leadingNotes: { degree: number; next: number; mark: '#' | 'b' }[] = [
+  { degree: 4, next: 5, mark: '#' },
+  { degree: 1, next: 2, mark: '#' },
+  { degree: 7, next: 6, mark: 'b' },
+  { degree: 6, next: 5, mark: 'b' },
+  { degree: 3, next: 2, mark: 'b' },
+];
+/** Alters up to two notes (never the first or last) into chromatic leading notes; bars keep their length. */
+function alterNotes(score: string, seed: number) {
+  const random = seeded(seed + 7919);
+  const words = score.split(' ');
+  const notes = words
+    // Whole note tokens only, so the 1=C and 4/4 header words are never touched.
+    .map((word, index) => ({ index, match: /^([1-7])([',]*)\.?_*\.?\^?$/.exec(word) }))
+    .filter((item): item is { index: number; match: RegExpExecArray } => !!item.match)
+    .map(({ index, match }) => ({ index, degree: Number(match[1]), octave: match[2] }));
+  let altered = 0;
+  for (let i = 1; i < notes.length - 1 && altered < 2; i++) {
+    const [note, next] = [notes[i], notes[i + 1]];
+    const rule = leadingNotes.find(item => item.degree === note.degree && item.next === next.degree);
+    if (!rule || note.octave !== next.octave || random() < 0.4) continue;
+    words[note.index] = rule.mark + words[note.index];
+    altered++;
+  }
+  return words.join(' ');
 }
 
 /** Plays a count-in bar of clicks before the question. */

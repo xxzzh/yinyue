@@ -264,7 +264,7 @@ const clefXml = (clef: keyof typeof clefSigns, number?: number) =>
 export function jianpuToMusicXml(
   score: Jianpu,
   title = '',
-  options: { clef?: keyof typeof clefSigns; left?: Jianpu } = {},
+  options: { clef?: keyof typeof clefSigns; left?: Jianpu; marks?: { bar: number; label: string }[] } = {},
 ): string {
   const upper = bars(score);
   const lower = options.left ? bars(options.left) : undefined;
@@ -286,7 +286,11 @@ export function jianpuToMusicXml(
     const left = bar.left
       ? '<barline location="left"><bar-style>heavy-light</bar-style><repeat direction="forward"/></barline>'
       : '';
-    let notes = notesXml(score, bar.notes, tieUpper, divisions, lower ? 1 : undefined);
+    const mark = options.marks?.find(item => item.bar === index + 1);
+    const rehearsal = mark
+      ? `<direction placement="above"><direction-type><rehearsal>${mark.label}</rehearsal></direction-type></direction>`
+      : '';
+    let notes = rehearsal + notesXml(score, bar.notes, tieUpper, divisions, lower ? 1 : undefined);
     if (lower)
       notes += `<backup><duration>${Math.round(measureBeats(bar.notes) * divisions)}</duration></backup>${notesXml(options.left!, lower[index].notes, tieLower, divisions, 2)}`;
     const right =
