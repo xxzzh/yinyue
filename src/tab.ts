@@ -3,7 +3,7 @@
 // Tokens separated by spaces:
 //   4/4 3/4              time signature, first word only (default 4/4)
 //   3/0                  string 3 (G), open; strings are numbered 1 (high E) to 6 (low E)
-//   1/3:2                string 1, fret 3, two beats (default one beat; 0.5 = eighth)
+//   1/3:2                string 1, fret 3, two beats (default one beat; 0.5 = eighth; 2/3 for swing)
 //   6/0+5/2+4/2          notes played together (a chord or a strum)
 //   ^3/0+2/1+1/0         up-strum: high strings first
 //   r  r:2               rest
@@ -47,8 +47,9 @@ export function parseTab(source: string): Tab {
     }
     const up = word.startsWith('^');
     const [body, length = '1'] = (up ? word.slice(1) : word).split(':');
-    const beats = Number(length);
-    if (!(beats > 0)) throw new Error(`Bad length in “${word}”`);
+    const [top, bottom = '1'] = length.split('/');
+    const beats = Number(top) / Number(bottom);
+    if (!(beats > 0) || !Number.isFinite(beats)) throw new Error(`Bad length in “${word}”`);
     if (body === 'r') {
       tab.tokens.push({ kind: 'rest', beats });
       return;
@@ -89,5 +90,5 @@ export function tabBars(tab: Tab): number[] {
     if (token.kind === 'bar') bars.push(0);
     else bars[bars.length - 1] += token.beats;
   }
-  return bars.filter(beats => beats > 0);
+  return bars.filter(beats => beats > 0).map(beats => Math.round(beats * 1e6) / 1e6);
 }

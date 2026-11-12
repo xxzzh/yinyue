@@ -1,4 +1,4 @@
-import { courses } from './data.ts';
+import { courses } from './course-index.ts';
 import { chineseSelectionProfiles } from './chinese-selection-profiles.ts';
 import { worldSelectionProfiles } from './world-selection-profiles.ts';
 import { additionalWorldSelectionProfiles } from './additional-world-catalog.ts';

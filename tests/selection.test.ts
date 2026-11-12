@@ -10,6 +10,7 @@ import {
   selectionLabels,
 } from '../src/instrument-selection.ts';
 import { audioSamples } from '../src/audio-samples.ts';
+import { findCourse } from '../src/data.ts';
 import { playingGuides } from '../src/instrument-guides.ts';
 
 test('every instrument has an individual complete selection profile and foundations are excluded', () => {
@@ -73,7 +74,8 @@ test('real sound excerpts are valid MP3 files with attribution, duration and int
 
 test('every instrument page links to at least one specific playing guide or reference', () => {
   for (const course of instrumentChoices) {
-    const links = playingGuides(course);
+    // The chooser builds guides from the full course, which has the reading links.
+    const links = playingGuides(findCourse(course.id)!);
     assert.ok(links.length > 0, course.id);
     for (const link of links) {
       assert.equal(new URL(link.url).protocol, 'https:', course.id);
@@ -81,7 +83,7 @@ test('every instrument page links to at least one specific playing guide or refe
     }
   }
   assert.equal(
-    playingGuides(instrumentChoices.find(course => course.id === 'bass')!)[0].title,
+    playingGuides(findCourse('bass')!)[0].title,
     'Fender · 贝斯使用手册',
   );
 });

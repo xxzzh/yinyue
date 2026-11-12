@@ -260,9 +260,9 @@ function JianpuCard({
       {view !== 'staff' &&
         (left ? (
           <div className="jp-hands">
-            <span className="jp-hand-label">右手</span>
+            <span className="jp-hand-label">{example.parts?.[0] ?? '右手'}</span>
             <JianpuLine score={score} active={activeFor('right')} />
-            <span className="jp-hand-label">左手</span>
+            <span className="jp-hand-label">{example.parts?.[1] ?? '左手'}</span>
             <JianpuLine score={left} active={activeFor('left')} />
           </div>
         ) : (

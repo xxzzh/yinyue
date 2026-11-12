@@ -18,9 +18,11 @@
 - `src/Path.tsx`：学习路线页、阶段测验与定级测验窗口（按需加载）。
 - `src/core-lessons.ts`：主线 L0、L1 的课程正文与题目，以及原有 8 节主线课的追加题目；`src/core-l2-lessons.ts`、`src/core-l3-lessons.ts`：主线 L2、L3 各 40 节。乐理、视唱练耳两门课程按路线顺序排列这些课（节奏与练耳课归视唱练耳，其余归乐理）。
 - `src/dictation.ts`：节奏听写与旋律听写的出题（纯函数，按种子生成）。节奏以“一拍”为单位（`BeatCell`），延长只跟在四分音符或延长之后，最后一拍不是休止；旋律听写复用 `sightReading` 的级进旋律。测试检查每题小节拍数与起止音。节奏积木含三连音与小切分；旋律听写可开启四、五度跳进。
+- `src/lesson-kit.ts`：写课程用的 `q`、`lesson` 小工具（M4 起的课程文件使用）。`lesson` 会按课程编号把每题的选项循环移位，让正确答案的位置在 A–D 间分布，作者写题时不必刻意安排。
+- `src/catalog-content.ts`：目录课程与它们原有的课（乐理、练耳与各乐器的入门课、中国与世界乐器），并补上 `src/core-extras.ts` 中八节原有主线课的追加题。`src/data.ts` 在它之上加入主线与五条乐器线的课程并按路线排序，是测试和索引脚本使用的完整数据。
 - `src/harmony.ts`：和弦进行听辨的出题（以 I 开头、相邻和弦不同，按种子生成）与 C 大调的和弦排列，以及五度圈数据（调号、关系小调、F♯/G♭ 等音调）。纯函数，测试检查五度关系与调号。
 - `src/jianpu.ts`：简谱文本格式的解析、播放事件与 MusicXML 转换，以及听辨示例的简短音序格式。三连音写作 `{1_ 2_ 3_}`，有三连音时 MusicXML 改用十二分之一拍为单位并加三连音括号；支持高音、低音与中音谱号；音序长度可写分数（如 `C4:1/3`）。均为纯函数，课程里的每段简谱都由测试检查小节拍数。
-- `src/piano-lessons.ts`、`src/guitar-lessons.ts`、`src/voice-lessons.ts`、`src/guzheng-lessons.ts`、`src/koudi-lessons.ts`：五条乐器线 L0–L2 的课程；`src/pitch.ts`：单音音高检测（YIN）与音名换算，纯函数，用合成音测试；`src/tab.ts`：六线谱文本格式的解析与播放事件（纯函数，测试检查每小节拍数）；`src/instrument-lesson-plans.ts`：各乐器线尚未编写课程的逐节工作标题（只随学习路线页加载）；`src/instrument-order.ts`：各乐器线每阶段已上线课程的 ID 顺序（只含 ID，供首屏的学习路线使用，`data.ts` 也按它排列乐器课程）。
+- `src/piano-lessons.ts`、`src/guitar-lessons.ts`、`src/voice-lessons.ts`、`src/guzheng-lessons.ts`、`src/koudi-lessons.ts`：五条乐器线 L0–L2 的课程；`src/piano-l3-lessons.ts` 等五个 `*-l3-lessons.ts`：各线 L3 的 20 节；`src/pitch.ts`：单音音高检测（YIN）与音名换算，纯函数，用合成音测试；`src/tab.ts`：六线谱文本格式的解析与播放事件（纯函数，测试检查每小节拍数）；`src/instrument-lesson-plans.ts`：各乐器线尚未编写课程的逐节工作标题（只随学习路线页加载）；`src/instrument-order.ts`：各乐器线每阶段已上线课程的 ID 顺序（只含 ID，供首屏的学习路线使用，`data.ts` 也按它排列乐器课程）。
 - `src/LessonWidgets.tsx`：简谱卡片（播放高亮、慢速、五线谱对照、左右手大谱表）、听辨示例列表、题目试听按钮、跟弹关卡（按音域加宽的键盘，屏幕与 MIDI 输入，逐音核对音高并计算节奏比例吻合度）与视奏练习、麦克风音准表、录音回放、节奏与旋律听写、和弦进行听辨、五度圈（按需加载；麦克风声音只在页面内处理，录音不上传）。视奏旋律由 `jianpu.ts` 的 `sightReading` 按种子生成，同一编号总是同一条旋律。
 - `src/catalog-quiz.ts`：中国与世界乐器认识课的测验生成：错误选项按乐器分别挑选、来自其他演奏类别、隐去乐器自身名称，解析说明每个错误选项对应的乐器。
 - `src/Dialog.tsx`：共用的原生模态窗口。
@@ -36,7 +38,7 @@
 首屏只包含外壳、课程目录索引和轻量配图信息：
 
 - **课程目录索引** `src/lesson-index.ts`：每条路线与每节课的标题、简介、时长和互动类型，由 `scripts/build-lesson-index.mjs` 从课程模块生成（`npm run index`，`npm run build` 会先运行它）。列表、搜索、概览和学习路线通过 `src/course-index.ts` 读取它；搜索规则与完整数据共用 `src/course-meta.ts` 的 `courseMatches`。改了课程后若忘记重新生成，`tests/lesson-index.test.ts` 会失败。
-- **课程正文** `src/data.ts`（含各乐器目录与课程生成）作为独立文件按需加载：打开课程时由 `loadContent` 读取，首屏空闲约 2 秒后也会在后台预取。加载失败时下次打开会重试，并显示刷新提示。首屏模块不得静态导入 `data.ts`、乐器目录或图片署名，测试会检查。
+- **课程正文**按块按需加载：打开课程时由 `src/course-index.ts` 的 `loadLesson` 只导入这节课所在的块——主线（`rh0-01` 这类编号）、五条乐器线之一（`piano-l3-05` 这类编号），或其余目录课程（`catalog-content.ts`）。每块只加载一次，失败时下次打开会重试并显示刷新提示；首屏空闲约 2 秒后会预取上次所学课程所在的块。课程的延伸阅读链接在生成的 `src/course-sources.ts` 中，阅读时按需加载。首屏模块不得静态导入 `data.ts`、乐器目录或图片署名；中国乐器、世界乐器、选乐器页只用轻量索引（选乐器页的演奏指南链接来自 `course-sources.ts`），除测试与索引脚本外任何模块都不在运行时导入 `data.ts`，测试会检查，并逐节核对每块加载出的课程与完整数据一致。
 - **配图**：`src/instrument-images.ts` 只含文件、尺寸、名称、类型与替代文字，供课程卡片使用；图注与署名在 `src/instrument-credits.ts`，随 `src/InstrumentFigure.tsx` 按需加载。两者都由 `scripts/sync-instrument-images.mjs` 生成。
 
 ## 代码规范

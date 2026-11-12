@@ -1,21 +1,7 @@
 // Main-line lessons for L2 初级 (docs/curriculum-outline.md, section 4). IDs follow `{skill}2-{position}`.
 // Melodies are original unless named as public-domain works.
-import type { Lesson, QuizItem } from './data.ts';
-
-const q = (question: string, options: string[], answer: number, explanation: string, listen?: string): QuizItem => ({
-  question,
-  options,
-  answer,
-  explanation,
-  ...(listen ? { listen } : {}),
-});
-type Spec = Omit<Lesson, 'sections' | 'quiz' | 'more'> & { sections: [string, string][]; questions: QuizItem[] };
-const lesson = ({ sections, questions, ...rest }: Spec): Lesson => ({
-  ...rest,
-  sections: sections.map(([title, body]) => ({ title, body })),
-  quiz: questions[0],
-  more: questions.slice(1),
-});
+import type { Lesson } from './data.ts';
+import { lesson, q } from './lesson-kit.ts';
 const major = 'C4+E4+G4:2';
 const minor = 'A3+C4+E4:2';
 const augmented = 'C4+E4+G#4:2';

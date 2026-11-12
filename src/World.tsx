@@ -2,7 +2,7 @@ import { TimbrePreview } from './TimbrePreview';
 import { useState } from 'react';
 import { useCatalogPage } from './useCatalogPage';
 import { ArrowRight, Check, ChevronRight, Globe2, Search } from 'lucide-react';
-import { courseFamilies, courses } from './data';
+import { courseFamilies, courses } from './course-index';
 import { worldAreas, worldInstrument } from './world-catalog';
 import { InstrumentImage } from './InstrumentImage';
 import { CourseArt } from './Art';

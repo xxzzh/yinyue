@@ -36,6 +36,6 @@ test('every instrument stage lists a working title for each lesson still to be w
       total += titles.length;
     }
   }
-  // L3–L5 of every line: piano, guitar and voice 55 each, guzheng 55, koudi 55.
-  assert.equal(total, 275);
+  // L4–L5 of every line: 35 each.
+  assert.equal(total, 175);
 });

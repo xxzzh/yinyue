@@ -1,21 +1,7 @@
 // Main-line lessons for L3 中级 (docs/curriculum-outline.md, section 4). IDs follow `{skill}3-{position}`.
 // Melodies are original unless named as public-domain works.
-import type { Lesson, QuizItem } from './data.ts';
-
-const q = (question: string, options: string[], answer: number, explanation: string, listen?: string): QuizItem => ({
-  question,
-  options,
-  answer,
-  explanation,
-  ...(listen ? { listen } : {}),
-});
-type Spec = Omit<Lesson, 'sections' | 'quiz' | 'more'> & { sections: [string, string][]; questions: QuizItem[] };
-const lesson = ({ sections, questions, ...rest }: Spec): Lesson => ({
-  ...rest,
-  sections: sections.map(([title, body]) => ({ title, body })),
-  quiz: questions[0],
-  more: questions.slice(1),
-});
+import type { Lesson } from './data.ts';
+import { lesson, q } from './lesson-kit.ts';
 
 // Chord voicings (C major unless named) shared by the listening examples.
 const I = 'C3+C4+E4+G4';
@@ -1419,6 +1405,7 @@ export const coreL3Lessons: Lesson[] = [
         title: '平行三度（原创）',
         score: '1=C 4/4 | 3 4 5 3 | 4 2 3 - ||',
         left: '| 1 2 3 1 | 2 7, 1 - ||',
+        parts: ['上声部', '下声部'],
         view: 'both',
         tempo: 72,
       },
@@ -1426,6 +1413,7 @@ export const coreL3Lessons: Lesson[] = [
         title: '反向进行（原创）',
         score: '1=C 4/4 | 1 2 3 4 | 5 - - - | 5 4 3 2 | 1 - - - ||',
         left: '| 1, 7,, 6,, 5,, | 3,, - - - | 4,, 5,, 6,, 7,, | 1, - - - ||',
+        parts: ['上声部', '下声部'],
         view: 'both',
         tempo: 72,
       },

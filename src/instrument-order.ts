@@ -18,6 +18,7 @@ export const instrumentLessonOrder: Record<'piano' | 'guitar' | 'voice' | 'guzhe
       'piano-l1-07',
     ],
     2: Array.from({ length: 16 }, (_, i) => `piano-l2-${String(i + 1).padStart(2, '0')}`),
+    3: Array.from({ length: 20 }, (_, i) => `piano-l3-${String(i + 1).padStart(2, '0')}`),
   },
   guitar: {
     0: ['guitar-1', 'guitar-l0-02', 'guitar-l0-03', 'guitar-l0-04'],
@@ -34,11 +35,13 @@ export const instrumentLessonOrder: Record<'piano' | 'guitar' | 'voice' | 'guzhe
       'guitar-l1-07',
     ],
     2: Array.from({ length: 16 }, (_, i) => `guitar-l2-${String(i + 1).padStart(2, '0')}`),
+    3: Array.from({ length: 20 }, (_, i) => `guitar-l3-${String(i + 1).padStart(2, '0')}`),
   },
   voice: {
     0: Array.from({ length: 4 }, (_, i) => `voice-l0-${String(i + 1).padStart(2, '0')}`),
     1: Array.from({ length: 10 }, (_, i) => `voice-l1-${String(i + 1).padStart(2, '0')}`),
     2: Array.from({ length: 16 }, (_, i) => `voice-l2-${String(i + 1).padStart(2, '0')}`),
+    3: Array.from({ length: 20 }, (_, i) => `voice-l3-${String(i + 1).padStart(2, '0')}`),
   },
   guzheng: {
     0: ['guzheng-1', 'guzheng-l0-02', 'guzheng-l0-03', 'guzheng-l0-04'],
@@ -55,11 +58,13 @@ export const instrumentLessonOrder: Record<'piano' | 'guitar' | 'voice' | 'guzhe
       'guzheng-l1-07',
     ],
     2: Array.from({ length: 16 }, (_, i) => `guzheng-l2-${String(i + 1).padStart(2, '0')}`),
+    3: Array.from({ length: 20 }, (_, i) => `guzheng-l3-${String(i + 1).padStart(2, '0')}`),
   },
   koudi: {
     0: ['koudi-1', 'koudi-2', 'koudi-3', 'koudi-l0-04'],
     1: Array.from({ length: 10 }, (_, i) => `koudi-l1-${String(i + 1).padStart(2, '0')}`),
     2: Array.from({ length: 16 }, (_, i) => `koudi-l2-${String(i + 1).padStart(2, '0')}`),
+    3: Array.from({ length: 20 }, (_, i) => `koudi-l3-${String(i + 1).padStart(2, '0')}`),
   },
 };
 

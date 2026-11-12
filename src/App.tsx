@@ -41,11 +41,13 @@ import {
   findCourse,
   findLesson,
   lessonCourse,
-  loadContent,
+  loadLesson,
+  loadSources,
+  preloadLesson,
 } from './course-index';
 import type { CourseMeta } from './course-meta';
 import type { QuizItem, Track } from './data';
-import { localDate, mergeProgress, streak, validateProgress } from './progress';
+import { localDate, mergeProgress, readProgress, streak, validateProgress } from './progress';
 import { BrandMark, CourseArt } from './Art';
 import { LearningProvider } from './state';
 import { CatalogPager } from './CatalogPager';
@@ -1020,21 +1022,35 @@ function QuizBlock({
   );
 }
 
+/** Reading links of the lesson's course, from a small module loaded on demand. */
+function LessonSources({ courseId }: { courseId: string }) {
+  const list = use(loadSources()).courseSources[courseId];
+  if (!list?.length) return null;
+  return (
+    <section className="lesson-sources" aria-label="延伸阅读">
+      {list.map(source => (
+        <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
+          <BookOpen size={12} />
+          {source.title}
+          <span aria-hidden="true"> ↗</span>
+        </a>
+      ))}
+    </section>
+  );
+}
+
 function LessonReader({ id, go }: { id: string; go: Go }) {
   const { progress, complete, notify } = useLearning();
-  const content = use(loadContent());
-  const lesson = content.findLesson(id)!;
+  const lesson = use(loadLesson(id));
   const questions = [lesson.quiz, ...(lesson.more ?? [])];
   const [answers, setAnswers] = useState<(number | null)[]>(() => questions.map(() => null));
   const solved = answers.every((value, i) => value === questions[i].answer);
-  const course = content.lessonCourse(lesson.id)!;
+  const course = lessonCourse(lesson.id)!;
   const place = lessonPlace(lesson.id);
   // Main-line lessons follow the graded path; other lessons follow their course.
   const core = place?.line === 'core' ? place : undefined;
-  const sequence = core
-    ? publishedLessons('core', core.stage).map(lessonId => content.findLesson(lessonId)!)
-    : course.lessons;
-  const index = sequence.indexOf(lesson);
+  const sequence = core ? publishedLessons('core', core.stage).map(lessonId => findLesson(lessonId)!) : course.lessons;
+  const index = sequence.findIndex(item => item.id === lesson.id);
   const home = core ? '/path/core' : `/courses/${course.id}`;
   const stageTest = core && testFor('core', core.stage);
   const testPending = !!stageTest && !progress.passedTests.includes(stageTest.id);
@@ -1151,15 +1167,9 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
               <p>{lesson.takeaway}</p>
             </div>
           </div>
-          <section className="lesson-sources" aria-label="延伸阅读">
-            {course.sources?.map(source => (
-              <a key={source.url} href={source.url} target="_blank" rel="noreferrer">
-                <BookOpen size={12} />
-                {source.title}
-                <span aria-hidden="true"> ↗</span>
-              </a>
-            ))}
-          </section>
+          <Suspense fallback={null}>
+            <LessonSources courseId={course.id} />
+          </Suspense>
           <QuizBlock
             questions={questions}
             answers={answers}
@@ -1276,7 +1286,8 @@ function Shell() {
     return () => window.removeEventListener('hashchange', closeMenu);
   }, []);
   useEffect(() => {
-    const timer = setTimeout(() => loadContent().catch(() => undefined), 2000);
+    // Warm up the chunk of the lesson the learner opened last (or the first main-line lesson).
+    const timer = setTimeout(() => void preloadLesson(readProgress().progress.lastLesson ?? 'rh0-01'), 2000);
     return () => clearTimeout(timer);
   }, []);
   function go(path: string) {

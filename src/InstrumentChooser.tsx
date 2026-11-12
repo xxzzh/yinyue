@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCatalogPage } from './useCatalogPage';
 import { ArrowRight, BookOpen, Check, Headphones, Music2, Scale, X } from 'lucide-react';
-import { courses, courseFamilies, findCourse } from './data';
+import { courseFamilies, courses, findCourse } from './course-index';
+import type { CourseMeta } from './course-meta';
+import { courseSources } from './course-sources';
 import type { Course } from './data';
 import { CourseArt } from './Art';
 import { CatalogPager } from './CatalogPager';
@@ -16,7 +18,7 @@ import { audioSamples } from './audio-samples';
 import { playingGuides } from './instrument-guides';
 import { useLearning } from './learning';
 
-function RealSound({ course }: { course: Course }) {
+function RealSound({ course }: { course: CourseMeta }) {
   const sample = audioSamples[course.id];
   const { progress } = useLearning();
   const audio = useRef<HTMLAudioElement>(null);
@@ -78,8 +80,8 @@ function RealSound({ course }: { course: Course }) {
   );
 }
 
-function PlayingGuide({ course }: { course: Course }) {
-  const links = playingGuides(course);
+function PlayingGuide({ course }: { course: CourseMeta }) {
+  const links = playingGuides({ id: course.id, sources: courseSources[course.id] });
   if (!links.length) return null;
   return (
     <div className="playing-guide">
@@ -101,7 +103,7 @@ function PlayingGuide({ course }: { course: Course }) {
 }
 
 export function InstrumentCharacter({ course: meta }: { course: Pick<Course, 'id'> }) {
-  // Callers may pass a light index entry; source links come from the full course.
+  // Reading links come from the small generated course-sources module.
   const course = findCourse(meta.id);
   const profile = selectionProfiles[meta.id];
   if (!profile || !course) return null;
