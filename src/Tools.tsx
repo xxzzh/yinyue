@@ -8,7 +8,7 @@ import {
   fretNote,
   guitarChords,
   guitarStrings,
-  intervals,
+  intervalSet,
   keyboardKeys,
   melody,
   noteNames,
@@ -20,7 +20,11 @@ import { metronome, playNote, playSequence } from './audio';
 import { useLearning, useStudyClock } from './learning';
 import { createMidiConnection } from './midi';
 
-export function ScorePreview() {
+export function ScorePreview({
+  xml = scaleXml,
+  label = 'C 大调上行音阶五线谱',
+  fallback = '音符顺序：C4 D4 E4 F4 G4 A4 B4 C5。',
+}: { xml?: string; label?: string; fallback?: string } = {}) {
   const element = useRef<HTMLDivElement>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -36,9 +40,10 @@ export function ScorePreview() {
           drawingParameters: 'compacttight',
           drawTitle: false,
           drawComposer: false,
+          drawMeasureNumbers: false,
         });
         display = osmd;
-        await osmd.load(scaleXml);
+        await osmd.load(xml);
         if (cancelled) return;
         osmd.render();
         setLoading(false);
@@ -53,12 +58,12 @@ export function ScorePreview() {
       cancelled = true;
       display?.clear();
     };
-  }, []);
+  }, [xml]);
   return (
     <div className="score-preview">
-      <div ref={element} aria-label="C 大调上行音阶五线谱" />
+      <div ref={element} aria-label={label} />
       {loading && <p className="muted">正在排版乐谱…</p>}
-      {error && <p>乐谱暂时无法显示。音符顺序：C4 D4 E4 F4 G4 A4 B4 C5。</p>}
+      {error && <p>乐谱暂时无法显示。{fallback}</p>}
     </div>
   );
 }
@@ -446,9 +451,10 @@ export function GuitarTool({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function EarTool({ compact = false }: { compact?: boolean }) {
+export function EarTool({ compact = false, pool }: { compact?: boolean; pool?: string[] }) {
   const { exercise, notify } = useLearning();
-  const [question, setQuestion] = useState(() => earQuestion());
+  const choices = intervalSet(pool);
+  const [question, setQuestion] = useState(() => earQuestion(Math.random, choices));
   const [heard, setHeard] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -484,7 +490,7 @@ export function EarTool({ compact = false }: { compact?: boolean }) {
             <span className="eyebrow">LISTEN A LITTLE CLOSER</span>
             <h2>两个音之间，藏着多远的距离？</h2>
           </div>
-          <span className="pill">入门 · 四种音程</span>
+          <span className="pill">入门 · {choices.length} 种音程</span>
         </div>
       )}
       <div className="ear-stage">
@@ -503,7 +509,7 @@ export function EarTool({ compact = false }: { compact?: boolean }) {
         <p className="muted">{heard ? '可以重复听，慢慢建立自己的听觉记忆。' : '点击耳机播放，再选择你听到的音程。'}</p>
       </div>
       <div className="ear-options">
-        {intervals.map(interval => (
+        {choices.map(interval => (
           <button
             key={interval.id}
             disabled={!heard || !!answer || playing}
@@ -538,7 +544,7 @@ export function EarTool({ compact = false }: { compact?: boolean }) {
           <button
             className="text-button"
             onClick={() => {
-              setQuestion(earQuestion());
+              setQuestion(earQuestion(Math.random, choices));
               setHeard(false);
               setAnswer(null);
               setRound(n => n + 1);
@@ -561,9 +567,10 @@ export function EarTool({ compact = false }: { compact?: boolean }) {
   );
 }
 
-export function RhythmTool({ compact = false }: { compact?: boolean }) {
+export function RhythmTool({ compact = false, meter = 4 }: { compact?: boolean; meter?: number }) {
   const { notify, exercise } = useLearning();
   const [bpm, setBpm] = useState(72);
+  const [beats, setBeats] = useState(meter);
   const [running, setRunning] = useState(false);
   const [beat, setBeat] = useState(-1);
   const [taps, setTaps] = useState<number[]>([]);
@@ -574,9 +581,13 @@ export function RhythmTool({ compact = false }: { compact?: boolean }) {
     if (!running) return;
     let cancelled = false;
     let stop: (() => void) | undefined;
-    metronome(bpm, beat => {
-      if (!cancelled) setBeat(beat);
-    })
+    metronome(
+      bpm,
+      beat => {
+        if (!cancelled) setBeat(beat);
+      },
+      beats,
+    )
       .then(dispose => {
         if (cancelled) dispose();
         else stop = dispose;
@@ -591,7 +602,7 @@ export function RhythmTool({ compact = false }: { compact?: boolean }) {
       cancelled = true;
       stop?.();
     };
-  }, [running, bpm, notify]);
+  }, [running, bpm, beats, notify]);
   function tap() {
     const now = performance.now();
     const next = taps.length && now - taps[taps.length - 1] <= 5000 ? [...taps, now].slice(-12) : [now];
@@ -611,7 +622,7 @@ export function RhythmTool({ compact = false }: { compact?: boolean }) {
             <span className="eyebrow">FIND YOUR STEADY BEAT</span>
             <h2>慢下来，让每一拍都稳稳落下</h2>
           </div>
-          <span className="pill">4/4 拍</span>
+          <span className="pill">{beats}/4 拍</span>
         </div>
       )}
       <div className="metronome-body">
@@ -632,8 +643,23 @@ export function RhythmTool({ compact = false }: { compact?: boolean }) {
           />
           <span>180</span>
         </label>
+        <div className="segmented meter-choice" role="group" aria-label="拍号">
+          {[2, 3, 4].map(value => (
+            <button
+              key={value}
+              className={beats === value ? 'selected' : ''}
+              aria-pressed={beats === value}
+              onClick={() => {
+                setBeat(-1);
+                setBeats(value);
+              }}
+            >
+              {value}/4
+            </button>
+          ))}
+        </div>
         <div className="beat-dots">
-          {[0, 1, 2, 3].map(index => (
+          {Array.from({ length: beats }, (_, index) => index).map(index => (
             <i key={index} className={beat === index ? 'active' : ''} />
           ))}
         </div>

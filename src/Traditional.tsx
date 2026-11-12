@@ -293,7 +293,10 @@ export function DiscoveryActivity({ lesson }: { lesson: Lesson }) {
   return (
     <div className="discovery-activity">
       <h3>{lesson.activity.title}</h3>
-      <p>每完成一个任务就勾选。没有实物时，先完成图文观察或桌面模拟；有真实示范时再补充听赏。</p>
+      <p>
+        {lesson.activity.intro ??
+          '每完成一个任务就勾选。没有实物时，先完成图文观察或桌面模拟；有真实示范时再补充听赏。'}
+      </p>
       <div>
         {lesson.activity.steps.map((step, index) => (
           <label className={done.includes(index) ? 'done' : ''} key={step.task}>

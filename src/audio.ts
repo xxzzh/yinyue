@@ -1,5 +1,6 @@
 import type * as ToneTypes from 'tone';
 import type { DrumPattern, DrumVoice } from './instrument-profiles';
+import type { MusicEvent } from './jianpu';
 let tone: typeof ToneTypes | null = null;
 let piano: ToneTypes.PolySynth | null = null;
 let guitar: ToneTypes.PluckSynth | null = null;
@@ -51,7 +52,7 @@ export async function playSequence(
       (instrument === 'piano' ? e.piano : e.guitar).triggerAttackRelease(note, '4n', time);
     });
 }
-export async function metronome(bpm: number, onBeat: (beat: number) => void): Promise<() => void> {
+export async function metronome(bpm: number, onBeat: (beat: number) => void, beatsPerBar = 4): Promise<() => void> {
   const e = await engine();
   let next = e.tone.now() + 0.08;
   let beat = 0;
@@ -60,7 +61,7 @@ export async function metronome(bpm: number, onBeat: (beat: number) => void): Pr
     const now = e.tone.now();
     if (next < now - 0.1) next = now + 0.03;
     while (next < now + 0.1) {
-      const current = beat % 4;
+      const current = beat % beatsPerBar;
       e.click.triggerAttackRelease(current === 0 ? 'C6' : 'G5', 0.025, next);
       const timeout = setTimeout(
         () => {
@@ -78,6 +79,68 @@ export async function metronome(bpm: number, onBeat: (beat: number) => void): Pr
     clearInterval(timer);
     scheduled.forEach(clearTimeout);
     e.click.triggerRelease();
+  };
+}
+
+/**
+ * Plays timed events (melodies, chords, rests) with a short look-ahead, so the returned stop function can
+ * cut playback cleanly. `onStep` receives the event index as it sounds, and -1 when playback ends.
+ */
+export async function playEvents(
+  events: MusicEvent[],
+  bpm: number,
+  options: { click?: boolean; instrument?: 'piano' | 'guitar'; onStep?: (index: number) => void } = {},
+): Promise<() => void> {
+  const e = await engine();
+  const beat = 60 / bpm;
+  const start = e.tone.now() + 0.1;
+  const times: number[] = [];
+  let total = 0;
+  for (const event of events) {
+    times.push(start + total * beat);
+    total += event.beats;
+  }
+  const pending = new Set<ReturnType<typeof setTimeout>>();
+  const later = (seconds: number, run: () => void) => {
+    const timeout = setTimeout(
+      () => {
+        pending.delete(timeout);
+        run();
+      },
+      Math.max(0, seconds * 1000),
+    );
+    pending.add(timeout);
+  };
+  let next = 0;
+  let nextClick = 0;
+  const timer = setInterval(() => {
+    const now = e.tone.now();
+    while (next < events.length && times[next] < now + 0.12) {
+      const event = events[next];
+      const index = next;
+      if (event.notes.length) {
+        const length = Math.max(0.08, event.beats * beat * 0.92);
+        if (options.instrument === 'guitar')
+          event.notes.forEach(note => e.guitar.triggerAttackRelease(note, length, times[index]));
+        else e.piano.triggerAttackRelease(event.notes, length, times[index], event.velocity);
+      }
+      later(times[index] - now, () => options.onStep?.(index));
+      next++;
+    }
+    while (options.click && nextClick < Math.ceil(total) && start + nextClick * beat < now + 0.12) {
+      e.click.triggerAttackRelease(nextClick === 0 ? 'C6' : 'G5', 0.025, start + nextClick * beat);
+      nextClick++;
+    }
+    if (next >= events.length && (!options.click || nextClick >= Math.ceil(total))) {
+      clearInterval(timer);
+      later(start + total * beat - now, () => options.onStep?.(-1));
+    }
+  }, 25);
+  return () => {
+    clearInterval(timer);
+    pending.forEach(clearTimeout);
+    e.piano.releaseAll();
+    options.onStep?.(-1);
   };
 }
 

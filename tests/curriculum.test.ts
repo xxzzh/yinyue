@@ -45,7 +45,24 @@ test('the graded path matches the outline and references every mapped lesson onc
     for (const lesson of courses.find(item => item.id === course)!.lessons)
       assert.ok(lessonPlace(lesson.id), lesson.id);
   assert.deepEqual(publishedLessons('koudi', 0), ['koudi-1', 'koudi-2', 'koudi-3']);
-  assert.deepEqual(publishedLessons('core', 0), ['ear-3', 'theory-1', 'ear-1', 'ear-4']);
+  assert.deepEqual(publishedLessons('core', 0), [
+    'rh0-01',
+    'rh0-02',
+    'ear-3',
+    'rh0-04',
+    'theory-1',
+    'ear-1',
+    'ea0-07',
+    'ea0-08',
+    'ear-4',
+    'ea0-10',
+    'ls0-11',
+    'ls0-12',
+    'pf0-13',
+  ]);
+  // L0 and L1 are fully written; later stages are still planned.
+  for (const stage of [0, 1] as const) assert.equal(publishedLessons('core', stage).length, plannedSize('core', stage));
+  assert.equal(publishedLessons('core', 2).length, 0);
   assert.equal(lessonPlace('guqin-1'), undefined);
 });
 
@@ -75,9 +92,9 @@ test('stages unlock by test, placement or finished instrument lessons', () => {
   let progress = freshProgress();
   assert.equal(stageStatus(progress, 'core', 0), 'open');
   assert.equal(stageStatus(progress, 'core', 1), 'locked');
-  assert.deepEqual(nextStep(progress, 'core'), { kind: 'lesson', line: 'core', stage: 0, lesson: 'ear-3' });
+  assert.deepEqual(nextStep(progress, 'core'), { kind: 'lesson', line: 'core', stage: 0, lesson: 'rh0-01' });
 
-  progress = finish(progress, ['ear-3', 'theory-1', 'ear-1', 'ear-4']);
+  progress = finish(progress, publishedLessons('core', 0));
   assert.deepEqual(nextStep(progress, 'core'), { kind: 'test', line: 'core', stage: 0, test: 'core-l0' });
   progress = passStageTest(progress, 'core-l0', '2026-11-12');
   assert.equal(stageStatus(progress, 'core', 0), 'passed');
@@ -146,9 +163,12 @@ test('version 1 records upgrade in place and backups merge the new fields', () =
 });
 
 test('generated catalog quizzes vary per instrument and do not reveal the subject by name', () => {
-  const generated = courses.flatMap(course =>
-    course.lessons.filter(lesson => lesson.widget === 'discovery').map(lesson => ({ course, lesson })),
-  );
+  // Only the generated Chinese and world catalog routes (they carry a `level`).
+  const generated = courses
+    .filter(course => course.level)
+    .flatMap(course =>
+      course.lessons.filter(lesson => lesson.widget === 'discovery').map(lesson => ({ course, lesson })),
+    );
   assert.ok(generated.length > 500);
   const positions = [0, 0, 0, 0];
   const distractorSets = new Set<string>();

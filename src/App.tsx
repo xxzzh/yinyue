@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { allLessons, courseFamilies, courses, filterCourses, findCourse, findLesson, lessonCourse } from './data';
-import type { Course, Lesson, Track } from './data';
+import type { Course, Lesson, QuizItem, Track } from './data';
 import { localDate, mergeProgress, streak, validateProgress } from './progress';
 import { BrandMark, CourseArt } from './Art';
 import { LearningProvider } from './state';
@@ -44,7 +44,7 @@ import { InstrumentFigure } from './InstrumentImage';
 import { instrumentImages } from './instrument-images';
 import { useLearning, useStudyClock } from './learning';
 import { Dialog } from './Dialog';
-import { findLine, lessonPlace, nextStep, stageLabel, stepPath } from './curriculum';
+import { findLine, lessonPlace, nextStep, publishedLessons, stageLabel, stages, stepPath, testFor } from './curriculum';
 import type { NextStep } from './curriculum';
 
 // Pages and interactive tools load on demand so the first screen only ships the shell and course data.
@@ -62,6 +62,9 @@ const WorldPage = lazy(() => import('./World').then(m => ({ default: m.WorldPage
 const InstrumentChooser = lazy(() => import('./InstrumentChooser').then(m => ({ default: m.InstrumentChooser })));
 const InstrumentCharacter = lazy(() => import('./InstrumentChooser').then(m => ({ default: m.InstrumentCharacter })));
 const PathPage = lazy(() => import('./Path').then(m => ({ default: m.PathPage })));
+const JianpuWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.JianpuWidget })));
+const ListenWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.ListenWidget })));
+const QuestionSound = lazy(() => import('./LessonWidgets').then(m => ({ default: m.QuestionSound })));
 const loading = (
   <div className="lazy-loading" role="status">
     正在加载…
@@ -884,34 +887,93 @@ function ProgressPage({ go }: { go: Go }) {
   );
 }
 
+function QuizBlock({
+  questions,
+  answers,
+  onChoose,
+}: {
+  questions: QuizItem[];
+  answers: (number | null)[];
+  onChoose: (question: number, option: number) => void;
+}) {
+  return (
+    <section className="lesson-quiz">
+      <span className="eyebrow">A LITTLE CHECK-IN</span>
+      <h2>{questions.length > 1 ? `理解了吗？试着回答这 ${questions.length} 个问题` : '理解了吗？试着回答一下'}</h2>
+      {questions.map((item, q) => {
+        const answer = answers[q];
+        const correct = answer === item.answer;
+        return (
+          <div className="quiz-item" key={item.question}>
+            <p>
+              {questions.length > 1 && <span className="quiz-number">{q + 1}</span>}
+              {item.question}
+            </p>
+            {item.listen && <QuestionSound seq={item.listen} />}
+            <div className="quiz-options">
+              {item.options.map((option, i) => (
+                <button
+                  className={answer === i ? (correct ? 'correct' : 'incorrect') : ''}
+                  key={option}
+                  onClick={() => onChoose(q, i)}
+                  disabled={correct}
+                >
+                  <span>{String.fromCharCode(65 + i)}</span>
+                  {option}
+                  {answer === i && correct && <Check size={16} />}
+                </button>
+              ))}
+            </div>
+            {answer !== null && (
+              <div className={`quiz-feedback ${correct ? 'success' : 'retry'}`} role="status">
+                <strong>{correct ? '答对了！' : '再想一想，可以重新选择。'}</strong>
+                {correct && <p>{item.explanation}</p>}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
   const { progress, complete, notify } = useLearning();
-  const [answer, setAnswer] = useState<number | null>(null);
+  const questions = [lesson.quiz, ...(lesson.more ?? [])];
+  const [answers, setAnswers] = useState<(number | null)[]>(() => questions.map(() => null));
+  const solved = answers.every((value, i) => value === questions[i].answer);
   const course = lessonCourse(lesson.id)!;
-  const index = course.lessons.indexOf(lesson);
-  const correct = answer === lesson.quiz.answer;
   const place = lessonPlace(lesson.id);
+  // Main-line lessons follow the graded path; other lessons follow their course.
+  const core = place?.line === 'core' ? place : undefined;
+  const sequence = core ? publishedLessons('core', core.stage).map(id => findLesson(id)!) : course.lessons;
+  const index = sequence.indexOf(lesson);
+  const home = core ? '/path/core' : `/courses/${course.id}`;
+  const stageTest = core && testFor('core', core.stage);
+  const testPending = !!stageTest && !progress.passedTests.includes(stageTest.id);
   useStudyClock(true);
   function finish() {
     complete(lesson.id);
     notify('这一小步，已经记在你的音乐旅程里。');
-    const next = course.lessons[index + 1];
-    go(next ? `/lesson/${next.id}` : `/courses/${course.id}`);
+    const next = sequence[index + 1];
+    if (next) go(`/lesson/${next.id}`);
+    else if (stageTest && testPending) go(`/path/test/${stageTest.id}`);
+    else go(home);
   }
   return (
-    <Dialog title={lesson.title} onClose={() => go(`/courses/${course.id}`)} className="lesson-dialog">
+    <Dialog title={lesson.title} onClose={() => go(home)} className="lesson-dialog">
       <aside className={`reader-sidebar ${course.color}`}>
-        <span className="eyebrow">{course.english}</span>
-        <h3>{course.title}</h3>
+        <span className="eyebrow">{core ? `CORE MUSICIANSHIP · L${core.stage}` : course.english}</span>
+        <h3>{core ? `${stages[core.stage].name} · ${stages[core.stage].title}` : course.title}</h3>
         <CourseArt track={course.id} />
         <div className="reader-lesson-nav">
-          {course.lessons.map((item, i) => (
+          {sequence.map((item, i) => (
             <button
               key={item.id}
               className={item.id === lesson.id ? 'current' : ''}
               onClick={() => go(`/lesson/${item.id}`)}
             >
-              <span>{progress.completed.includes(item.id) ? <Check size={14} /> : `0${i + 1}`}</span>
+              <span>{progress.completed.includes(item.id) ? <Check size={14} /> : String(i + 1).padStart(2, '0')}</span>
               {item.title}
             </button>
           ))}
@@ -921,8 +983,8 @@ function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
       <article className="lesson-article">
         <LoadBoundary resetKey={lesson.id}>
           <div className="reader-breadcrumb">
-            {course.tag}
-            <ChevronRight size={12} />第 {index + 1} / {course.lessons.length} 课
+            {core ? `主线 · ${stageLabel(core.stage)}` : course.tag}
+            <ChevronRight size={12} />第 {index + 1} / {sequence.length} 课
           </div>
           <h1>{lesson.title}</h1>
           <div className="article-meta">
@@ -954,14 +1016,18 @@ function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
             </div>
             {lesson.widget === 'discovery' ? (
               <DiscoveryActivity lesson={lesson} />
+            ) : lesson.widget === 'jianpu' ? (
+              <JianpuWidget examples={lesson.jianpu ?? []} />
+            ) : lesson.widget === 'listen' ? (
+              <ListenWidget clips={lesson.listen ?? []} />
             ) : lesson.widget === 'piano' ? (
               <PianoTool compact />
             ) : lesson.widget === 'guitar' ? (
               <GuitarTool compact />
             ) : lesson.widget === 'interval' ? (
-              <EarTool compact />
+              <EarTool compact pool={lesson.intervals} />
             ) : lesson.widget === 'rhythm' ? (
-              <RhythmTool compact />
+              <RhythmTool compact meter={lesson.meter} />
             ) : lesson.widget === 'drums' ? (
               <DrumTool />
             ) : lesson.widget === 'instrument' ? (
@@ -969,6 +1035,7 @@ function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
             ) : (
               <TheoryPlayer type={lesson.widget} />
             )}
+            {lesson.activity && lesson.widget !== 'discovery' && <DiscoveryActivity lesson={lesson} />}
           </section>
           <div className="takeaway">
             <Sparkles size={18} />
@@ -986,45 +1053,34 @@ function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
               </a>
             ))}
           </section>
-          <section className="lesson-quiz">
-            <span className="eyebrow">A LITTLE CHECK-IN</span>
-            <h2>理解了吗？试着回答一下</h2>
-            <p>{lesson.quiz.question}</p>
-            <div className="quiz-options">
-              {lesson.quiz.options.map((option, i) => (
-                <button
-                  className={answer === i ? (correct ? 'correct' : 'incorrect') : ''}
-                  key={option}
-                  onClick={() => setAnswer(i)}
-                  disabled={correct}
-                >
-                  <span>{String.fromCharCode(65 + i)}</span>
-                  {option}
-                  {answer === i && correct && <Check size={16} />}
-                </button>
-              ))}
-            </div>
-            {answer !== null && (
-              <div className={`quiz-feedback ${correct ? 'success' : 'retry'}`} role="status">
-                <strong>{correct ? '答对了！' : '再想一想，可以重新选择。'}</strong>
-                <p>{lesson.quiz.explanation}</p>
-              </div>
-            )}
-          </section>
+          <QuizBlock
+            questions={questions}
+            answers={answers}
+            onChoose={(question, option) =>
+              setAnswers(previous => previous.map((value, i) => (i === question ? option : value)))
+            }
+          />
           <div className="lesson-actions">
-            <button
-              className="text-button"
-              onClick={() => go(index > 0 ? `/lesson/${course.lessons[index - 1].id}` : `/courses/${course.id}`)}
-            >
+            <button className="text-button" onClick={() => go(index > 0 ? `/lesson/${sequence[index - 1].id}` : home)}>
               <ArrowLeft size={15} />
-              {index > 0 ? '上一课' : '课程目录'}
+              {index > 0 ? '上一课' : core ? '学习路线' : '课程目录'}
             </button>
-            <button className="button primary" disabled={!correct} onClick={finish}>
-              {index < course.lessons.length - 1 ? '完成本课，继续下一课' : '完成这条入门路线'}
+            <button className="button primary" disabled={!solved} onClick={finish}>
+              {index < sequence.length - 1
+                ? '完成本课，继续下一课'
+                : testPending
+                  ? '完成本课，去做阶段测验'
+                  : core
+                    ? '完成本课，回到学习路线'
+                    : '完成这条入门路线'}
               <ArrowRight size={16} />
             </button>
           </div>
-          {!correct && <p className="quiz-hint">答对上方小问题后，就可以完成这一课。</p>}
+          {!solved && (
+            <p className="quiz-hint">
+              {lesson.more?.length ? '答对上方全部问题后，就可以完成这一课。' : '答对上方小问题后，就可以完成这一课。'}
+            </p>
+          )}
         </LoadBoundary>
       </article>
     </Dialog>

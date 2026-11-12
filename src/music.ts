@@ -35,18 +35,24 @@ export function chordVoicing(name: string) {
 export function theoryChord(name: string) {
   return Chord.get(name).notes.map(note => `${note}4`);
 }
-export const intervals = [
+export const allIntervals = [
   { id: '2M', title: '大二度', semitones: 2 },
+  { id: '3m', title: '小三度', semitones: 3 },
   { id: '3M', title: '大三度', semitones: 4 },
+  { id: '4P', title: '纯四度', semitones: 5 },
   { id: '5P', title: '纯五度', semitones: 7 },
   { id: '8P', title: '纯八度', semitones: 12 },
 ];
+/** The four intervals of the default practice set. */
+export const intervals = allIntervals.filter(item => ['2M', '3M', '5P', '8P'].includes(item.id));
+export const intervalSet = (ids?: string[]) =>
+  ids?.length ? allIntervals.filter(item => ids.includes(item.id)) : intervals;
 export interface EarQuestion {
   interval: (typeof intervals)[number];
   notes: string[];
 }
-export function earQuestion(random = Math.random): EarQuestion {
-  const interval = intervals[Math.min(3, Math.floor(random() * intervals.length))];
+export function earQuestion(random = Math.random, pool = intervals): EarQuestion {
+  const interval = pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
   const root = ['C4', 'D4', 'F4', 'G4'][Math.min(3, Math.floor(random() * 4))];
   return { interval, notes: [root, Note.transpose(root, interval.id)] };
 }

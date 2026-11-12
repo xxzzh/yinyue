@@ -1,4 +1,5 @@
 import { instrumentCourses } from './instrument-courses.ts';
+import { coreL0Lessons, coreL1Lessons, coreLessonExtras, earCourseOrder, theoryCourseOrder } from './core-lessons.ts';
 import { traditionalCourses } from './traditional-courses.ts';
 import { worldCourses } from './world-courses.ts';
 import type { WorldTrack } from './world-catalog.ts';
@@ -29,8 +30,35 @@ export type Widget =
   | 'sing'
   | 'instrument'
   | 'drums'
-  | 'discovery';
+  | 'discovery'
+  | 'jianpu'
+  | 'listen';
 export type CourseFamily = 'foundation' | 'keyboard' | 'plucked' | 'bowed' | 'wind' | 'percussion' | 'other';
+export interface QuizItem {
+  question: string;
+  options: string[];
+  answer: number;
+  explanation: string;
+  /** A sound to play before answering (sequence format in jianpu.ts), for listening questions. */
+  listen?: string;
+}
+/** A melody in numbered notation (format in jianpu.ts), shown as 简谱, staff or both, with playback. */
+export interface JianpuExample {
+  title: string;
+  score: string;
+  view?: 'jianpu' | 'staff' | 'both';
+  tempo?: number;
+  note?: string;
+}
+/** A labelled sound example (sequence format in jianpu.ts). */
+export interface ListenClip {
+  label: string;
+  seq: string;
+  tempo?: number;
+  click?: boolean;
+  instrument?: 'piano' | 'guitar';
+  note?: string;
+}
 export interface Lesson {
   id: string;
   title: string;
@@ -39,8 +67,16 @@ export interface Lesson {
   sections: { title: string; body: string }[];
   takeaway: string;
   widget: Widget;
-  activity?: { title: string; steps: { task: string; hint: string }[] };
-  quiz: { question: string; options: string[]; answer: number; explanation: string };
+  activity?: { title: string; intro?: string; steps: { task: string; hint: string }[] };
+  quiz: QuizItem;
+  /** Further questions; the lesson is complete when every question is answered correctly. */
+  more?: QuizItem[];
+  jianpu?: JianpuExample[];
+  listen?: ListenClip[];
+  /** Beats per bar for the metronome widget. */
+  meter?: number;
+  /** Interval ids (music.ts) offered by the interval widget. */
+  intervals?: string[];
 }
 export interface Course {
   id: Track;
@@ -211,6 +247,10 @@ export const courses: Course[] = [
           {
             title: '听完再选择，允许多听几次',
             body: '先播放题目，在脑中保留第一个音，再听第二个音的距离。听音练习会变化起始音，帮助你学习距离，而不是只记住某两个固定音。答错后对照解释，再听一次。',
+          },
+          {
+            title: '再加两种：小三度与纯四度',
+            body: 'C 到 E♭ 是小三度（3 个半音），比大三度少一个半音，听起来更暗一些；C 到 F 是纯四度（5 个半音）。本课的听辨练习加入了这两种，一共六种音程。',
           },
         ],
         takeaway: '从少量音程开始，听熟之后再增加种类。',
@@ -499,6 +539,21 @@ for (const course of courses) {
     course.aliases = [...traditional.aliases];
   }
 }
+
+// Main-line lessons: the theory and ear courses list them in graded-path order (core-lessons.ts).
+const coreById = new Map(
+  [
+    ...coreL0Lessons,
+    ...coreL1Lessons,
+    ...courses.flatMap(course => (course.id === 'theory' || course.id === 'ear' ? course.lessons : [])),
+  ].map(lesson => [lesson.id, lesson]),
+);
+for (const [id, order] of [
+  ['theory', theoryCourseOrder],
+  ['ear', earCourseOrder],
+] as const)
+  courses.find(course => course.id === id)!.lessons = order.map(lessonId => coreById.get(lessonId)!);
+for (const [id, extra] of Object.entries(coreLessonExtras)) Object.assign(coreById.get(id)!, extra);
 
 export const courseFamilies = [
   { id: 'all', tag: '全部课程' },
