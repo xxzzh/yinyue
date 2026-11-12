@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   Cable,
   Circle,
@@ -14,7 +15,27 @@ import {
   Volume2,
 } from 'lucide-react';
 import { Note } from 'tonal';
-import type { JianpuExample, ListenClip, PitchTask, PlayTarget, RecordTask, TabExample } from './data';
+import type {
+  DictationTask,
+  JianpuExample,
+  ListenClip,
+  PitchTask,
+  PlayTarget,
+  ProgressionTask,
+  RecordTask,
+  TabExample,
+} from './data';
+import {
+  circleOfFifths,
+  degreeChords,
+  degreeOrder,
+  majorScaleSequence,
+  prettyAccidentals,
+  progressionQuestion,
+} from './harmony';
+import type { Degree } from './harmony';
+import { beatCells, countIn, melodyQuestion, rhythmQuestion, rhythmScore } from './dictation';
+import type { BeatCell } from './dictation';
 import { detectPitch, matchesTarget, nearestNote } from './pitch';
 import type { NoteReading } from './pitch';
 import { parseTab, tabEvents } from './tab';
@@ -90,6 +111,31 @@ function usePlayer() {
 
 const accidentalMark = (value: number) => (value > 0 ? '♯' : value < 0 ? '♭' : '');
 
+/** Renders a bar's tokens, grouping the notes of each triplet under a bracket marked 3. */
+function wrapTriplets(
+  tokens: { token: JianpuToken; index: number }[],
+  render: (item: { token: JianpuToken; index: number }) => ReactNode,
+) {
+  const out: ReactNode[] = [];
+  let group: ReactNode[] | undefined;
+  for (const item of tokens) {
+    const tuplet = item.token.kind === 'note' || item.token.kind === 'rest' ? item.token.tuplet : undefined;
+    const node = render(item);
+    if (tuplet === 'start') group = [node];
+    else if (group && tuplet) group.push(node);
+    else out.push(node);
+    if (group && tuplet === 'stop') {
+      out.push(
+        <span className="jp-tuplet" key={`t${item.index}`}>
+          {group}
+        </span>,
+      );
+      group = undefined;
+    }
+  }
+  return out;
+}
+
 function JianpuLine({ score, active }: { score: Jianpu; active: number }) {
   const groups: { tokens: { token: JianpuToken; index: number }[]; bar?: JianpuToken }[] = [{ tokens: [] }];
   score.tokens.forEach((token, index) => {
@@ -106,7 +152,7 @@ function JianpuLine({ score, active }: { score: Jianpu; active: number }) {
         let previousLines = 0;
         return (
           <span className="jp-measure" key={g}>
-            {group.tokens.map(({ token, index }) => {
+            {wrapTriplets(group.tokens, ({ token, index }) => {
               if (token.kind === 'dash') {
                 position += 1;
                 previousLines = 0;
@@ -118,8 +164,8 @@ function JianpuLine({ score, active }: { score: Jianpu; active: number }) {
               }
               const note = token as JianpuNote;
               // Underlines of neighbouring short notes join, except where a new beat starts.
-              const breakBeam = note.lines > 0 && previousLines > 0 && Number.isInteger(position);
-              position += (1 / 2 ** note.lines) * (note.dot ? 1.5 : 1);
+              const breakBeam = note.lines > 0 && previousLines > 0 && Math.abs(position - Math.round(position)) < 1e-6;
+              position += (1 / 2 ** note.lines) * (note.dot ? 1.5 : 1) * (note.tuplet ? 2 / 3 : 1);
               previousLines = note.lines;
               return (
                 <span
@@ -986,6 +1032,403 @@ export function RecordWidget({ task }: { task: RecordTask }) {
       <p className="muted fineprint">
         录音只保存在当前页面，不会上传；刷新或离开本课后自动清除。多录几遍、对比着听，比只录一遍更有收获。
       </p>
+    </div>
+  );
+}
+
+const degreeButtons = ['1', '2', '3', '4', '5', '6', '7'];
+
+/**
+ * Rhythm or melody dictation. The question plays after a count-in bar with clicks and can be replayed;
+ * the learner builds the answer from beat patterns (rhythm) or scale degrees with the rhythm given (melody).
+ */
+export function DictationWidget({ task }: { task: DictationTask }) {
+  const { exercise } = useLearning();
+  const player = usePlayer();
+  const meter = task.meter ?? 4;
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 100000));
+  const [cells, setCells] = useState<BeatCell[]>([]);
+  const [degrees, setDegrees] = useState<string[]>([]);
+  const [octave, setOctave] = useState(0);
+  const [checked, setChecked] = useState(false);
+  const [score, setScore] = useState({ right: 0, total: 0 });
+  const rhythm = task.kind === 'rhythm';
+  const question = rhythm
+    ? rhythmQuestion(seed, { meter, bars: task.bars, cells: task.cells })
+    : melodyQuestion(seed, { meter, bars: task.bars, range: task.range, leaps: task.leaps, eighths: task.eighths });
+  const target = question.score;
+  const answerLength = rhythm ? question.answer.length : (question.answer as string[]).length;
+  const filled = rhythm ? cells.length : degrees.length;
+  const correct = rhythm
+    ? cells.every((cell, i) => cell === question.answer[i]) && cells.length === answerLength
+    : degrees.every((degree, i) => degree === question.answer[i]) && degrees.length === answerLength;
+  function play() {
+    if (player.playing === 'dictation') {
+      player.halt();
+      return;
+    }
+    const lead = jianpuEvents(parseJianpu(countIn(meter)));
+    const body = jianpuEvents(parseJianpu(target));
+    player.start('dictation', [...lead, ...body], task.tempo ?? 72, { click: true });
+  }
+  function next() {
+    player.halt();
+    setSeed(value => value + 1);
+    setCells([]);
+    setDegrees([]);
+    setChecked(false);
+  }
+  function check() {
+    setChecked(true);
+    setScore(value => ({ right: value.right + (correct ? 1 : 0), total: value.total + 1 }));
+    if (correct) exercise();
+  }
+  // Rhythm: a held beat may only follow a sounding quarter or another held beat within the bar.
+  const allowed = (cell: BeatCell) => {
+    if (cell !== 'hold') return true;
+    const previous = cells[cells.length - 1];
+    return cells.length % meter !== 0 && (previous === 'q' || previous === 'hold');
+  };
+  const melodySlots = rhythm
+    ? []
+    : parseJianpu(target)
+        .tokens.filter(token => token.kind === 'note')
+        .map((_, i) => degrees[i] ?? '?');
+  return (
+    <div className="dictation-widget">
+      <div className="jp-head">
+        <div>
+          <strong>
+            {rhythm ? '节奏听写' : '旋律听写'} · 第 {seed % 1000} 题
+          </strong>
+          <span>
+            {meter}/4 拍，{task.bars ?? 2} 小节。先听一小节预备拍，再听题目；可以反复听。
+            {score.total ? ` 本次答对 ${score.right} / ${score.total}` : ''}
+          </span>
+        </div>
+        <div className="jp-actions">
+          {!rhythm && (
+            <button className="text-button" onClick={() => void playNote('C4').catch(() => undefined)}>
+              <Volume2 size={14} />
+              do 的音高
+            </button>
+          )}
+          <button className="button primary small" onClick={play}>
+            {player.playing === 'dictation' ? <Square size={14} /> : <Play size={14} />}
+            {player.playing === 'dictation' ? '停止' : '播放题目'}
+          </button>
+        </div>
+      </div>
+      {rhythm ? (
+        <>
+          <div className="dictation-palette" role="group" aria-label="选择一拍的节奏">
+            {beatCells
+              .filter(cell => (task.cells ?? ['q', 'ee', 'r', 'hold']).includes(cell.id))
+              .map(cell => (
+                <button
+                  key={cell.id}
+                  disabled={checked || filled >= answerLength || !allowed(cell.id)}
+                  onClick={() => setCells(list => [...list, cell.id])}
+                  title={cell.label}
+                >
+                  <span className="dictation-cell">{cell.symbol}</span>
+                  <small>{cell.label}</small>
+                </button>
+              ))}
+          </div>
+          <div className="dictation-answer">
+            <span className="muted">
+              你的答案：已填 {filled} / {answerLength} 拍
+            </span>
+            {cells.length > 0 && (
+              <JianpuLine
+                score={parseJianpu(
+                  rhythmScore(
+                    [...cells, ...Array.from({ length: (meter - (cells.length % meter)) % meter }, () => 'r' as const)],
+                    meter,
+                  ),
+                )}
+                active={-1}
+              />
+            )}
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="dictation-slots" aria-label="你的答案">
+            {melodySlots.map((value, i) => (
+              <span
+                key={i}
+                className={
+                  checked ? (value === question.answer[i] ? 'right' : 'wrong') : i === degrees.length ? 'current' : ''
+                }
+              >
+                {value.replace(/'/g, '·').replace(/,/g, '̣')}
+              </span>
+            ))}
+          </div>
+          <div className="dictation-palette" role="group" aria-label="选择音级">
+            <div className="segmented" role="group" aria-label="八度">
+              {[
+                [-1, '低音'],
+                [0, '中音'],
+                [1, '高音'],
+              ].map(([value, label]) => (
+                <button
+                  key={label}
+                  className={octave === value ? 'selected' : ''}
+                  onClick={() => setOctave(value as number)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {degreeButtons.map(degree => (
+              <button
+                key={degree}
+                disabled={checked || filled >= answerLength}
+                onClick={() => setDegrees(list => [...list, `${degree}${octave > 0 ? "'" : octave < 0 ? ',' : ''}`])}
+              >
+                <span className="dictation-cell">{degree}</span>
+                <small>{['do', 're', 'mi', 'fa', 'sol', 'la', 'si'][Number(degree) - 1]}</small>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+      <div className="quiz-runner-actions">
+        <button
+          className="text-button"
+          disabled={checked || filled === 0}
+          onClick={() => (rhythm ? setCells(list => list.slice(0, -1)) : setDegrees(list => list.slice(0, -1)))}
+        >
+          <RotateCcw size={14} />
+          退一格
+        </button>
+        {checked ? (
+          <button className="button primary small" onClick={next}>
+            <Shuffle size={14} />
+            下一题
+          </button>
+        ) : (
+          <button className="button primary small" disabled={filled < answerLength} onClick={check}>
+            检查答案
+          </button>
+        )}
+      </div>
+      {checked && (
+        <div className={`quiz-feedback ${correct ? 'success' : 'retry'}`} role="status">
+          <strong>{correct ? '完全正确！' : '有不一样的地方，对照正确答案再听一遍。'}</strong>
+          <JianpuLine score={parseJianpu(target)} active={-1} />
+        </div>
+      )}
+      <p className="muted fineprint">题目由程序随机生成；点“下一题”换新题，答对计为一次练习。</p>
+    </div>
+  );
+}
+
+/**
+ * Chord-progression listening: a progression in C that starts on I plays as piano chords; the learner names
+ * each following chord by its Roman numeral. Single chords can be played for reference.
+ */
+export function ProgressionWidget({ task }: { task: ProgressionTask }) {
+  const { exercise } = useLearning();
+  const player = usePlayer();
+  const pool = task.pool ?? ['I', 'IV', 'V', 'vi'];
+  const [seed, setSeed] = useState(() => Math.floor(Math.random() * 100000));
+  const [chosen, setChosen] = useState<Degree[]>(['I']);
+  const [checked, setChecked] = useState(false);
+  const [score, setScore] = useState({ right: 0, total: 0 });
+  const question = progressionQuestion(seed, { pool, length: task.length });
+  const length = question.answer.length;
+  const correct = chosen.length === length && chosen.every((degree, i) => degree === question.answer[i]);
+  const tempo = task.tempo ?? 80;
+  function play(id: string, seq: string) {
+    if (player.playing === id) player.halt();
+    else player.start(id, parseSequence(seq), tempo);
+  }
+  function check() {
+    setChecked(true);
+    setScore(value => ({ right: value.right + (correct ? 1 : 0), total: value.total + 1 }));
+    if (correct) exercise();
+  }
+  function next() {
+    player.halt();
+    setSeed(value => value + 1);
+    setChosen(['I']);
+    setChecked(false);
+  }
+  return (
+    <div className="dictation-widget">
+      <div className="jp-head">
+        <div>
+          <strong>和弦进行听辨 · 第 {seed % 1000} 题</strong>
+          <span>
+            C 大调，{length} 个和弦，第一个是 I。听出后面每个和弦的级数。
+            {score.total ? ` 本次答对 ${score.right} / ${score.total}` : ''}
+          </span>
+        </div>
+        <div className="jp-actions">
+          <button className="button primary small" onClick={() => play('progression', question.seq)}>
+            {player.playing === 'progression' ? <Square size={14} /> : <Play size={14} />}
+            {player.playing === 'progression' ? '停止' : '播放进行'}
+          </button>
+        </div>
+      </div>
+      <div className="dictation-slots" aria-label="你的答案">
+        {question.answer.map((degree, i) => (
+          <span
+            key={i}
+            className={checked ? (chosen[i] === degree ? 'right' : 'wrong') : i === chosen.length ? 'current' : ''}
+          >
+            {chosen[i] ?? '?'}
+          </span>
+        ))}
+      </div>
+      <div className="dictation-palette" role="group" aria-label="选择和弦级数">
+        {degreeOrder
+          .filter(degree => pool.includes(degree))
+          .map(degree => (
+            <button
+              key={degree}
+              disabled={checked || chosen.length >= length}
+              onClick={() => setChosen(list => [...list, degree])}
+            >
+              <span className="dictation-cell">{degree}</span>
+              <small>{degreeChords[degree].name}</small>
+            </button>
+          ))}
+      </div>
+      <div className="progression-reference">
+        <span className="muted">单独听：</span>
+        {degreeOrder
+          .filter(degree => pool.includes(degree))
+          .map(degree => (
+            <button
+              key={degree}
+              className="text-button"
+              onClick={() => play(`chord-${degree}`, `${degreeChords[degree].notes.join('+')}:2`)}
+            >
+              <Volume2 size={13} />
+              {degree}
+            </button>
+          ))}
+      </div>
+      <div className="quiz-runner-actions">
+        <button
+          className="text-button"
+          disabled={checked || chosen.length <= 1}
+          onClick={() => setChosen(list => list.slice(0, -1))}
+        >
+          <RotateCcw size={14} />
+          退一格
+        </button>
+        {checked ? (
+          <button className="button primary small" onClick={next}>
+            <Shuffle size={14} />
+            下一题
+          </button>
+        ) : (
+          <button className="button primary small" disabled={chosen.length < length} onClick={check}>
+            检查答案
+          </button>
+        )}
+      </div>
+      {checked && (
+        <div className={`quiz-feedback ${correct ? 'success' : 'retry'}`} role="status">
+          <strong>{correct ? '完全正确！' : '有不一样的地方，再听一遍对照。'}</strong>
+          <span>
+            正确答案：{question.answer.join(' – ')}（
+            {question.answer.map(degree => degreeChords[degree].name).join(' – ')}）
+          </span>
+        </div>
+      )}
+      <p className="muted fineprint">
+        先听低音走向，再听和弦明暗：I、IV、V 是大三和弦，ii、iii、vi 是小三和弦。答对计为一次练习。
+      </p>
+    </div>
+  );
+}
+
+/** The circle of fifths: pick a key to see its signature and relative minor, and hear its scale. */
+export function CircleOfFifthsWidget() {
+  const player = usePlayer();
+  const [selected, setSelected] = useState(1);
+  const key = circleOfFifths[selected];
+  const size = 300;
+  const center = size / 2;
+  const at = (index: number, radius: number) => {
+    const angle = (index / 12) * 2 * Math.PI - Math.PI / 2;
+    return [center + radius * Math.cos(angle), center + radius * Math.sin(angle)];
+  };
+  const describe = (count: number, accidentals: string[]) =>
+    count === 0
+      ? '没有升降号'
+      : `${Math.abs(count)} 个${count > 0 ? '升' : '降'}号：${accidentals.map(prettyAccidentals).join(' ')}`;
+  return (
+    <div className="dictation-widget circle-widget">
+      <svg viewBox={`0 0 ${size} ${size}`} role="group" aria-label="五度圈">
+        <circle cx={center} cy={center} r={136} className="circle-ring" />
+        <circle cx={center} cy={center} r={78} className="circle-ring inner" />
+        {circleOfFifths.map((item, i) => {
+          const [x, y] = at(i, 112);
+          const [mx, my] = at(i, 60);
+          return (
+            <g
+              key={item.major}
+              className={`circle-key${i === selected ? ' selected' : ''}`}
+              onClick={() => setSelected(i)}
+              role="button"
+              tabIndex={0}
+              aria-label={`${prettyAccidentals(item.major)} 大调`}
+              onKeyDown={event => {
+                if (event.key === 'Enter' || event.key === ' ') setSelected(i);
+              }}
+            >
+              <circle cx={x} cy={y} r={21} />
+              <text x={x} y={y + 1} className="major">
+                {prettyAccidentals(item.major)}
+                {item.enharmonic ? `/${prettyAccidentals(item.enharmonic.major)}` : ''}
+              </text>
+              <text x={mx} y={my + 1} className="minor">
+                {prettyAccidentals(item.minor)}
+              </text>
+            </g>
+          );
+        })}
+        <text x={center} y={center - 4} className="circle-center">
+          顺时针
+        </text>
+        <text x={center} y={center + 12} className="circle-center">
+          上行纯五度
+        </text>
+      </svg>
+      <div className="circle-info">
+        <strong>
+          {prettyAccidentals(key.major)} 大调 · 关系小调 {prettyAccidentals(key.minor)} 小调
+        </strong>
+        <p>{describe(key.count, key.accidentals)}</p>
+        {key.enharmonic && (
+          <p>
+            同一位置也可以写成 {prettyAccidentals(key.enharmonic.major)} 大调（{prettyAccidentals(key.enharmonic.minor)}{' '}
+            小调），{describe(key.enharmonic.count, key.enharmonic.accidentals)}。
+          </p>
+        )}
+        <button
+          className="button primary small"
+          onClick={() =>
+            player.playing === 'circle-scale'
+              ? player.halt()
+              : player.start('circle-scale', parseSequence(majorScaleSequence(key.major)), 96)
+          }
+        >
+          {player.playing === 'circle-scale' ? <Square size={14} /> : <Play size={14} />}
+          {player.playing === 'circle-scale' ? '停止' : `听 ${prettyAccidentals(key.major)} 大调音阶`}
+        </button>
+        <p className="muted fineprint">
+          外圈是大调，内圈是同一调号的关系小调。顺时针每走一格多一个升号（或少一个降号），逆时针每走一格多一个降号。
+        </p>
+      </div>
     </div>
   );
 }

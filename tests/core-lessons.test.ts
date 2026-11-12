@@ -2,6 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { findCourse, findLesson } from '../src/data.ts';
 import { coreL0Lessons, coreL1Lessons, coreLessonExtras } from '../src/core-lessons.ts';
+import { coreL2Lessons } from '../src/core-l2-lessons.ts';
+import { coreL3Lessons } from '../src/core-l3-lessons.ts';
+import { circleOfFifths, degreeChords, majorScaleSequence, progressionQuestion } from '../src/harmony.ts';
+import { parseTab, tabEvents } from '../src/tab.ts';
+import { beatCells, melodyQuestion, rhythmQuestion, rhythmScore } from '../src/dictation.ts';
 import { publishedLessons } from '../src/curriculum.ts';
 import {
   barBeats,
@@ -15,8 +20,9 @@ import {
 } from '../src/jianpu.ts';
 import type { JianpuNote } from '../src/jianpu.ts';
 import { allIntervals, earQuestion, intervalSet } from '../src/music.ts';
+import { Note } from 'tonal';
 
-const mainLine = [...publishedLessons('core', 0), ...publishedLessons('core', 1)].map(id => findLesson(id)!);
+const mainLine = ([0, 1, 2, 3] as const).flatMap(stage => publishedLessons('core', stage)).map(id => findLesson(id)!);
 
 test('jianpu parses pitch, octave dots, lengths, ties and repeats', () => {
   const g = parseJianpu("1=G 4/4 | 1 2 3 4 | 5 6 7 1' ||");
@@ -64,7 +70,7 @@ test('interval sets add minor third and perfect fourth without changing the defa
     intervalSet().map(item => item.id),
     ['2M', '3M', '5P', '8P'],
   );
-  assert.equal(allIntervals.length, 6);
+  assert.equal(allIntervals.length, 12);
   const pool = intervalSet(['3m', '4P']);
   assert.deepEqual(
     [earQuestion(() => 0, pool).notes, earQuestion(() => 0.99, pool).interval.id],
@@ -72,10 +78,12 @@ test('interval sets add minor third and perfect fourth without changing the defa
   );
 });
 
-test('main-line L0 and L1 lessons are complete, checkable and playable', () => {
+test('main-line L0–L3 lessons are complete, checkable and playable', () => {
   assert.equal(coreL0Lessons.length + coreL1Lessons.length, 35);
-  assert.equal(mainLine.length, 43);
-  assert.equal(findCourse('ear')!.lessons.length + findCourse('theory')!.lessons.length, 43);
+  assert.equal(coreL2Lessons.length, 40);
+  assert.equal(coreL3Lessons.length, 40);
+  assert.equal(mainLine.length, 123);
+  assert.equal(findCourse('ear')!.lessons.length + findCourse('theory')!.lessons.length, 123);
   const answerSlots = new Set<number>();
   for (const lesson of mainLine) {
     assert.ok(lesson, 'lesson exists');
@@ -116,8 +124,176 @@ test('main-line L0 and L1 lessons are complete, checkable and playable', () => {
       }
     }
     if (lesson.widget === 'interval' && lesson.intervals) assert.ok(intervalSet(lesson.intervals).length >= 4);
+    if (lesson.widget === 'dictation') assert.ok(lesson.dictation, lesson.id);
+    if (lesson.widget === 'progression') assert.ok(lesson.progression?.pool?.includes('V'), lesson.id);
+    if (lesson.widget === 'tab') {
+      assert.ok(lesson.tab?.length, lesson.id);
+      for (const example of lesson.tab!) assert.ok(tabEvents(parseTab(example.score)).length > 0, example.title);
+    }
+    if (lesson.widget === 'sight') assert.ok(lesson.sight, lesson.id);
+    if (lesson.widget === 'discovery') assert.ok(lesson.activity?.steps.length, lesson.id);
   }
   assert.ok(answerSlots.size >= 3, 'answers are not always in the same position');
   for (const id of Object.keys(coreLessonExtras)) assert.ok((findLesson(id)!.more ?? []).length >= 2, id);
   assert.deepEqual(findLesson('ear-2')!.intervals, ['2M', '3m', '3M', '4P', '5P', '8P']);
+});
+
+test('L2 and L3 lessons sit in the right course and the ear course covers dictation and all intervals', () => {
+  const ear = findCourse('ear')!.lessons.map(lesson => lesson.id);
+  const theory = findCourse('theory')!.lessons.map(lesson => lesson.id);
+  for (const id of [...publishedLessons('core', 2), ...publishedLessons('core', 3)]) {
+    const listening = id.startsWith('rh') || id.startsWith('ea');
+    assert.ok((listening ? ear : theory).includes(id), id);
+  }
+  assert.deepEqual(
+    intervalSet(findLesson('ea2-25')!.intervals).map(item => item.id),
+    allIntervals.map(item => item.id),
+  );
+  assert.equal(findLesson('ea2-25')!.intervalsMixed, true);
+  assert.equal(findLesson('ea2-29')!.dictation!.kind, 'rhythm');
+  assert.equal(findLesson('ea2-30')!.dictation!.kind, 'melody');
+});
+
+test('mixed interval questions sometimes play downward', () => {
+  let calls = 0;
+  const random = () => [0, 0, 0.9, 0.2][calls++ % 4];
+  const up = earQuestion(random, intervalSet(['5P']), true);
+  const down = earQuestion(random, intervalSet(['5P']), true);
+  assert.deepEqual(
+    [up.notes, down.notes],
+    [
+      ['C4', 'G4'],
+      ['G4', 'C4'],
+    ],
+  );
+});
+
+test('rhythm dictation questions fill every bar and can be written in 简谱', () => {
+  const all = beatCells.map(cell => cell.id);
+  for (let seed = 1; seed <= 200; seed++)
+    for (const meter of [2, 3, 4] as const) {
+      const { answer, score } = rhythmQuestion(seed, { meter, bars: 2, cells: all });
+      assert.equal(answer.length, meter * 2);
+      assert.notEqual(answer[answer.length - 1], 'r', `seed ${seed}`);
+      answer.forEach((cell, i) => {
+        if (cell === 'hold') {
+          assert.ok(i % meter !== 0, `seed ${seed}: hold at a bar start`);
+          assert.ok(['q', 'hold'].includes(answer[i - 1]), `seed ${seed}: hold after ${answer[i - 1]}`);
+        }
+      });
+      const parsed = parseJianpu(score);
+      assert.deepEqual(measures(parsed).map(measureBeats), [meter, meter], `seed ${seed}: ${score}`);
+    }
+  assert.equal(rhythmScore(['es', 'q', 'hold', 'r'], 4), '1=C 4/4 | 5._ 5__ 5 - 0 ||');
+  assert.deepEqual(rhythmQuestion(7), rhythmQuestion(7));
+});
+
+test('melody dictation questions start on do, mi or sol, end on do and match their notes', () => {
+  for (let seed = 1; seed <= 200; seed++) {
+    const { answer, score, events } = melodyQuestion(seed, { range: [0, 4] });
+    assert.ok(['1', '3', '5'].includes(answer[0]), `seed ${seed}: starts on ${answer[0]}`);
+    assert.equal(answer[answer.length - 1], '1', `seed ${seed}`);
+    assert.equal(events.filter(event => event.notes.length).length, answer.length);
+    assert.ok(
+      answer.every(degree => /^[1-5]$/.test(degree)),
+      `seed ${seed}: ${answer.join(' ')}`,
+    );
+    assert.deepEqual(measures(parseJianpu(score)).map(measureBeats), [4, 4]);
+  }
+  const wide = melodyQuestion(3, { range: [-3, 5] });
+  assert.ok(
+    wide.answer.every(degree => /^[1-7][',]?$/.test(degree)),
+    wide.answer.join(' '),
+  );
+});
+
+test('triplets in 简谱 take two thirds of their length and get tuplet marks on the staff', () => {
+  const score = parseJianpu('1=C 2/4 | {1_ 2_ 3_} 5 | {5 3_} 1 | {1__ 2__ 3__} {4__ 5__ 6__} 5 ||');
+  assert.deepEqual(measures(score).map(measureBeats), [2, 2, 2]);
+  const notes = score.tokens.filter((token): token is JianpuNote => token.kind === 'note');
+  assert.deepEqual(
+    notes.slice(0, 3).map(note => note.tuplet),
+    ['start', 'middle', 'stop'],
+  );
+  const xml = jianpuToMusicXml(score);
+  assert.match(xml, /<divisions>12<\/divisions>/);
+  assert.match(xml, /<duration>4<\/duration><type>eighth<\/type><time-modification>/);
+  assert.match(xml, /<duration>8<\/duration><type>quarter<\/type><time-modification>/);
+  assert.equal(xml.match(/<tuplet type="start" bracket="yes"\/>/g)?.length, 4);
+  // Scores without triplets keep sixteenth-note divisions.
+  assert.match(jianpuToMusicXml(parseJianpu('1=C 4/4 | 1 2 3 4 ||')), /<divisions>4<\/divisions>/);
+  assert.match(
+    jianpuToMusicXml(parseJianpu('1=C 4/4 | 1 2 3 4 ||'), '', { clef: 'alto' }),
+    /<sign>C<\/sign><line>3<\/line>/,
+  );
+  for (const bad of ['1=C 2/4 | {1_ 2_', '1=C 2/4 | 1_ 2_}', '{1_ {2_ 3_}', '{1 - 2}', '{x_ 1_ 2_}'])
+    assert.throws(() => parseJianpu(bad), bad);
+  assert.deepEqual(
+    parseSequence('C4:1/3 D4:2/3').map(event => event.beats),
+    [1 / 3, 2 / 3],
+  );
+  assert.throws(() => parseSequence('C4:1/0'));
+});
+
+test('chord-progression questions start on I, never repeat a chord and stay in the pool', () => {
+  for (let seed = 1; seed <= 200; seed++) {
+    const { answer, seq } = progressionQuestion(seed, { pool: ['I', 'ii', 'IV', 'V', 'vi'] });
+    assert.equal(answer[0], 'I');
+    assert.equal(answer.length, 4);
+    answer.forEach((degree, i) => {
+      assert.ok(['I', 'ii', 'IV', 'V', 'vi'].includes(degree), degree);
+      if (i) assert.notEqual(degree, answer[i - 1], `seed ${seed}`);
+    });
+    assert.equal(parseSequence(seq).length, 4);
+  }
+  assert.deepEqual(progressionQuestion(9), progressionQuestion(9));
+  // Voicings hold the right chord tones.
+  assert.deepEqual(
+    degreeChords.vi.notes.map(note => note.slice(0, -1)),
+    ['A', 'C', 'E', 'A'],
+  );
+});
+
+test('the circle of fifths lists every key signature with its relative minor', () => {
+  assert.equal(circleOfFifths.length, 12);
+  const key = (major: string) => circleOfFifths.find(item => item.major === major)!;
+  assert.deepEqual([key('A').minor, key('A').count, key('A').accidentals], ['f#', 3, ['F#', 'C#', 'G#']]);
+  assert.deepEqual([key('Eb').minor, key('Eb').count, key('Eb').accidentals], ['c', -3, ['Bb', 'Eb', 'Ab']]);
+  assert.deepEqual(key('F#').enharmonic, {
+    major: 'Gb',
+    minor: 'eb',
+    count: -6,
+    accidentals: ['Bb', 'Eb', 'Ab', 'Db', 'Gb', 'Cb'],
+  });
+  // Each step clockwise is a perfect fifth up.
+  circleOfFifths.forEach((item, i) => {
+    const next = circleOfFifths[(i + 1) % 12];
+    assert.equal((Note.chroma(next.major)! - Note.chroma(item.major)! + 12) % 12, 7, `${item.major} → ${next.major}`);
+  });
+  assert.equal(majorScaleSequence('D'), 'D4 E4 F#4 G4 A4 B4 C#5 D5:2');
+  for (const item of circleOfFifths) assert.equal(parseSequence(majorScaleSequence(item.major)).length, 8);
+});
+
+test('rhythm dictation can ask triplets and syncopation; melody dictation can leap', () => {
+  const cells = ['q', 'ee', 'es', 'ses', 'trip', 'r', 'hold'] as const;
+  let triplets = 0;
+  for (let seed = 1; seed <= 200; seed++) {
+    const { answer, score } = rhythmQuestion(seed, { meter: 4, bars: 2, cells: [...cells] });
+    triplets += answer.filter(cell => cell === 'trip').length;
+    assert.deepEqual(measures(parseJianpu(score)).map(measureBeats), [4, 4], score);
+  }
+  assert.ok(triplets > 0);
+  let leaps = 0;
+  for (let seed = 1; seed <= 200; seed++) {
+    const { answer, score } = melodyQuestion(seed, { bars: 4, range: [-3, 7], leaps: true });
+    const pitches = jianpuEvents(parseJianpu(score)).map(event => Note.midi(event.notes[0])!);
+    pitches.forEach((pitch, i) => {
+      if (i && Math.abs(pitch - pitches[i - 1]) >= 5) leaps++;
+      assert.ok(pitch >= Note.midi('G3')! && pitch <= Note.midi('C5')!, `seed ${seed}: ${score}`);
+    });
+    assert.equal(answer[answer.length - 1], '1');
+  }
+  assert.ok(leaps > 50, `${leaps} leaps`);
+  // Without leaps the melody is unchanged from before (seeded sight-reading stays stable).
+  assert.equal(melodyQuestion(5).score, melodyQuestion(5, { leaps: false }).score);
 });

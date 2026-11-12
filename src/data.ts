@@ -1,5 +1,7 @@
 import { instrumentCourses } from './instrument-courses.ts';
 import { coreL0Lessons, coreL1Lessons, coreLessonExtras, earCourseOrder, theoryCourseOrder } from './core-lessons.ts';
+import { coreL2Lessons, earCourseOrderL2, theoryCourseOrderL2 } from './core-l2-lessons.ts';
+import { coreL3Lessons, earCourseOrderL3, theoryCourseOrderL3 } from './core-l3-lessons.ts';
 import { traditionalCourses } from './traditional-courses.ts';
 import { worldCourses } from './world-courses.ts';
 import type { WorldTrack } from './world-catalog.ts';
@@ -11,6 +13,8 @@ import { guzhengLessons } from './guzheng-lessons.ts';
 import { koudiLessons } from './koudi-lessons.ts';
 import { instrumentLessonOrder, lineLessons } from './instrument-order.ts';
 import type { SightOptions } from './jianpu.ts';
+import type { BeatCell } from './dictation.ts';
+import type { Degree } from './harmony.ts';
 import type { TraditionalTrack } from './traditional-catalog.ts';
 import { courseFamilies, courseMatches } from './course-meta.ts';
 
@@ -46,7 +50,10 @@ export type Widget =
   | 'sight'
   | 'tab'
   | 'pitch'
-  | 'record';
+  | 'record'
+  | 'dictation'
+  | 'progression'
+  | 'circle';
 export type CourseFamily = 'foundation' | 'keyboard' | 'plucked' | 'bowed' | 'wind' | 'percussion' | 'other';
 export interface QuizItem {
   question: string;
@@ -62,7 +69,7 @@ export interface JianpuExample {
   score: string;
   /** Left-hand part for a grand staff; bars must line up with `score`. */
   left?: string;
-  clef?: 'treble' | 'bass';
+  clef?: 'treble' | 'bass' | 'alto';
   /** Play octaves away from the written pitch: guitar music sounds an octave lower (-1). */
   playOctave?: number;
   instrument?: 'piano' | 'guitar' | 'wind';
@@ -89,6 +96,26 @@ export interface PitchTask {
   hold?: number;
   instrument?: 'piano' | 'guitar' | 'wind';
   note?: string;
+}
+/** A rhythm or melody dictation exercise (questions generated in dictation.ts). */
+export interface DictationTask {
+  kind: 'rhythm' | 'melody';
+  meter?: 2 | 3 | 4;
+  bars?: number;
+  /** Beat patterns offered for rhythm dictation. */
+  cells?: BeatCell[];
+  /** Scale-degree range for melody dictation (do = 0). */
+  range?: [number, number];
+  tempo?: number;
+  /** Melody dictation: allow leaps of a fourth and a fifth, and eighth notes. */
+  leaps?: boolean;
+  eighths?: boolean;
+}
+/** Chord-progression listening (questions generated in harmony.ts). */
+export interface ProgressionTask {
+  pool?: Degree[];
+  length?: number;
+  tempo?: number;
 }
 /** Record a take and play it back; nothing leaves the page. */
 export interface RecordTask {
@@ -131,11 +158,15 @@ export interface Lesson {
   meter?: number;
   /** Interval ids (music.ts) offered by the interval widget. */
   intervals?: string[];
+  /** Play about half the interval questions downward. */
+  intervalsMixed?: boolean;
   play?: PlayTarget[];
   sight?: SightOptions;
   tab?: TabExample[];
   pitch?: PitchTask;
   record?: RecordTask;
+  dictation?: DictationTask;
+  progression?: ProgressionTask;
   /** Chord names (music.ts) shown by the guitar widget. */
   chords?: string[];
 }
@@ -617,12 +648,14 @@ const coreById = new Map(
   [
     ...coreL0Lessons,
     ...coreL1Lessons,
+    ...coreL2Lessons,
+    ...coreL3Lessons,
     ...courses.flatMap(course => (course.id === 'theory' || course.id === 'ear' ? course.lessons : [])),
   ].map(lesson => [lesson.id, lesson]),
 );
 for (const [id, order] of [
-  ['theory', theoryCourseOrder],
-  ['ear', earCourseOrder],
+  ['theory', [...theoryCourseOrder, ...theoryCourseOrderL2, ...theoryCourseOrderL3]],
+  ['ear', [...earCourseOrder, ...earCourseOrderL2, ...earCourseOrderL3]],
 ] as const)
   courses.find(course => course.id === id)!.lessons = order.map(lessonId => coreById.get(lessonId)!);
 for (const [id, extra] of Object.entries(coreLessonExtras)) Object.assign(coreById.get(id)!, extra);

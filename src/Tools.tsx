@@ -472,10 +472,18 @@ export function GuitarTool({ compact = false, chords = basicGuitarChords }: { co
   );
 }
 
-export function EarTool({ compact = false, pool }: { compact?: boolean; pool?: string[] }) {
+export function EarTool({
+  compact = false,
+  pool,
+  mixed = false,
+}: {
+  compact?: boolean;
+  pool?: string[];
+  mixed?: boolean;
+}) {
   const { exercise, notify } = useLearning();
   const choices = intervalSet(pool);
-  const [question, setQuestion] = useState(() => earQuestion(Math.random, choices));
+  const [question, setQuestion] = useState(() => earQuestion(Math.random, choices, mixed));
   const [heard, setHeard] = useState(false);
   const [answer, setAnswer] = useState<string | null>(null);
   const [playing, setPlaying] = useState(false);
@@ -565,7 +573,7 @@ export function EarTool({ compact = false, pool }: { compact?: boolean; pool?: s
           <button
             className="text-button"
             onClick={() => {
-              setQuestion(earQuestion(Math.random, choices));
+              setQuestion(earQuestion(Math.random, choices, mixed));
               setHeard(false);
               setAnswer(null);
               setRound(n => n + 1);

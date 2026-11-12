@@ -7,6 +7,7 @@
 //   1' 1''  5, 5,,       octave dots above / below  5_ 5__            one / two underlines (eighth, 16th)
 //   3. 3._               dot after the note         5^                tie to the next note
 //   -                    one more beat (增时线)      | || |: :|         barlines and repeats
+//   {1_ 2_ 3_}           triplet: notes in braces take two thirds of their written length
 import { Note, Scale } from 'tonal';
 
 export interface JianpuNote {
@@ -19,6 +20,8 @@ export interface JianpuNote {
   tie: boolean;
   /** Length in quarter-note beats, including any following dashes. */
   beats: number;
+  /** Part of a triplet ({…}): its first, a middle or its last note. */
+  tuplet?: 'start' | 'middle' | 'stop';
 }
 export type JianpuToken =
   JianpuNote | { kind: 'dash' } | { kind: 'bar'; style: 'single' | 'final' | 'repeat-start' | 'repeat-end' };
@@ -61,7 +64,14 @@ const noteToken = /^([#b]?)([0-7])([',]*)(\.?)(_*)(\.?)(\^?)$/;
 export function parseJianpu(source: string): Jianpu {
   const result: Jianpu = { key: 'C', beats: 4, beatType: 4, tokens: [] };
   let last: JianpuNote | undefined;
-  for (const word of source.trim().split(/\s+/)) {
+  let inTuplet = false;
+  for (const raw of source.trim().split(/\s+/)) {
+    const opens = raw.length > 1 && raw.startsWith('{');
+    const closes = raw.length > 1 && raw.endsWith('}');
+    const word = raw.slice(opens ? 1 : 0, closes ? -1 : undefined);
+    if ((opens || closes) && !noteToken.test(word)) throw new Error(`Unknown jianpu token “${raw}”`);
+    if (opens && inTuplet) throw new Error('Triplets cannot be nested');
+    if (closes && !inTuplet && !opens) throw new Error('A triplet closes without opening');
     const key = /^1=([#b]?)([A-G])([#b]?)$/.exec(word);
     const meter = /^(\d+)\/(\d+)$/.exec(word);
     const note = noteToken.exec(word);
@@ -77,6 +87,7 @@ export function parseJianpu(source: string): Jianpu {
     else if (word === ':|' || word === ':||') result.tokens.push({ kind: 'bar', style: 'repeat-end' });
     else if (word === '-') {
       if (!last) throw new Error('A dash needs a note before it');
+      if (inTuplet) throw new Error('Use note lengths, not dashes, inside a triplet');
       last.beats += 1;
       result.tokens.push({ kind: 'dash' });
     } else if (note) {
@@ -93,9 +104,15 @@ export function parseJianpu(source: string): Jianpu {
         tie: !!tie,
         beats: (1 / 2 ** lines.length) * (dot ? 1.5 : 1),
       };
+      if (opens || inTuplet || closes) {
+        last.beats *= 2 / 3;
+        last.tuplet = opens ? 'start' : closes ? 'stop' : 'middle';
+        inTuplet = !closes;
+      }
       result.tokens.push(last);
     } else throw new Error(`Unknown jianpu token “${word}”`);
   }
+  if (inTuplet) throw new Error('A triplet is not closed');
   return result;
 }
 
@@ -121,7 +138,8 @@ export const measures = (score: Jianpu) => {
   }
   return list.filter(measure => measure.length);
 };
-export const measureBeats = (measure: JianpuNote[]) => measure.reduce((sum, note) => sum + note.beats, 0);
+export const measureBeats = (measure: JianpuNote[]) =>
+  Math.round(measure.reduce((sum, note) => sum + note.beats, 0) * 1e6) / 1e6;
 /** Beats per bar in quarter notes: 3/4 → 3, 6/8 → 3. */
 export const barBeats = (score: Jianpu) => (score.beats * 4) / score.beatType;
 
@@ -190,7 +208,7 @@ function bars(score: Jianpu): Bar[] {
   }
   return list.filter(bar => bar.notes.length);
 }
-function notesXml(score: Jianpu, notes: JianpuNote[], tie: { open: boolean }, staff?: number) {
+function notesXml(score: Jianpu, notes: JianpuNote[], tie: { open: boolean }, divisions: number, staff?: number) {
   const keyAlter = (letter: string) => {
     const spelled = Scale.get(`${score.key} major`).notes.find(name => name[0] === letter)!;
     return Note.get(spelled).alt;
@@ -199,13 +217,23 @@ function notesXml(score: Jianpu, notes: JianpuNote[], tie: { open: boolean }, st
   const staffTag = staff ? `<staff>${staff}</staff>` : '';
   return notes
     .map(note => {
-      const duration = Math.round(note.beats * 4);
-      const value = types[duration];
+      const duration = Math.round(note.beats * divisions);
+      // A triplet note is written with the value it would have outside the triplet.
+      const value = types[Math.round(note.beats * (note.tuplet ? 1.5 : 1) * 4)];
       if (!value) throw new Error(`Duration ${note.beats} has no single note value`);
       const [type, dotted] = value;
       const dot = dotted ? '<dot/>' : '';
+      const modification = note.tuplet
+        ? '<time-modification><actual-notes>3</actual-notes><normal-notes>2</normal-notes></time-modification>'
+        : '';
+      const bracket =
+        note.tuplet === 'start'
+          ? '<tuplet type="start" bracket="yes"/>'
+          : note.tuplet === 'stop'
+            ? '<tuplet type="stop"/>'
+            : '';
       if (note.kind === 'rest')
-        return `<note><rest/><duration>${duration}</duration>${voice}<type>${type}</type>${dot}${staffTag}</note>`;
+        return `<note><rest/><duration>${duration}</duration>${voice}<type>${type}</type>${dot}${modification}${staffTag}${bracket ? `<notations>${bracket}</notations>` : ''}</note>`;
       const pitch = Note.get(jianpuPitch(score, note));
       const alter = pitch.alt;
       const accidental =
@@ -215,21 +243,28 @@ function notesXml(score: Jianpu, notes: JianpuNote[], tie: { open: boolean }, st
       const ties = `${tie.open ? '<tie type="stop"/>' : ''}${note.tie ? '<tie type="start"/>' : ''}`;
       const tied = `${tie.open ? '<tied type="stop"/>' : ''}${note.tie ? '<tied type="start"/>' : ''}`;
       tie.open = note.tie;
-      return `<note><pitch><step>${pitch.letter}</step>${alter ? `<alter>${alter}</alter>` : ''}<octave>${pitch.oct}</octave></pitch><duration>${duration}</duration>${ties}${voice}<type>${type}</type>${dot}${accidental}${staffTag}${tied ? `<notations>${tied}</notations>` : ''}</note>`;
+      const notations = tied + bracket;
+      return `<note><pitch><step>${pitch.letter}</step>${alter ? `<alter>${alter}</alter>` : ''}<octave>${pitch.oct}</octave></pitch><duration>${duration}</duration>${ties}${voice}<type>${type}</type>${dot}${accidental}${modification}${staffTag}${notations ? `<notations>${notations}</notations>` : ''}</note>`;
     })
     .join('');
 }
-const clefXml = (clef: 'treble' | 'bass', number?: number) =>
-  `<clef${number ? ` number="${number}"` : ''}>${clef === 'bass' ? '<sign>F</sign><line>4</line>' : '<sign>G</sign><line>2</line>'}</clef>`;
+const clefSigns = {
+  treble: '<sign>G</sign><line>2</line>',
+  bass: '<sign>F</sign><line>4</line>',
+  alto: '<sign>C</sign><line>3</line>',
+};
+const clefXml = (clef: keyof typeof clefSigns, number?: number) =>
+  `<clef${number ? ` number="${number}"` : ''}>${clefSigns[clef]}</clef>`;
 
 /**
- * The same melody as MusicXML for the staff view (divisions of a 16th note). With `left`, the two parts form
+ * The same melody as MusicXML for the staff view (divisions of a 16th note, or of a 16th-note triplet when
+ * the music has triplets). With `left`, the two parts form
  * a grand staff: right hand on the treble staff, left hand on the bass staff; both need the same bars.
  */
 export function jianpuToMusicXml(
   score: Jianpu,
   title = '',
-  options: { clef?: 'treble' | 'bass'; left?: Jianpu } = {},
+  options: { clef?: keyof typeof clefSigns; left?: Jianpu } = {},
 ): string {
   const upper = bars(score);
   const lower = options.left ? bars(options.left) : undefined;
@@ -238,20 +273,22 @@ export function jianpuToMusicXml(
   const pickup = measureBeats(upper[0].notes) < full;
   const tieUpper = { open: false };
   const tieLower = { open: false };
+  const triplets = [score, options.left].some(part => part?.tokens.some(token => 'tuplet' in token && token.tuplet));
+  const divisions = triplets ? 12 : 4;
   const xml = upper.map((bar, index) => {
     const clefs = lower
       ? `<staves>2</staves>${clefXml('treble', 1)}${clefXml('bass', 2)}`
       : clefXml(options.clef ?? 'treble');
     const attributes =
       index === 0
-        ? `<attributes><divisions>4</divisions><key><fifths>${fifths[score.key]}</fifths></key><time><beats>${score.beats}</beats><beat-type>${score.beatType}</beat-type></time>${clefs}</attributes>`
+        ? `<attributes><divisions>${divisions}</divisions><key><fifths>${fifths[score.key]}</fifths></key><time><beats>${score.beats}</beats><beat-type>${score.beatType}</beat-type></time>${clefs}</attributes>`
         : '';
     const left = bar.left
       ? '<barline location="left"><bar-style>heavy-light</bar-style><repeat direction="forward"/></barline>'
       : '';
-    let notes = notesXml(score, bar.notes, tieUpper, lower ? 1 : undefined);
+    let notes = notesXml(score, bar.notes, tieUpper, divisions, lower ? 1 : undefined);
     if (lower)
-      notes += `<backup><duration>${Math.round(measureBeats(bar.notes) * 4)}</duration></backup>${notesXml(options.left!, lower[index].notes, tieLower, 2)}`;
+      notes += `<backup><duration>${Math.round(measureBeats(bar.notes) * divisions)}</duration></backup>${notesXml(options.left!, lower[index].notes, tieLower, divisions, 2)}`;
     const right =
       bar.right === 'backward'
         ? '<barline location="right"><bar-style>light-heavy</bar-style><repeat direction="backward"/></barline>'
@@ -300,6 +337,8 @@ export interface SightOptions {
   /** Lowest and highest scale degree, counted from do = 0 (so -3 is low sol, 7 is high do). */
   range?: [number, number];
   eighths?: boolean;
+  /** Also leap a fourth or a fifth now and then. */
+  leaps?: boolean;
   /** Playback only: octaves away from the written pitch, and the voice (guitar sounds an octave lower). */
   playOctave?: number;
   instrument?: 'piano' | 'guitar' | 'wind';
@@ -372,7 +411,7 @@ const degreeToken = (degree: number) => {
  * ending on do with a long note. Stays inside `range`.
  */
 export function sightReading(seed: number, options: SightOptions = {}): string {
-  const { key = 'C', meter = 4, bars: count = 4, range = [0, 4], eighths = false } = options;
+  const { key = 'C', meter = 4, bars: count = 4, range = [0, 4], eighths = false, leaps = false } = options;
   const random = seeded(seed);
   const pick = <T>(list: T[]) => list[Math.floor(random() * list.length)];
   const [low, high] = range;
@@ -392,9 +431,10 @@ export function sightReading(seed: number, options: SightOptions = {}): string {
           const nearest = Math.min(...options.map(value => Math.abs(value - degree)));
           degree = pick(options.filter(value => Math.abs(value - degree) === nearest));
         } else {
-          const move = pick([-1, -1, 1, 1, -2, 2, 0]);
+          const move = pick(leaps ? [-1, -1, 1, 1, -2, 2, 0, -3, 3, -4, 4] : [-1, -1, 1, 1, -2, 2, 0]);
           // Turn back at the edge of the range instead of repeating the edge note.
-          degree = degree + move > high || degree + move < low ? degree - move : degree + move;
+          const next = degree + move > high || degree + move < low ? degree - move : degree + move;
+          degree = next > high || next < low ? degree : next;
         }
       }
       return `${degreeToken(degree)}${lengthMark(beats)}`;
@@ -405,7 +445,7 @@ export function sightReading(seed: number, options: SightOptions = {}): string {
 }
 
 // Short sequences for listening examples, separated by spaces:
-//   C4  C4:2  C4:0.5     note with length in beats (default 1)
+//   C4  C4:2  C4:0.5     note with length in beats (default 1); C4:1/3 for triplets
 //   C4+E4+G4:2           chord
 //   r:1                  rest
 //   pp p mp mf f ff      dynamic for the notes that follow
@@ -423,8 +463,9 @@ export function parseSequence(source: string): MusicEvent[] {
     }
     const up = word.startsWith('^');
     const [pitch, length = '1'] = (up ? word.slice(1) : word).split(':');
-    const beats = Number(length);
-    if (!(beats > 0)) throw new Error(`Bad length in “${word}”`);
+    const [top, bottom = '1'] = length.split('/');
+    const beats = Number(top) / Number(bottom);
+    if (!(beats > 0) || !Number.isFinite(beats)) throw new Error(`Bad length in “${word}”`);
     const notes = pitch === 'r' ? [] : pitch.split('+');
     for (const note of notes) if (Note.midi(note) === null) throw new Error(`Unknown note “${note}”`);
     events.push({ notes, beats, velocity, ...(up ? { up } : {}) });

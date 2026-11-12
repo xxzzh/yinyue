@@ -81,6 +81,9 @@ const SightReading = lazy(() => import('./LessonWidgets').then(m => ({ default: 
 const TabWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.TabWidget })));
 const PitchWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.PitchWidget })));
 const RecordWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.RecordWidget })));
+const DictationWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.DictationWidget })));
+const ProgressionWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.ProgressionWidget })));
+const CircleOfFifthsWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.CircleOfFifthsWidget })));
 const loading = (
   <div className="lazy-loading" role="status">
     正在加载…
@@ -703,6 +706,7 @@ const practiceTabs = [
   { id: 'sing', title: '跟唱音阶', icon: Music2 },
   { id: 'sight', title: '视奏练习', icon: BookOpen },
   { id: 'tuner', title: '音准与调音', icon: Mic },
+  { id: 'dictation', title: '听写练习', icon: Headphones },
   { id: 'instruments', title: '乐器参考音', icon: Music2 },
   { id: 'drums', title: '八步鼓机', icon: AudioLines },
 ];
@@ -746,6 +750,19 @@ function PracticePage({ go, tool }: { go: Go; tool: string }) {
           <InstrumentPractice />
         ) : selected === 'drums' ? (
           <DrumTool />
+        ) : selected === 'dictation' ? (
+          <>
+            <div className="tool-heading">
+              <div>
+                <span className="eyebrow">HEAR IT, WRITE IT</span>
+                <h2>听一遍，写下来</h2>
+              </div>
+            </div>
+            <DictationWidget task={{ kind: 'rhythm', cells: ['q', 'ee', 'ssss', 'es', 'r', 'hold'] }} />
+            <DictationWidget task={{ kind: 'melody', range: [-3, 5] }} />
+            <ProgressionWidget task={{ pool: ['I', 'ii', 'IV', 'V', 'vi'] }} />
+            <CircleOfFifthsWidget />
+          </>
         ) : selected === 'tuner' ? (
           <>
             <div className="tool-heading">
@@ -1100,6 +1117,12 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
               <SightReading options={lesson.sight} />
             ) : lesson.widget === 'tab' ? (
               <TabWidget examples={lesson.tab ?? []} />
+            ) : lesson.widget === 'progression' ? (
+              <ProgressionWidget task={lesson.progression ?? {}} />
+            ) : lesson.widget === 'circle' ? (
+              <CircleOfFifthsWidget />
+            ) : lesson.widget === 'dictation' ? (
+              <DictationWidget task={lesson.dictation ?? { kind: 'rhythm' }} />
             ) : lesson.widget === 'pitch' ? (
               <PitchWidget task={lesson.pitch ?? { title: '音准' }} />
             ) : lesson.widget === 'record' ? (
@@ -1109,7 +1132,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
             ) : lesson.widget === 'guitar' ? (
               <GuitarTool compact chords={lesson.chords} />
             ) : lesson.widget === 'interval' ? (
-              <EarTool compact pool={lesson.intervals} />
+              <EarTool compact pool={lesson.intervals} mixed={lesson.intervalsMixed} />
             ) : lesson.widget === 'rhythm' ? (
               <RhythmTool compact meter={lesson.meter} />
             ) : lesson.widget === 'drums' ? (

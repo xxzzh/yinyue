@@ -60,9 +60,12 @@ test('the graded path matches the outline and references every mapped lesson onc
     'ls0-12',
     'pf0-13',
   ]);
-  // L0 and L1 are fully written; later stages are still planned.
-  for (const stage of [0, 1] as const) assert.equal(publishedLessons('core', stage).length, plannedSize('core', stage));
-  assert.equal(publishedLessons('core', 2).length, 0);
+  // L0–L3 are fully written; later stages are still planned.
+  for (const stage of [0, 1, 2, 3] as const)
+    assert.equal(publishedLessons('core', stage).length, plannedSize('core', stage));
+  assert.equal(publishedLessons('core', 2).length, 40);
+  assert.equal(publishedLessons('core', 3).length, 40);
+  assert.equal(publishedLessons('core', 4).length, 0);
   assert.equal(lessonPlace('guqin-1'), undefined);
 });
 
@@ -73,7 +76,7 @@ test('stage tests are well formed', () => {
   );
   assert.deepEqual(
     stageTests.map(item => item.id),
-    ['core-l0', 'core-l1'],
+    ['core-l0', 'core-l1', 'core-l2', 'core-l3'],
   );
   for (const stageTest of stageTests) {
     assert.ok(stageTest.questions.length >= 10, stageTest.id);
@@ -118,7 +121,13 @@ test('stages unlock by test, placement or finished instrument lessons', () => {
   assert.equal(stageStatus(placed, 'core', 0), 'placed');
   assert.equal(stageStatus(placed, 'core', 1), 'placed');
   assert.equal(stageStatus(placed, 'core', 2), 'open');
-  assert.deepEqual(nextStep(placed, 'core'), { kind: 'waiting', line: 'core', stage: 2 });
+  assert.deepEqual(nextStep(placed, 'core'), { kind: 'lesson', line: 'core', stage: 2, lesson: 'rh2-01' });
+  // A stage that is still being written waits instead of pointing at a lesson.
+  assert.deepEqual(nextStep(recordPlacement(freshProgress(), 4, '2026-11-12'), 'core'), {
+    kind: 'waiting',
+    line: 'core',
+    stage: 4,
+  });
   // Placement never marks lessons as completed.
   assert.deepEqual(placed.completed, []);
 });
