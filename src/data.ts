@@ -5,6 +5,7 @@ import { worldCourses } from './world-courses.ts';
 import type { WorldTrack } from './world-catalog.ts';
 import { traditionalInstrument } from './traditional-catalog.ts';
 import type { TraditionalTrack } from './traditional-catalog.ts';
+import { courseFamilies, courseMatches } from './course-meta.ts';
 
 export type Track =
   | 'theory'
@@ -555,26 +556,9 @@ for (const [id, order] of [
   courses.find(course => course.id === id)!.lessons = order.map(lessonId => coreById.get(lessonId)!);
 for (const [id, extra] of Object.entries(coreLessonExtras)) Object.assign(coreById.get(id)!, extra);
 
-export const courseFamilies = [
-  { id: 'all', tag: '全部课程' },
-  { id: 'foundation', tag: '乐理与听觉' },
-  { id: 'keyboard', tag: '键盘' },
-  { id: 'plucked', tag: '弹拨' },
-  { id: 'bowed', tag: '弓弦' },
-  { id: 'wind', tag: '管乐' },
-  { id: 'percussion', tag: '打击乐' },
-  { id: 'other', tag: '其他与电子' },
-];
+export { courseFamilies };
 export function filterCourses(query: string, family = 'all') {
-  const normalized = query.trim().toLowerCase();
-  return courses.filter(
-    course =>
-      (family === 'all' || course.family === family) &&
-      (!normalized ||
-        `${course.title} ${course.tag} ${course.description} ${course.english} ${course.aliases?.join(' ') ?? ''} ${traditionalInstrument(course.id)?.tradition ?? ''} ${course.lessons.map(lesson => lesson.title).join(' ')}`
-          .toLowerCase()
-          .includes(normalized)),
-  );
+  return courses.filter(course => courseMatches(course, query, family, traditionalInstrument(course.id)?.tradition));
 }
 
 export const allLessons = courses.flatMap(course => course.lessons);

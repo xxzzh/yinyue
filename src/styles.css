@@ -6599,3 +6599,17 @@ input[type='range'] {
 .question-sound {
   margin-bottom: 12px;
 }
+
+/* Shown while a lesson's content loads for the first time */
+.lazy-loading.lesson-opening {
+  position: fixed;
+  top: 45%;
+  left: 50%;
+  z-index: 60;
+  transform: translate(-50%, -50%);
+  padding: 18px 26px;
+  border-radius: 10px;
+  background: #fefefa;
+  border: 1px solid #e1e6d6;
+  box-shadow: 0 20px 60px #24331c33;
+}

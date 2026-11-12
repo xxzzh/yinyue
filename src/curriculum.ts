@@ -1,7 +1,7 @@
 // Graded learning path (docs/curriculum-outline.md). Units reference existing lessons by their stable
 // `lesson.id`; titles that are planned but not yet written are kept as `plan` items so the route can show
 // the whole ladder honestly. Lesson content itself stays in data.ts and the course modules.
-import { findLesson } from './data.ts';
+import { findLesson } from './course-index.ts';
 import type { Progress } from './progress.ts';
 
 export type Stage = 0 | 1 | 2 | 3 | 4 | 5;

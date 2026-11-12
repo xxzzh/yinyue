@@ -1,4 +1,4 @@
-import { Component, lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Component, lazy, Suspense, use, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   ArrowDownToLine,
@@ -32,15 +32,24 @@ import {
   X,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { allLessons, courseFamilies, courses, filterCourses, findCourse, findLesson, lessonCourse } from './data';
-import type { Course, Lesson, QuizItem, Track } from './data';
+import {
+  allLessons,
+  courseFamilies,
+  courses,
+  filterCourses,
+  findCourse,
+  findLesson,
+  lessonCourse,
+  loadContent,
+} from './course-index';
+import type { CourseMeta } from './course-meta';
+import type { QuizItem, Track } from './data';
 import { localDate, mergeProgress, streak, validateProgress } from './progress';
 import { BrandMark, CourseArt } from './Art';
 import { LearningProvider } from './state';
 import { CatalogPager } from './CatalogPager';
 import { useCatalogPage } from './useCatalogPage';
-import { traditionalCatalog } from './traditional-catalog';
-import { InstrumentFigure } from './InstrumentImage';
+import { InstrumentImage } from './InstrumentImage';
 import { instrumentImages } from './instrument-images';
 import { useLearning, useStudyClock } from './learning';
 import { Dialog } from './Dialog';
@@ -62,6 +71,7 @@ const WorldPage = lazy(() => import('./World').then(m => ({ default: m.WorldPage
 const InstrumentChooser = lazy(() => import('./InstrumentChooser').then(m => ({ default: m.InstrumentChooser })));
 const InstrumentCharacter = lazy(() => import('./InstrumentChooser').then(m => ({ default: m.InstrumentCharacter })));
 const PathPage = lazy(() => import('./Path').then(m => ({ default: m.PathPage })));
+const InstrumentFigure = lazy(() => import('./InstrumentFigure').then(m => ({ default: m.InstrumentFigure })));
 const JianpuWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.JianpuWidget })));
 const ListenWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.ListenWidget })));
 const QuestionSound = lazy(() => import('./LessonWidgets').then(m => ({ default: m.QuestionSound })));
@@ -73,7 +83,10 @@ const loading = (
 
 // Shows a retry message instead of a blank app when an on-demand page file cannot be loaded
 // (offline, or a file removed by a newer deploy that the one-time reload in main.tsx could not fix).
-class LoadBoundary extends Component<{ children: ReactNode; resetKey: string }, { failed: boolean }> {
+class LoadBoundary extends Component<
+  { children: ReactNode; resetKey: string; className?: string },
+  { failed: boolean }
+> {
   state = { failed: false };
   static getDerivedStateFromError() {
     return { failed: true };
@@ -82,9 +95,25 @@ class LoadBoundary extends Component<{ children: ReactNode; resetKey: string }, 
     if (this.state.failed && previous.resetKey !== this.props.resetKey) this.setState({ failed: false });
   }
   render() {
-    if (!this.state.failed) return <Suspense fallback={loading}>{this.props.children}</Suspense>;
+    const className = `lazy-loading ${this.props.className ?? ''}`;
+    if (!this.state.failed)
+      return (
+        <Suspense
+          fallback={
+            this.props.className ? (
+              <div className={className} role="status">
+                正在打开课程…
+              </div>
+            ) : (
+              loading
+            )
+          }
+        >
+          {this.props.children}
+        </Suspense>
+      );
     return (
-      <div className="lazy-loading" role="alert">
+      <div className={className} role="alert">
         <p>这部分内容没有加载成功，可能是网络中断或网站刚更新。</p>
         <button className="button outline small" onClick={() => window.location.reload()}>
           刷新页面
@@ -158,7 +187,7 @@ function GoalRing({ percent, small = false }: { percent: number; small?: boolean
     </div>
   );
 }
-function CourseCard({ course, onOpen }: { course: Course; onOpen: () => void }) {
+function CourseCard({ course, onOpen }: { course: CourseMeta; onOpen: () => void }) {
   const { progress } = useLearning();
   const count = course.lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
   const Icon = trackIcons[course.id] ?? Music2;
@@ -332,7 +361,10 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
         <div>
           <span className="eyebrow">THE SOUNDS OF CHINA</span>
           <h2>你感兴趣的国乐，在这里。</h2>
-          <p>{traditionalCatalog.length} 种代表乐器，从古琴、琵琶到各地民族乐器，慢慢听，慢慢认识。</p>
+          <p>
+            {courses.filter(course => course.traditional).length}{' '}
+            种代表乐器，从古琴、琵琶到各地民族乐器，慢慢听，慢慢认识。
+          </p>
         </div>
         <button className="button dark" onClick={() => go('/traditional')}>
           走进中国传统乐器
@@ -487,7 +519,7 @@ function CoursesPage({
   go: Go;
   query: string;
   setQuery: (value: string) => void;
-  course?: Course;
+  course?: CourseMeta;
 }) {
   const { progress } = useLearning();
   const [filter, setFilter] = useState('all');
@@ -529,7 +561,13 @@ function CoursesPage({
               {completed ? '继续学习' : '开始这条路线'}
             </button>
           </div>
-          {instrumentImages[course.id] ? <InstrumentFigure track={course.id} /> : <CourseArt track={course.id} />}
+          {instrumentImages[course.id] ? (
+            <Suspense fallback={<InstrumentImage track={course.id} />}>
+              <InstrumentFigure track={course.id} />
+            </Suspense>
+          ) : (
+            <CourseArt track={course.id} />
+          )}
         </div>
         <InstrumentCharacter course={course} />
         {course.level && (
@@ -937,16 +975,20 @@ function QuizBlock({
   );
 }
 
-function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
+function LessonReader({ id, go }: { id: string; go: Go }) {
   const { progress, complete, notify } = useLearning();
+  const content = use(loadContent());
+  const lesson = content.findLesson(id)!;
   const questions = [lesson.quiz, ...(lesson.more ?? [])];
   const [answers, setAnswers] = useState<(number | null)[]>(() => questions.map(() => null));
   const solved = answers.every((value, i) => value === questions[i].answer);
-  const course = lessonCourse(lesson.id)!;
+  const course = content.lessonCourse(lesson.id)!;
   const place = lessonPlace(lesson.id);
   // Main-line lessons follow the graded path; other lessons follow their course.
   const core = place?.line === 'core' ? place : undefined;
-  const sequence = core ? publishedLessons('core', core.stage).map(id => findLesson(id)!) : course.lessons;
+  const sequence = core
+    ? publishedLessons('core', core.stage).map(lessonId => content.findLesson(lessonId)!)
+    : course.lessons;
   const index = sequence.indexOf(lesson);
   const home = core ? '/path/core' : `/courses/${course.id}`;
   const stageTest = core && testFor('core', core.stage);
@@ -1002,7 +1044,11 @@ function LessonReader({ lesson, go }: { lesson: Lesson; go: Go }) {
             </span>
           </div>
           <p className="lesson-intro">{lesson.intro}</p>
-          {instrumentImages[course.id] && <InstrumentFigure track={course.id} />}
+          {instrumentImages[course.id] && (
+            <Suspense fallback={<InstrumentImage track={course.id} />}>
+              <InstrumentFigure track={course.id} />
+            </Suspense>
+          )}
           {lesson.sections.map(section => (
             <section className="article-section" key={section.title}>
               <h2>{section.title}</h2>
@@ -1167,6 +1213,10 @@ function Shell() {
     const closeMenu = () => setMobileMenu(false);
     window.addEventListener('hashchange', closeMenu);
     return () => window.removeEventListener('hashchange', closeMenu);
+  }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => loadContent().catch(() => undefined), 2000);
+    return () => clearTimeout(timer);
   }, []);
   function go(path: string) {
     setMobileMenu(false);
@@ -1341,7 +1391,11 @@ function Shell() {
         </main>
       </div>
       {settings && <SettingsDialog onClose={() => setSettings(false)} />}
-      {lesson && <LessonReader key={lesson.id} lesson={lesson} go={go} />}
+      {lesson && (
+        <LoadBoundary resetKey={lesson.id} className="lesson-opening">
+          <LessonReader key={lesson.id} id={lesson.id} go={go} />
+        </LoadBoundary>
+      )}
     </div>
   );
 }

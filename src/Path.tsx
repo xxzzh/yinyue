@@ -11,7 +11,7 @@ import {
   Route,
   Trophy,
 } from 'lucide-react';
-import { findLesson } from './data';
+import { findLesson } from './course-index';
 import { Dialog } from './Dialog';
 import { useLearning, useStudyClock } from './learning';
 import { passStageTest, recordPlacement } from './progress';

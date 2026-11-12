@@ -1,10 +1,16 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, statSync } from 'node:fs';
-import { instrumentImages } from '../src/instrument-images.ts';
+import { instrumentImages as lightImages } from '../src/instrument-images.ts';
+import { instrumentCredits } from '../src/instrument-credits.ts';
 import { traditionalCatalog } from '../src/traditional-catalog.ts';
 import { worldCatalog } from '../src/world-catalog.ts';
 import { courses } from '../src/data.ts';
+
+// The UI data is split into a light first-screen part and lazily loaded credits; together they match the ledger.
+const instrumentImages = Object.fromEntries(
+  Object.entries(lightImages).map(([id, image]) => [id, { ...image, ...instrumentCredits[id] }]),
+);
 
 test('every instrument course has a bundled, attributed image with matching UI metadata', () => {
   const root = new URL('../public/instruments/', import.meta.url);
@@ -17,6 +23,8 @@ test('every instrument course has a bundled, attributed image with matching UI m
     ]),
   );
   assert.deepEqual(instrumentImages, uiLedger, 'Regenerate the image data with scripts/sync-instrument-images.mjs');
+  assert.deepEqual(Object.keys(instrumentCredits).sort(), Object.keys(lightImages).sort());
+  assert.ok(Object.values(lightImages).every(image => !('caption' in image) && !('author' in image)));
   const catalog = [...traditionalCatalog, ...worldCatalog];
   const instrumentCourses = courses.filter(course => course.family !== 'foundation');
   assert.deepEqual(Object.keys(ledger).sort(), instrumentCourses.map(course => course.id).sort());

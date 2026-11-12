@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useCatalogPage } from './useCatalogPage';
 import { ArrowRight, BookOpen, Check, Headphones, Music2, Scale, X } from 'lucide-react';
-import { courses, courseFamilies } from './data';
+import { courses, courseFamilies, findCourse } from './data';
 import type { Course } from './data';
 import { CourseArt } from './Art';
 import { CatalogPager } from './CatalogPager';
@@ -100,9 +100,11 @@ function PlayingGuide({ course }: { course: Course }) {
   );
 }
 
-export function InstrumentCharacter({ course }: { course: Course }) {
-  const profile = selectionProfiles[course.id];
-  if (!profile) return null;
+export function InstrumentCharacter({ course: meta }: { course: Pick<Course, 'id'> }) {
+  // Callers may pass a light index entry; source links come from the full course.
+  const course = findCourse(meta.id);
+  const profile = selectionProfiles[meta.id];
+  if (!profile || !course) return null;
   return (
     <section className="instrument-character" aria-label={`${course.tag}特色与选学建议`}>
       <div className="section-title">

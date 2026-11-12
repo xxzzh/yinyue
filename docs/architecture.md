@@ -22,11 +22,19 @@
 - `src/catalog-quiz.ts`：中国与世界乐器认识课的测验生成：错误选项按乐器分别挑选、来自其他演奏类别、隐去乐器自身名称，解析说明每个错误选项对应的乐器。
 - `src/Dialog.tsx`：共用的原生模态窗口。
 - `src/CatalogPager.tsx`：各目录共用的分页器。
+- `src/course-index.ts`、`src/course-meta.ts`、`src/lesson-index.ts`（生成）：首屏用的课程目录索引与共用搜索规则，见下文“按需加载”。
+- `src/InstrumentFigure.tsx`：带图注、署名和放大查看的配图（按需加载）；`src/InstrumentImage.tsx` 只显示图片本身。
 - `src/useCatalogPage.ts`：共用分页状态；搜索或筛选条件变化时，在渲染结果前条件式重置页码，保留筛选与比较清单等其他状态。也覆盖顶部共享搜索框传入的查询变化。
 
 ## 按需加载
 
-`App.tsx` 用 `React.lazy` 按需加载中国乐器、世界乐器、选乐器页面，乐器特色区块，以及钢琴、吉他、练耳、节拍器、乐谱等工具；首屏只包含外壳、课程数据与配图数据。Tone.js 与 OpenSheetMusicDisplay 本来就在用户操作时才加载。新增页面或重型组件时沿用这种方式，避免重新并入主包。
+`App.tsx` 用 `React.lazy` 按需加载中国乐器、世界乐器、选乐器页面，乐器特色区块，以及钢琴、吉他、练耳、节拍器、乐谱等工具。Tone.js 与 OpenSheetMusicDisplay 本来就在用户操作时才加载。新增页面或重型组件时沿用这种方式，避免重新并入主包。
+
+首屏只包含外壳、课程目录索引和轻量配图信息：
+
+- **课程目录索引** `src/lesson-index.ts`：每条路线与每节课的标题、简介、时长和互动类型，由 `scripts/build-lesson-index.mjs` 从课程模块生成（`npm run index`，`npm run build` 会先运行它）。列表、搜索、概览和学习路线通过 `src/course-index.ts` 读取它；搜索规则与完整数据共用 `src/course-meta.ts` 的 `courseMatches`。改了课程后若忘记重新生成，`tests/lesson-index.test.ts` 会失败。
+- **课程正文** `src/data.ts`（含各乐器目录与课程生成）作为独立文件按需加载：打开课程时由 `loadContent` 读取，首屏空闲约 2 秒后也会在后台预取。加载失败时下次打开会重试，并显示刷新提示。首屏模块不得静态导入 `data.ts`、乐器目录或图片署名，测试会检查。
+- **配图**：`src/instrument-images.ts` 只含文件、尺寸、名称、类型与替代文字，供课程卡片使用；图注与署名在 `src/instrument-credits.ts`，随 `src/InstrumentFigure.tsx` 按需加载。两者都由 `scripts/sync-instrument-images.mjs` 生成。
 
 ## 代码规范
 
