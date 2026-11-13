@@ -21,13 +21,23 @@ import { guitarL3Lessons } from '../src/guitar-l3-lessons.ts';
 import { voiceL3Lessons } from '../src/voice-l3-lessons.ts';
 import { guzhengL3Lessons } from '../src/guzheng-l3-lessons.ts';
 import { koudiL3Lessons } from '../src/koudi-l3-lessons.ts';
+import { pianoL4Lessons } from '../src/piano-l4-lessons.ts';
+import { guitarL4Lessons } from '../src/guitar-l4-lessons.ts';
+import { voiceL4Lessons } from '../src/voice-l4-lessons.ts';
+import { guzhengL4Lessons } from '../src/guzheng-l4-lessons.ts';
+import { koudiL4Lessons } from '../src/koudi-l4-lessons.ts';
 
 const lines = [
-  { id: 'piano', lessons: pianoL3Lessons },
-  { id: 'guitar', lessons: guitarL3Lessons },
-  { id: 'voice', lessons: voiceL3Lessons },
-  { id: 'guzheng', lessons: guzhengL3Lessons },
-  { id: 'koudi', lessons: koudiL3Lessons },
+  { id: 'piano', stage: 3, lessons: pianoL3Lessons },
+  { id: 'guitar', stage: 3, lessons: guitarL3Lessons },
+  { id: 'voice', stage: 3, lessons: voiceL3Lessons },
+  { id: 'guzheng', stage: 3, lessons: guzhengL3Lessons },
+  { id: 'koudi', stage: 3, lessons: koudiL3Lessons },
+  { id: 'piano', stage: 4, lessons: pianoL4Lessons },
+  { id: 'guitar', stage: 4, lessons: guitarL4Lessons },
+  { id: 'voice', stage: 4, lessons: voiceL4Lessons },
+  { id: 'guzheng', stage: 4, lessons: guzhengL4Lessons },
+  { id: 'koudi', stage: 4, lessons: koudiL4Lessons },
 ] as const;
 
 const fullBars = (source: string, label: string) => {
@@ -66,23 +76,26 @@ function checkMaterial(lesson: Lesson) {
   for (const target of lesson.pitch?.targets ?? []) assert.notEqual(Note.midi(target), null, target);
 }
 
-test('instrument lines L3 are written, ordered and end with a performance check', () => {
+test('instrument lines L3 and L4 are written, ordered and end with a performance check', () => {
   for (const line of lines) {
-    assert.equal(line.lessons.length, 20, line.id);
+    const label = `${line.id} L${line.stage}`;
+    const order = instrumentLessonOrder[line.id][line.stage]!;
+    assert.equal(line.lessons.length, 20, label);
     assert.deepEqual(
       line.lessons.map(lesson => lesson.id),
-      instrumentLessonOrder[line.id][3],
-      line.id,
+      order,
+      label,
     );
-    assert.equal(publishedLessons(line.id, 3).length, plannedSize(line.id, 3), line.id);
+    assert.equal(publishedLessons(line.id, line.stage).length, plannedSize(line.id, line.stage), label);
     const course = findCourse(line.id)!.lessons.map(lesson => lesson.id);
-    assert.deepEqual(course.slice(-20), instrumentLessonOrder[line.id][3], `${line.id}: course order`);
-    assert.match(line.lessons[19].title, /^L3 (演奏|演唱)关卡/, line.id);
-    assert.equal(new Set(line.lessons.map(lesson => lesson.title)).size, 20, `${line.id}: titles are unique`);
+    const start = course.indexOf(order[0]);
+    assert.deepEqual(course.slice(start, start + 20), order, `${label}: course order`);
+    assert.match(line.lessons[19].title, new RegExp(`^L${line.stage} (演奏|演唱)关卡`), label);
+    assert.equal(new Set(line.lessons.map(lesson => lesson.title)).size, 20, `${label}: titles are unique`);
   }
 });
 
-test('instrument L3 lessons are complete, checkable and playable', () => {
+test('instrument L3 and L4 lessons are complete, checkable and playable', () => {
   for (const line of lines)
     for (const lesson of line.lessons) {
       assert.equal(findLesson(lesson.id), lesson, lesson.id);
@@ -132,5 +145,5 @@ test('the lesson kit places correct answers in varying positions', () => {
   for (const line of lines)
     for (const lesson of line.lessons)
       for (const item of [lesson.quiz, ...(lesson.more ?? [])]) positions[item.answer]++;
-  for (const count of positions) assert.ok(count >= 40 && count <= 110, `answer positions ${positions.join(' ')}`);
+  for (const count of positions) assert.ok(count >= 100 && count <= 200, `answer positions ${positions.join(' ')}`);
 });

@@ -23,7 +23,7 @@
 - `src/catalog-content.ts`：目录课程与它们原有的课（乐理、练耳与各乐器的入门课、中国与世界乐器），并补上 `src/core-extras.ts` 中八节原有主线课的追加题。`src/data.ts` 在它之上加入主线与五条乐器线的课程并按路线排序，是测试和索引脚本使用的完整数据。
 - `src/harmony.ts`：和弦进行听辨的出题（以 I 开头、相邻和弦不同，按种子生成）与 C 大调的和弦排列，以及五度圈数据（调号、关系小调、F♯/G♭ 等音调）。纯函数，测试检查五度关系与调号。
 - `src/jianpu.ts`：简谱文本格式的解析、播放事件与 MusicXML 转换，以及听辨示例的简短音序格式。三连音写作 `{1_ 2_ 3_}`；简谱示例可带段落标记 `marks`，在五线谱上写成排练记号；有三连音时 MusicXML 改用十二分之一拍为单位并加三连音括号；支持高音、低音与中音谱号；音序长度可写分数（如 `C4:1/3`）。均为纯函数，课程里的每段简谱都由测试检查小节拍数。
-- `src/piano-lessons.ts`、`src/guitar-lessons.ts`、`src/voice-lessons.ts`、`src/guzheng-lessons.ts`、`src/koudi-lessons.ts`：五条乐器线 L0–L2 的课程；`src/piano-l3-lessons.ts` 等五个 `*-l3-lessons.ts`：各线 L3 的 20 节；`src/pitch.ts`：单音音高检测（YIN）与音名换算，纯函数，用合成音测试；`src/tab.ts`：六线谱文本格式的解析与播放事件（纯函数，测试检查每小节拍数）；`src/instrument-lesson-plans.ts`：各乐器线尚未编写课程的逐节工作标题（只随学习路线页加载）；`src/instrument-order.ts`：各乐器线每阶段已上线课程的 ID 顺序（只含 ID，供首屏的学习路线使用，`data.ts` 也按它排列乐器课程）。
+- `src/piano-lessons.ts`、`src/guitar-lessons.ts`、`src/voice-lessons.ts`、`src/guzheng-lessons.ts`、`src/koudi-lessons.ts`：五条乐器线 L0–L2 的课程；`src/piano-l3-lessons.ts` 等五个 `*-l3-lessons.ts` 与五个 `*-l4-lessons.ts`：各线 L3、L4 各 20 节；`src/pitch.ts`：单音音高检测（YIN）与音名换算，纯函数，用合成音测试；`src/tab.ts`：六线谱文本格式的解析与播放事件（纯函数，测试检查每小节拍数）；`src/instrument-lesson-plans.ts`：各乐器线尚未编写课程的逐节工作标题（只随学习路线页加载）；`src/instrument-order.ts`：各乐器线每阶段已上线课程的 ID 顺序（只含 ID，供首屏的学习路线使用，`data.ts` 也按它排列乐器课程）。
 - `src/LessonWidgets.tsx`：简谱卡片（播放高亮、慢速、五线谱对照、左右手大谱表）、听辨示例列表、题目试听按钮、跟弹关卡（按音域加宽的键盘，屏幕与 MIDI 输入，逐音核对音高并计算节奏比例吻合度）与视奏练习、麦克风音准表、录音回放、节奏与旋律听写、和弦进行听辨、五度圈、四部和声练习（按需加载；麦克风声音只在页面内处理，录音不上传）。视奏旋律由 `jianpu.ts` 的 `sightReading` 按种子生成，同一编号总是同一条旋律。
 - `src/catalog-quiz.ts`：中国与世界乐器认识课的测验生成：错误选项按乐器分别挑选、来自其他演奏类别、隐去乐器自身名称，解析说明每个错误选项对应的乐器。
 - `src/Dialog.tsx`：共用的原生模态窗口。

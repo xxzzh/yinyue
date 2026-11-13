@@ -36,6 +36,6 @@ test('every instrument stage lists a working title for each lesson still to be w
       total += titles.length;
     }
   }
-  // L4–L5 of every line: 35 each.
-  assert.equal(total, 175);
+  // L5 of every line: 15 each.
+  assert.equal(total, 75);
 });

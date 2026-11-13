@@ -36,30 +36,29 @@ const chunkLoaders: Record<LessonChunk, () => Promise<Lesson[]>> = {
       ...l4.coreL4Lessons,
     ]),
   piano: () =>
-    Promise.all([import('./piano-lessons.ts'), import('./piano-l3-lessons.ts')]).then(([a, b]) => [
-      ...a.pianoLessons,
-      ...b.pianoL3Lessons,
-    ]),
+    Promise.all([import('./piano-lessons.ts'), import('./piano-l3-lessons.ts'), import('./piano-l4-lessons.ts')]).then(
+      ([a, b, c]) => [...a.pianoLessons, ...b.pianoL3Lessons, ...c.pianoL4Lessons],
+    ),
   guitar: () =>
-    Promise.all([import('./guitar-lessons.ts'), import('./guitar-l3-lessons.ts')]).then(([a, b]) => [
-      ...a.guitarLessons,
-      ...b.guitarL3Lessons,
-    ]),
+    Promise.all([
+      import('./guitar-lessons.ts'),
+      import('./guitar-l3-lessons.ts'),
+      import('./guitar-l4-lessons.ts'),
+    ]).then(([a, b, c]) => [...a.guitarLessons, ...b.guitarL3Lessons, ...c.guitarL4Lessons]),
   voice: () =>
-    Promise.all([import('./voice-lessons.ts'), import('./voice-l3-lessons.ts')]).then(([a, b]) => [
-      ...a.voiceLessons,
-      ...b.voiceL3Lessons,
-    ]),
+    Promise.all([import('./voice-lessons.ts'), import('./voice-l3-lessons.ts'), import('./voice-l4-lessons.ts')]).then(
+      ([a, b, c]) => [...a.voiceLessons, ...b.voiceL3Lessons, ...c.voiceL4Lessons],
+    ),
   guzheng: () =>
-    Promise.all([import('./guzheng-lessons.ts'), import('./guzheng-l3-lessons.ts')]).then(([a, b]) => [
-      ...a.guzhengLessons,
-      ...b.guzhengL3Lessons,
-    ]),
+    Promise.all([
+      import('./guzheng-lessons.ts'),
+      import('./guzheng-l3-lessons.ts'),
+      import('./guzheng-l4-lessons.ts'),
+    ]).then(([a, b, c]) => [...a.guzhengLessons, ...b.guzhengL3Lessons, ...c.guzhengL4Lessons]),
   koudi: () =>
-    Promise.all([import('./koudi-lessons.ts'), import('./koudi-l3-lessons.ts')]).then(([a, b]) => [
-      ...a.koudiLessons,
-      ...b.koudiL3Lessons,
-    ]),
+    Promise.all([import('./koudi-lessons.ts'), import('./koudi-l3-lessons.ts'), import('./koudi-l4-lessons.ts')]).then(
+      ([a, b, c]) => [...a.koudiLessons, ...b.koudiL3Lessons, ...c.koudiL4Lessons],
+    ),
   catalog: () => import('./catalog-content.ts').then(module => module.baseLessons),
 };
 const chunks = new Map<LessonChunk, Promise<Map<string, Lesson>>>();

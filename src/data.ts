@@ -15,6 +15,11 @@ import { guitarL3Lessons } from './guitar-l3-lessons.ts';
 import { voiceL3Lessons } from './voice-l3-lessons.ts';
 import { guzhengL3Lessons } from './guzheng-l3-lessons.ts';
 import { koudiL3Lessons } from './koudi-l3-lessons.ts';
+import { pianoL4Lessons } from './piano-l4-lessons.ts';
+import { guitarL4Lessons } from './guitar-l4-lessons.ts';
+import { voiceL4Lessons } from './voice-l4-lessons.ts';
+import { guzhengL4Lessons } from './guzheng-l4-lessons.ts';
+import { koudiL4Lessons } from './koudi-l4-lessons.ts';
 import { instrumentLessonOrder, lineLessons } from './instrument-order.ts';
 import type { SightOptions } from './jianpu.ts';
 import type { BeatCell } from './dictation.ts';
@@ -223,14 +228,19 @@ const lineLessonsById = new Map(
     ...coreL4Lessons,
     ...pianoLessons,
     ...pianoL3Lessons,
+    ...pianoL4Lessons,
     ...guitarLessons,
     ...guitarL3Lessons,
+    ...guitarL4Lessons,
     ...voiceLessons,
     ...voiceL3Lessons,
+    ...voiceL4Lessons,
     ...guzhengLessons,
     ...guzhengL3Lessons,
+    ...guzhengL4Lessons,
     ...koudiLessons,
     ...koudiL3Lessons,
+    ...koudiL4Lessons,
     ...baseLessons,
   ].map(lesson => [lesson.id, lesson]),
 );
