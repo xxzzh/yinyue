@@ -2304,6 +2304,18 @@ input[type='range'] {
 .lesson-quiz {
   margin-top: 30px;
 }
+.review-session {
+  max-width: 46rem;
+}
+.review-session h2 {
+  margin: 8px 0;
+}
+.review-session > .button {
+  margin-top: 16px;
+}
+.review-session .pill {
+  flex-shrink: 0;
+}
 .lesson-quiz .eyebrow {
   font-size: 8px;
   margin-bottom: 8px;

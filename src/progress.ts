@@ -1,3 +1,6 @@
+import { reviewLessonId, validateReviewQueue } from './review.ts';
+import type { ReviewQueue } from './review.ts';
+
 export interface DayLog {
   seconds: number;
   lessons: number;
@@ -25,6 +28,7 @@ export interface Progress {
   instrument: string | null;
   /** Self-checked L5 portfolio items. The actual works are kept by the learner. */
   portfolio: PortfolioItem[];
+  review: ReviewQueue;
 }
 // The key keeps its original name so that version 1 records are read and upgraded in place.
 export const STORAGE_KEY = 'yinxu.progress.v1';
@@ -39,6 +43,7 @@ export const freshProgress = (): Progress => ({
   placement: null,
   instrument: null,
   portfolio: [],
+  review: {},
 });
 export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -88,6 +93,7 @@ export function validateProgress(value: unknown): Progress {
         : null,
     instrument: typeof p.instrument === 'string' && p.instrument.length < 40 ? p.instrument : null,
     portfolio: portfolioItemIds.filter(id => portfolio.includes(id)),
+    review: validateReviewQueue(p.review),
   };
 }
 /** Merges an imported backup into the current record without losing anything already earned. */
@@ -101,7 +107,12 @@ export function mergeProgress(current: Progress, imported: Progress, knownLesson
       (imported.placement?.stage ?? -1) > (current.placement?.stage ?? -1) ? imported.placement : current.placement,
     instrument: current.instrument ?? imported.instrument,
     portfolio: portfolioItemIds.filter(id => current.portfolio.includes(id) || imported.portfolio.includes(id)),
+    review: { ...current.review },
   };
+  for (const [id, entry] of Object.entries(imported.review)) {
+    if (knownLesson(reviewLessonId(id)) && (!merged.review[id] || entry.updatedAt > merged.review[id].updatedAt))
+      merged.review[id] = entry;
+  }
   for (const [date, day] of Object.entries(imported.days)) {
     const old = current.days[date] ?? { seconds: 0, lessons: 0, exercises: 0 };
     merged.days[date] = {

@@ -23,6 +23,7 @@ import {
   Music2,
   Piano,
   Play,
+  RotateCcw,
   Route,
   Search,
   Settings2,
@@ -49,6 +50,7 @@ import {
 import type { CourseMeta } from './course-meta';
 import type { QuizItem, Track } from './data';
 import { localDate, mergeProgress, readProgress, streak, validateProgress } from './progress';
+import { recordMistake, reviewQuestionId } from './review';
 import { BrandMark, CourseArt } from './Art';
 import { LearningProvider } from './state';
 import { CatalogPager } from './CatalogPager';
@@ -63,6 +65,7 @@ import {
   lessonPlace,
   nextStep,
   publishedLessons,
+  reviewSchedule,
   stageLabel,
   stagePassed,
   stages,
@@ -87,6 +90,7 @@ const WorldPage = lazy(() => import('./World').then(m => ({ default: m.WorldPage
 const InstrumentChooser = lazy(() => import('./InstrumentChooser').then(m => ({ default: m.InstrumentChooser })));
 const InstrumentCharacter = lazy(() => import('./InstrumentChooser').then(m => ({ default: m.InstrumentCharacter })));
 const PathPage = lazy(() => import('./Path').then(m => ({ default: m.PathPage })));
+const ReviewPage = lazy(() => import('./ReviewPage').then(m => ({ default: m.ReviewPage })));
 const InstrumentFigure = lazy(() => import('./InstrumentFigure').then(m => ({ default: m.InstrumentFigure })));
 const JianpuWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.JianpuWidget })));
 const ListenWidget = lazy(() => import('./LessonWidgets').then(m => ({ default: m.ListenWidget })));
@@ -170,6 +174,7 @@ const navItems = [
   { id: 'world', title: '世界乐器', icon: Globe2 },
   { id: 'choose', title: '选适合的乐器', icon: Compass },
   { id: 'practice', title: '我的练习室', icon: Piano },
+  { id: 'review', title: '错题复习', icon: RotateCcw },
   { id: 'progress', title: '学习记录', icon: TrendingUp },
 ];
 function useRoute() {
@@ -261,7 +266,9 @@ function stepTitle(step: NextStep | undefined, prefix: string) {
 
 function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
   const { progress } = useLearning();
-  const today = progress.days[localDate()] ?? { seconds: 0, lessons: 0, exercises: 0 };
+  const date = localDate();
+  const today = progress.days[date] ?? { seconds: 0, lessons: 0, exercises: 0 };
+  const due = reviewSchedule(progress).filter(entry => entry.due <= date).length;
   const coreStep = nextStep(progress, 'core');
   const instrumentLine = progress.instrument ? findLine(progress.instrument) : undefined;
   const instrumentStep = instrumentLine ? nextStep(progress, instrumentLine.id) : undefined;
@@ -290,6 +297,12 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
         }
       : { title: '选一件乐器同行', detail: '钢琴、吉他、声乐、古筝、口笛', done: false, path: '/path/piano' },
     { title: '听一听，两个音有多远', detail: '听觉训练 · 音程听辨', done: today.exercises > 0, path: '/practice/ear' },
+    {
+      title: '错题复习',
+      detail: due ? `今日 ${due} 道到期错题` : '今天暂无到期错题',
+      done: due === 0,
+      path: '/review',
+    },
   ];
   return (
     <>
@@ -1023,10 +1036,12 @@ function ProgressPage({ go }: { go: Go }) {
 function QuizBlock({
   questions,
   answers,
+  reviewEnabled,
   onChoose,
 }: {
   questions: QuizItem[];
   answers: (number | null)[];
+  reviewEnabled: boolean;
   onChoose: (question: number, option: number) => void;
 }) {
   return (
@@ -1061,6 +1076,7 @@ function QuizBlock({
               <div className={`quiz-feedback ${correct ? 'success' : 'retry'}`} role="status">
                 <strong>{correct ? '答对了！' : '再想一想，可以重新选择。'}</strong>
                 {correct && <p>{item.explanation}</p>}
+                {!correct && reviewEnabled && <p>已加入错题复习，明天可以再练。</p>}
               </div>
             )}
           </div>
@@ -1088,7 +1104,7 @@ function LessonSources({ courseId }: { courseId: string }) {
 }
 
 function LessonReader({ id, go }: { id: string; go: Go }) {
-  const { progress, complete, notify } = useLearning();
+  const { progress, complete, notify, update } = useLearning();
   const lesson = use(loadLesson(id));
   const questions = [lesson.quiz, ...(lesson.more ?? [])];
   const [answers, setAnswers] = useState<(number | null)[]>(() => questions.map(() => null));
@@ -1098,6 +1114,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
   const place = lessonPlace(lesson.id);
   // Main-line lessons follow the graded path; other lessons follow their course.
   const core = place?.line === 'core' ? place : undefined;
+  const reviewEnabled = core !== undefined && core.stage <= 2;
   const sequence = core ? publishedLessons('core', core.stage).map(lessonId => findLesson(lessonId)!) : course.lessons;
   const index = sequence.findIndex(item => item.id === lesson.id);
   const home = core ? '/path/core' : `/courses/${course.id}`;
@@ -1113,6 +1130,18 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
     />
   );
   useStudyClock(true);
+  function choose(questionIndex: number, option: number) {
+    const question = questions[questionIndex];
+    setAnswers(previous => previous.map((value, index) => (index === questionIndex ? option : value)));
+    if (reviewEnabled && option !== question.answer) {
+      const questionId = reviewQuestionId(lesson.id, question);
+      const now = new Date();
+      update(current => {
+        const review = recordMistake(current.review, questionId, localDate(now), now.toISOString());
+        return review === current.review ? current : { ...current, review };
+      });
+    }
+  }
   function finish() {
     complete(lesson.id);
     notify('这一小步，已经记在你的音乐旅程里。');
@@ -1232,13 +1261,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
           <Suspense fallback={null}>
             <LessonSources courseId={course.id} />
           </Suspense>
-          <QuizBlock
-            questions={questions}
-            answers={answers}
-            onChoose={(question, option) =>
-              setAnswers(previous => previous.map((value, i) => (i === question ? option : value)))
-            }
-          />
+          <QuizBlock questions={questions} answers={answers} reviewEnabled={reviewEnabled} onChoose={choose} />
           <div className="lesson-actions">
             <button className="text-button" onClick={() => go(index > 0 ? `/lesson/${sequence[index - 1].id}` : home)}>
               <ArrowLeft size={15} />
@@ -1523,6 +1546,8 @@ function Shell() {
               <InstrumentChooser go={go} query={query} setQuery={setQuery} />
             ) : activePage === 'practice' ? (
               <PracticePage go={go} tool={route.split('/')[2] ?? 'piano'} />
+            ) : activePage === 'review' ? (
+              <ReviewPage go={go} />
             ) : (
               <ProgressPage go={go} />
             )}

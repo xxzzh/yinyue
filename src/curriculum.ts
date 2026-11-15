@@ -5,6 +5,7 @@ import { findLesson } from './course-index.ts';
 import { instrumentLessonOrder } from './instrument-order.ts';
 import { portfolioItemIds } from './progress.ts';
 import type { Progress } from './progress.ts';
+import { pendingReviews, reviewLessonId } from './review.ts';
 
 export type Stage = 0 | 1 | 2 | 3 | 4 | 5;
 export type Skill = 'rh' | 'nt' | 'th' | 'ea' | 'pf' | 'cr' | 'ls';
@@ -334,6 +335,13 @@ export function plannedSize(line: LineId, stage: Stage) {
 export function lessonPlace(lessonId: string): { line: LineId; stage: Stage } | undefined {
   const found = units.find(item => item.items.some(entry => 'lesson' in entry && entry.lesson === lessonId));
   return found && { line: found.line, stage: found.stage };
+}
+
+export function reviewSchedule(progress: Progress) {
+  return pendingReviews(progress.review).filter(({ id }) => {
+    const place = lessonPlace(reviewLessonId(id));
+    return place?.line === 'core' && place.stage <= 2;
+  });
 }
 
 /** Which stages have a test. The questions live in curriculum-content.ts, loaded with the path page. */
