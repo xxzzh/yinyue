@@ -5,6 +5,7 @@ import { coreL0Lessons, coreL1Lessons, coreLessonExtras } from '../src/core-less
 import { coreL2Lessons } from '../src/core-l2-lessons.ts';
 import { coreL3Lessons } from '../src/core-l3-lessons.ts';
 import { coreL4Lessons } from '../src/core-l4-lessons.ts';
+import { coreL5Lessons } from '../src/core-l5-lessons.ts';
 import { checkChorale, chordName, choraleSequence, satb, stringQuartet } from '../src/voice-leading.ts';
 import { circleOfFifths, degreeChords, majorScaleSequence, progressionQuestion } from '../src/harmony.ts';
 import { parseTab, tabEvents } from '../src/tab.ts';
@@ -24,7 +25,7 @@ import type { JianpuNote } from '../src/jianpu.ts';
 import { allIntervals, earQuestion, intervalSet } from '../src/music.ts';
 import { Note } from 'tonal';
 
-const mainLine = ([0, 1, 2, 3, 4] as const)
+const mainLine = ([0, 1, 2, 3, 4, 5] as const)
   .flatMap(stage => publishedLessons('core', stage))
   .map(id => findLesson(id)!);
 
@@ -82,13 +83,17 @@ test('interval sets add minor third and perfect fourth without changing the defa
   );
 });
 
-test('main-line L0–L4 lessons are complete, checkable and playable', () => {
+test('main-line L0–L5 lessons are complete, checkable and playable', () => {
   assert.equal(coreL0Lessons.length + coreL1Lessons.length, 35);
   assert.equal(coreL2Lessons.length, 40);
   assert.equal(coreL3Lessons.length, 40);
   assert.equal(coreL4Lessons.length, 35);
-  assert.equal(mainLine.length, 158);
-  assert.equal(findCourse('ear')!.lessons.length + findCourse('theory')!.lessons.length, 158);
+  assert.deepEqual(
+    coreL5Lessons.map(item => item.id),
+    publishedLessons('core', 5),
+  );
+  assert.equal(mainLine.length, 188);
+  assert.equal(findCourse('ear')!.lessons.length + findCourse('theory')!.lessons.length, 188);
   const answerSlots = new Set<number>();
   for (const lesson of mainLine) {
     assert.ok(lesson, 'lesson exists');
@@ -150,10 +155,10 @@ test('main-line L0–L4 lessons are complete, checkable and playable', () => {
   assert.deepEqual(findLesson('ear-2')!.intervals, ['2M', '3m', '3M', '4P', '5P', '8P']);
 });
 
-test('L2 and L3 lessons sit in the right course and the ear course covers dictation and all intervals', () => {
+test('L2–L5 lessons sit in the right course and the ear course covers dictation and all intervals', () => {
   const ear = findCourse('ear')!.lessons.map(lesson => lesson.id);
   const theory = findCourse('theory')!.lessons.map(lesson => lesson.id);
-  for (const id of [...publishedLessons('core', 2), ...publishedLessons('core', 3), ...publishedLessons('core', 4)]) {
+  for (const id of ([2, 3, 4, 5] as const).flatMap(stage => publishedLessons('core', stage))) {
     const listening = id.startsWith('rh') || id.startsWith('ea');
     assert.ok((listening ? ear : theory).includes(id), id);
   }

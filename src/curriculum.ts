@@ -3,6 +3,7 @@
 // the whole ladder honestly. Lesson content itself stays in data.ts and the course modules.
 import { findLesson } from './course-index.ts';
 import { instrumentLessonOrder } from './instrument-order.ts';
+import { portfolioItemIds } from './progress.ts';
 import type { Progress } from './progress.ts';
 
 export type Stage = 0 | 1 | 2 | 3 | 4 | 5;
@@ -158,7 +159,6 @@ export const findLine = (id: string) => lines.find(line => line.id === id);
 export const instrumentStageSize: Record<Stage, number> = { 0: 4, 1: 10, 2: 16, 3: 20, 4: 20, 5: 15 };
 
 const l = (lesson: string): UnitItem => ({ lesson });
-const p = (plan: string): UnitItem => ({ plan });
 const unit = (line: LineId, stage: Stage, skill: Skill, items: UnitItem[], title = skillNames[skill]): Unit => ({
   id: `${line}-l${stage}-${skill}`,
   line,
@@ -284,47 +284,24 @@ const coreUnits: Unit[] = [
   unit('core', 4, 'ls', [l('ls4-30'), l('ls4-31'), l('ls4-32'), l('ls4-33'), l('ls4-34'), l('ls4-35')]),
   // L5 专业 · 30
   unit('core', 5, 'th', [
-    p('类别对位：一至五类'),
-    p('二部创意曲写作'),
-    p('赋格的结构与写作'),
-    p('半音化和声'),
-    p('完整作品的和声分析'),
-    p('申克分析入门'),
-    p('全音阶、八声音阶与音级集合'),
-    p('十二音技法'),
-    p('复调性、微分音与频谱音乐概览'),
-    p('极简主义与当代技法'),
+    l('th5-01'),
+    l('th5-02'),
+    l('th5-03'),
+    l('th5-04'),
+    l('th5-05'),
+    l('th5-06'),
+    l('th5-07'),
+    l('th5-08'),
+    l('th5-09'),
+    l('th5-10'),
   ]),
-  unit('core', 5, 'ea', [
-    p('无调性音程与音组听辨'),
-    p('复杂和声听写'),
-    p('总谱听读'),
-    p('无调性视唱'),
-    p('内心听觉：不出声地读谱'),
-  ]),
-  unit('core', 5, 'cr', [
-    p('配器法：各乐器组的写法'),
-    p('为管弦乐队配器'),
-    p('艺术歌曲写作'),
-    p('室内乐作品创作'),
-    p('影视与游戏配乐基础'),
-    p('自由即兴'),
-    p('完成并发布一部作品'),
-  ]),
+  unit('core', 5, 'ea', [l('ea5-11'), l('ea5-12'), l('ea5-13'), l('ea5-14'), l('ea5-15')]),
+  unit('core', 5, 'cr', [l('cr5-16'), l('cr5-17'), l('cr5-18'), l('cr5-19'), l('cr5-20'), l('cr5-21'), l('cr5-22')]),
   unit(
     'core',
     5,
     'pf',
-    [
-      p('独奏会曲目策划'),
-      p('舞台表现与演出焦虑'),
-      p('练习方法论：刻意练习与录音复盘'),
-      p('教学法：把会的教给别人'),
-      p('民族音乐学：怎样做田野记录'),
-      p('历史演奏实践'),
-      p('写乐评与作品分析'),
-      p('建立个人音乐语言'),
-    ],
+    [l('pf5-23'), l('pf5-24'), l('pf5-25'), l('pf5-26'), l('pf5-27'), l('pf5-28'), l('pf5-29'), l('pf5-30')],
     '演奏、教学与研究',
   ),
 ];
@@ -372,16 +349,30 @@ export const testFor = (line: LineId, stage: Stage) =>
 
 export type StageStatus = 'passed' | 'placed' | 'open' | 'locked';
 
-/** A stage counts as passed by its test, by placement (main line only) or, for instrument lines without
- * a performance check yet, by finishing every lesson already published in it. */
+export const corePortfolioPath = '/path/portfolio';
+export const isPortfolioStage = (line: LineId, stage: Stage) => line === 'core' && stage === 5;
+
+/** The main line uses tests or placement through L4, and course completion plus portfolio at L5.
+ * Instrument stages count their performance check as the final lesson. */
 export function stagePassed(progress: Progress, line: LineId, stage: Stage): boolean {
+  if (isPortfolioStage(line, stage))
+    return (
+      stageUnlocked(progress, line, stage) &&
+      publishedLessons(line, stage).every(id => progress.completed.includes(id)) &&
+      portfolioItemIds.every(id => progress.portfolio.includes(id))
+    );
   if (progress.passedTests.includes(`${line}-l${stage}`)) return true;
   if (line === 'core') return (progress.placement?.stage ?? 0) > stage;
   const published = publishedLessons(line, stage);
   return published.length > 0 && published.every(id => progress.completed.includes(id));
 }
 export function stageStatus(progress: Progress, line: LineId, stage: Stage): StageStatus {
-  if (line === 'core' && !progress.passedTests.includes(`core-l${stage}`) && (progress.placement?.stage ?? 0) > stage)
+  if (
+    line === 'core' &&
+    stage < 5 &&
+    !progress.passedTests.includes(`core-l${stage}`) &&
+    (progress.placement?.stage ?? 0) > stage
+  )
     return 'placed';
   if (stagePassed(progress, line, stage)) return 'passed';
   return stageUnlocked(progress, line, stage) ? 'open' : 'locked';
@@ -403,9 +394,10 @@ export function unlockHint(line: LineId, stage: Stage) {
 export type NextStep =
   | { kind: 'lesson'; line: LineId; stage: Stage; lesson: string }
   | { kind: 'test'; line: LineId; stage: Stage; test: string }
+  | { kind: 'portfolio'; line: 'core'; stage: 5 }
   | { kind: 'waiting'; line: LineId; stage: Stage };
 
-/** The next thing to do on a line: first unfinished lesson of the lowest open stage, then its test. */
+/** The next thing to do on a line: first unfinished lesson, then the stage assessment. */
 export function nextStep(progress: Progress, line: LineId): NextStep | undefined {
   for (const stage of STAGES) {
     if (stagePassed(progress, line, stage)) continue;
@@ -414,14 +406,14 @@ export function nextStep(progress: Progress, line: LineId): NextStep | undefined
     if (lesson) return { kind: 'lesson', line, stage, lesson };
     const test = testFor(line, stage);
     if (test) return { kind: 'test', line, stage, test: test.id };
+    if (line === 'core' && stage === 5) return { kind: 'portfolio', line, stage };
     return { kind: 'waiting', line, stage };
   }
   return undefined;
 }
 export function stepPath(step: NextStep) {
-  return step.kind === 'lesson'
-    ? `/lesson/${step.lesson}`
-    : step.kind === 'test'
-      ? `/path/test/${step.test}`
-      : `/path/${step.line}`;
+  if (step.kind === 'lesson') return `/lesson/${step.lesson}`;
+  if (step.kind === 'test') return `/path/test/${step.test}`;
+  if (step.kind === 'portfolio') return corePortfolioPath;
+  return `/path/${step.line}`;
 }

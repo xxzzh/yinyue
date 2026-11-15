@@ -12,6 +12,7 @@ import {
   stageStatus,
   stageTestIndex,
   stageUnlocked,
+  stepPath,
   units,
 } from '../src/curriculum.ts';
 import { passMark, stageTests } from '../src/curriculum-content.ts';
@@ -20,6 +21,7 @@ import {
   freshProgress,
   mergeProgress,
   passStageTest,
+  portfolioItemIds,
   recordPlacement,
   validateProgress,
 } from '../src/progress.ts';
@@ -60,13 +62,11 @@ test('the graded path matches the outline and references every mapped lesson onc
     'ls0-12',
     'pf0-13',
   ]);
-  // L0–L4 are fully written; L5 is still planned.
-  for (const stage of [0, 1, 2, 3, 4] as const)
-    assert.equal(publishedLessons('core', stage).length, plannedSize('core', stage));
+  for (const stage of STAGES) assert.equal(publishedLessons('core', stage).length, plannedSize('core', stage));
   assert.equal(publishedLessons('core', 2).length, 40);
   assert.equal(publishedLessons('core', 3).length, 40);
   assert.equal(publishedLessons('core', 4).length, 35);
-  assert.equal(publishedLessons('core', 5).length, 0);
+  assert.equal(publishedLessons('core', 5).length, 30);
   assert.equal(lessonPlace('guqin-1'), undefined);
 });
 
@@ -123,14 +123,43 @@ test('stages unlock by test, placement or finished instrument lessons', () => {
   assert.equal(stageStatus(placed, 'core', 1), 'placed');
   assert.equal(stageStatus(placed, 'core', 2), 'open');
   assert.deepEqual(nextStep(placed, 'core'), { kind: 'lesson', line: 'core', stage: 2, lesson: 'rh2-01' });
-  // A stage that is still being written waits instead of pointing at a lesson.
-  assert.deepEqual(nextStep(recordPlacement(freshProgress(), 5, '2026-11-12'), 'core'), {
-    kind: 'waiting',
+  const placedAtL5 = recordPlacement(freshProgress(), 5, '2026-11-12');
+  assert.deepEqual(nextStep(placedAtL5, 'core'), {
+    kind: 'lesson',
     line: 'core',
+    stage: 5,
+    lesson: 'th5-01',
+  });
+  const pianoThroughL4 = finish(
+    placedAtL5,
+    STAGES.slice(0, 5).flatMap(stage => publishedLessons('piano', stage)),
+  );
+  assert.deepEqual(nextStep(pianoThroughL4, 'piano'), {
+    kind: 'waiting',
+    line: 'piano',
     stage: 5,
   });
   // Placement never marks lessons as completed.
   assert.deepEqual(placed.completed, []);
+});
+
+test('L5 requires the prerequisite, all lessons and the three portfolio confirmations', () => {
+  const lessons = publishedLessons('core', 5);
+  const finished = finish(freshProgress(), lessons);
+  assert.equal(stageStatus({ ...finished, portfolio: [...portfolioItemIds] }, 'core', 5), 'locked');
+
+  const placed = recordPlacement(freshProgress(), 5, '2026-11-12');
+  assert.equal(stageStatus({ ...placed, portfolio: [...portfolioItemIds] }, 'core', 5), 'open');
+  const ready = finish(placed, lessons);
+  assert.deepEqual(nextStep(ready, 'core'), { kind: 'portfolio', line: 'core', stage: 5 });
+  assert.equal(stepPath(nextStep(ready, 'core')!), '/path/portfolio');
+
+  const partial = { ...ready, portfolio: portfolioItemIds.slice(0, 2) };
+  assert.equal(stageStatus({ ...partial, passedTests: ['core-l5'] }, 'core', 5), 'open');
+  assert.equal(stageStatus(recordPlacement(partial, 6, '2026-11-12'), 'core', 5), 'open');
+  const assessed = { ...ready, portfolio: [...portfolioItemIds] };
+  assert.equal(stageStatus(assessed, 'core', 5), 'passed');
+  assert.equal(nextStep(assessed, 'core'), undefined);
 });
 
 test('version 1 records upgrade in place and backups merge the new fields', () => {
@@ -147,6 +176,7 @@ test('version 1 records upgrade in place and backups merge the new fields', () =
   assert.deepEqual(upgraded.passedTests, []);
   assert.equal(upgraded.placement, null);
   assert.equal(upgraded.instrument, null);
+  assert.deepEqual(upgraded.portfolio, []);
   assert.equal(upgraded.dailyGoal, 20);
   assert.deepEqual(validateProgress(JSON.parse(JSON.stringify(upgraded))), upgraded);
 
@@ -157,24 +187,29 @@ test('version 1 records upgrade in place and backups merge the new fields', () =
     passedTests: ['core-l0', 'core-l0', 7],
     placement: { stage: 99, date: '2026-11-12' },
     instrument: 'piano',
+    portfolio: ['composition', 'analysis', 'analysis', 'unknown', 7],
   });
   assert.deepEqual(tidy.passedTests, ['core-l0']);
   assert.equal(tidy.placement, null);
   assert.equal(tidy.instrument, 'piano');
+  assert.deepEqual(tidy.portfolio, ['composition', 'analysis']);
+  assert.deepEqual(validateProgress({ ...v1, version: 2 }).portfolio, []);
 
-  const current: Progress = { ...upgraded, instrument: 'guitar', passedTests: ['core-l0'] };
+  const current: Progress = { ...upgraded, instrument: 'guitar', passedTests: ['core-l0'], portfolio: ['recital'] };
   const imported: Progress = {
     ...freshProgress(),
     completed: ['ear-1', 'gone-1'],
     passedTests: ['core-l1'],
     instrument: 'piano',
     placement: { stage: 1, date: '2026-11-10' },
+    portfolio: ['recital', 'analysis'],
   };
   const merged = mergeProgress(current, imported, id => !!findLesson(id));
   assert.deepEqual(merged.completed, ['theory-1', 'ear-1']);
   assert.deepEqual(merged.passedTests, ['core-l0', 'core-l1']);
   assert.deepEqual(merged.placement, { stage: 1, date: '2026-11-10' });
   assert.equal(merged.instrument, 'guitar');
+  assert.deepEqual(merged.portfolio, ['recital', 'analysis']);
 });
 
 test('generated catalog quizzes vary per instrument and do not reveal the subject by name', () => {

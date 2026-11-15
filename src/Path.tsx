@@ -14,12 +14,15 @@ import {
 import { findLesson } from './course-index';
 import { Dialog } from './Dialog';
 import { useLearning, useStudyClock } from './learning';
-import { passStageTest, recordPlacement } from './progress';
+import { passStageTest, portfolioItemIds, recordPlacement } from './progress';
+import type { PortfolioItem } from './progress';
 import { stableHash } from './catalog-quiz';
 import { findStageTest, instrumentPlans, passMark, stageTests } from './curriculum-content';
 import { instrumentLessonPlans } from './instrument-lesson-plans';
 import {
+  corePortfolioPath,
   findLine,
+  isPortfolioStage,
   lines,
   nextStep,
   plannedSize,
@@ -55,6 +58,7 @@ export function PathPage({ go, route }: { go: Go; route: string }) {
   const [, , section, detail] = route.split('/');
   const test = section === 'test' ? findStageTest(detail ?? '') : undefined;
   const placement = section === 'placement';
+  const portfolio = route === corePortfolioPath;
   const line: LineId = test?.line ?? (placement ? 'core' : (findLine(section ?? '')?.id ?? 'core'));
   const info = findLine(line)!;
   const step = nextStep(progress, line);
@@ -65,7 +69,7 @@ export function PathPage({ go, route }: { go: Go; route: string }) {
         <div>
           <span className="eyebrow">FROM FIRST NOTE TO MASTERY</span>
           <h1>从第一个音，走到属于你的音乐。</h1>
-          <p>一条音乐素养主线，加上一件你选的乐器。学完一个阶段、通过阶段测验，再往上走。</p>
+          <p>沿音乐素养主线和所选乐器逐阶学习。主线 L5 用个人作品集结业。</p>
         </div>
       </div>
       {fresh && (
@@ -132,6 +136,7 @@ export function PathPage({ go, route }: { go: Go; route: string }) {
       </div>
       {test && <StageTestDialog key={test.id} test={test} go={go} />}
       {placement && <PlacementDialog go={go} />}
+      {portfolio && <PortfolioDialog go={go} />}
     </>
   );
 }
@@ -231,7 +236,18 @@ function StageCard({ line, stage, current, go }: { line: LineId; stage: Stage; c
             </div>
           </div>
         ))}
-        {test ? (
+        {isPortfolioStage(line, stage) ? (
+          <div className="stage-test-row">
+            <Flag size={18} />
+            <span>
+              <strong>{status === 'passed' ? '作品集已完成' : '结业作品集'}</strong>
+              <small>学完 30 节课程，并自行核对独奏会录音、原创作品和作品分析。</small>
+            </span>
+            <button className="button dark small" disabled={status === 'locked'} onClick={() => go(corePortfolioPath)}>
+              {status === 'passed' ? '查看作品集' : '作品集自评'}
+            </button>
+          </div>
+        ) : test ? (
           <div className="stage-test-row">
             <Flag size={18} />
             <span>
@@ -250,13 +266,82 @@ function StageCard({ line, stage, current, go }: { line: LineId; stage: Stage; c
           </div>
         ) : (
           <p className="stage-note">
-            {line === 'core'
-              ? '本阶段的课程和阶段测验会一起上线。'
-              : '演奏关卡会随乐器课程上线；在那之前，学完本阶段已上线的课程即算通过。'}
+            {published.length === 0
+              ? '本阶段的课程仍在编写中。'
+              : stage === 0
+                ? '学完本阶段全部课程即可通过。'
+                : '本阶段最后一课是关卡，学完本阶段全部课程即可通过。'}
           </p>
         )}
       </div>
     </details>
+  );
+}
+
+const portfolioItems: Record<PortfolioItem, { title: string; criteria: string }> = {
+  recital: {
+    title: '独奏会曲目录音',
+    criteria: '整理曲目顺序，留存一次连贯演出或排练的录音，并回听曲目衔接和音量。',
+  },
+  composition: {
+    title: '原创作品的乐谱与录音',
+    criteria: '留存同一版本的乐谱和录音，检查段落、速度及编制能否与录音对应。',
+  },
+  analysis: {
+    title: '作品分析',
+    criteria: '写明分析对象和参考版本，引用具体小节或时间点来支持自己的判断。',
+  },
+};
+
+function PortfolioDialog({ go }: { go: Go }) {
+  const { progress, update } = useLearning();
+  const status = stageStatus(progress, 'core', 5);
+  const lessons = publishedLessons('core', 5);
+  const done = lessons.filter(id => progress.completed.includes(id)).length;
+  const back = () => go('/path/core');
+  return (
+    <Dialog title="L5 结业作品集" onClose={back} className="quiz-dialog">
+      <h2>L5 结业作品集</h2>
+      {status === 'locked' ? (
+        <p className="muted">{unlockHint('core', 5)}</p>
+      ) : (
+        <>
+          <p className="muted">请自行保留乐谱、录音和文章。本站在学习记录里保存你勾选的结果。</p>
+          <fieldset className="portfolio-checklist">
+            <legend>作品集自评</legend>
+            {portfolioItemIds.map(id => (
+              <label key={id}>
+                <input
+                  type="checkbox"
+                  checked={progress.portfolio.includes(id)}
+                  onChange={event => {
+                    const checked = event.currentTarget.checked;
+                    update(state => ({
+                      ...state,
+                      portfolio: portfolioItemIds.filter(item =>
+                        item === id ? checked : state.portfolio.includes(item),
+                      ),
+                    }));
+                  }}
+                />
+                <span>
+                  <strong>{portfolioItems[id].title}</strong>
+                  <small>{portfolioItems[id].criteria}</small>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          <p role="status" className="portfolio-status">
+            {status === 'passed'
+              ? '音乐素养主线 L5 已完成'
+              : `课程已完成 ${done} / ${lessons.length} 节，作品已确认 ${progress.portfolio.length} / ${portfolioItemIds.length} 项。`}
+          </p>
+        </>
+      )}
+      <button className="button primary" onClick={back}>
+        返回学习路线
+      </button>
+    </Dialog>
   );
 }
 
@@ -451,7 +536,7 @@ function PlacementDialog({ go }: { go: Go }) {
         <>
           <p className="muted">
             从 L0 开始出题，每个阶段答对 80% 才进入下一阶段的题目；某一阶段没通过就停在那里。目前最高可定级到 L
-            {placementTests.length}，更高阶段的定级题会随课程上线补充。
+            {placementTests.length}。进入 L5 后，学完课程并完成作品集即可结业。
           </p>
           <p className="muted">定级只跳过已经会的阶段，不会把课程标记为“已学完”。可以随时重新定级。</p>
           <button className="button primary" onClick={() => setStarted(true)}>

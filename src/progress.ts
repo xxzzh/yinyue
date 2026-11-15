@@ -8,6 +8,9 @@ export interface Placement {
   stage: number;
   date: string;
 }
+export const portfolioItemIds = ['recital', 'composition', 'analysis'] as const;
+export type PortfolioItem = (typeof portfolioItemIds)[number];
+
 export interface Progress {
   version: 2;
   completed: string[];
@@ -20,6 +23,8 @@ export interface Progress {
   placement: Placement | null;
   /** Instrument line the learner follows next to the main line, e.g. `piano`. */
   instrument: string | null;
+  /** Self-checked L5 portfolio items. The actual works are kept by the learner. */
+  portfolio: PortfolioItem[];
 }
 // The key keeps its original name so that version 1 records are read and upgraded in place.
 export const STORAGE_KEY = 'yinxu.progress.v1';
@@ -33,6 +38,7 @@ export const freshProgress = (): Progress => ({
   passedTests: [],
   placement: null,
   instrument: null,
+  portfolio: [],
 });
 export function localDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
@@ -61,6 +67,7 @@ export function validateProgress(value: unknown): Progress {
   const shortIds = (list: unknown) =>
     Array.isArray(list) ? [...new Set(list.filter(id => typeof id === 'string' && id.length < 80) as string[])] : [];
   const placement = p.placement as Partial<Placement> | null | undefined;
+  const portfolio = Array.isArray(p.portfolio) ? p.portfolio : [];
   return {
     version: 2,
     completed: [...new Set(p.completed)],
@@ -80,6 +87,7 @@ export function validateProgress(value: unknown): Progress {
         ? { stage: placement.stage, date: placement.date }
         : null,
     instrument: typeof p.instrument === 'string' && p.instrument.length < 40 ? p.instrument : null,
+    portfolio: portfolioItemIds.filter(id => portfolio.includes(id)),
   };
 }
 /** Merges an imported backup into the current record without losing anything already earned. */
@@ -92,6 +100,7 @@ export function mergeProgress(current: Progress, imported: Progress, knownLesson
     placement:
       (imported.placement?.stage ?? -1) > (current.placement?.stage ?? -1) ? imported.placement : current.placement,
     instrument: current.instrument ?? imported.instrument,
+    portfolio: portfolioItemIds.filter(id => current.portfolio.includes(id) || imported.portfolio.includes(id)),
   };
   for (const [date, day] of Object.entries(imported.days)) {
     const old = current.days[date] ?? { seconds: 0, lessons: 0, exercises: 0 };

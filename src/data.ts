@@ -3,6 +3,7 @@ import { coreL0Lessons, coreL1Lessons, earCourseOrder, theoryCourseOrder } from 
 import { coreL2Lessons, earCourseOrderL2, theoryCourseOrderL2 } from './core-l2-lessons.ts';
 import { coreL3Lessons, earCourseOrderL3, theoryCourseOrderL3 } from './core-l3-lessons.ts';
 import { coreL4Lessons, earCourseOrderL4, theoryCourseOrderL4 } from './core-l4-lessons.ts';
+import { coreL5Lessons, earCourseOrderL5, theoryCourseOrderL5 } from './core-l5-lessons.ts';
 import type { WorldTrack } from './world-catalog.ts';
 import { traditionalInstrument } from './traditional-catalog.ts';
 import { pianoLessons } from './piano-lessons.ts';
@@ -217,8 +218,7 @@ export interface Course {
   sources?: { title: string; url: string }[];
 }
 
-// Main-line lessons: the theory and ear courses list them in graded-path order (core-lessons.ts and the
-// L2/L3 files). Instrument courses with graded-path lessons list them in path order (instrument-order.ts).
+// The theory, ear and instrument courses list their graded lessons in path order.
 const lineLessonsById = new Map(
   [
     ...coreL0Lessons,
@@ -226,6 +226,7 @@ const lineLessonsById = new Map(
     ...coreL2Lessons,
     ...coreL3Lessons,
     ...coreL4Lessons,
+    ...coreL5Lessons,
     ...pianoLessons,
     ...pianoL3Lessons,
     ...pianoL4Lessons,
@@ -245,8 +246,14 @@ const lineLessonsById = new Map(
   ].map(lesson => [lesson.id, lesson]),
 );
 const courseOrder: Partial<Record<Track, string[]>> = {
-  theory: [...theoryCourseOrder, ...theoryCourseOrderL2, ...theoryCourseOrderL3, ...theoryCourseOrderL4],
-  ear: [...earCourseOrder, ...earCourseOrderL2, ...earCourseOrderL3, ...earCourseOrderL4],
+  theory: [
+    ...theoryCourseOrder,
+    ...theoryCourseOrderL2,
+    ...theoryCourseOrderL3,
+    ...theoryCourseOrderL4,
+    ...theoryCourseOrderL5,
+  ],
+  ear: [...earCourseOrder, ...earCourseOrderL2, ...earCourseOrderL3, ...earCourseOrderL4, ...earCourseOrderL5],
   piano: lineLessons(instrumentLessonOrder.piano),
   guitar: lineLessons(instrumentLessonOrder.guitar),
   voice: lineLessons(instrumentLessonOrder.voice),

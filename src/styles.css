@@ -6264,6 +6264,44 @@ input[type='range'] {
 .quiz-dialog > .button {
   margin-top: 8px;
 }
+.portfolio-checklist {
+  min-inline-size: 0;
+  margin: 0 0 14px;
+  padding: 0;
+  border: 0;
+}
+.portfolio-checklist legend {
+  margin-bottom: 8px;
+  color: #637d53;
+  font-weight: 600;
+}
+.portfolio-checklist label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #f2f5ea;
+  cursor: pointer;
+}
+.portfolio-checklist input {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: #627a50;
+}
+.portfolio-checklist small {
+  display: block;
+  margin-top: 4px;
+  color: #536447;
+  line-height: 1.6;
+}
+.portfolio-status {
+  margin: 0 0 8px;
+  color: #536447;
+}
 .quiz-runner h3 {
   font: 500 15px/1.8 var(--serif);
   color: #637d53;

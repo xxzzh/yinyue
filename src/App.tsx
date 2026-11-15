@@ -57,7 +57,18 @@ import { InstrumentImage } from './InstrumentImage';
 import { instrumentImages } from './instrument-images';
 import { useLearning, useStudyClock } from './learning';
 import { Dialog } from './Dialog';
-import { findLine, lessonPlace, nextStep, publishedLessons, stageLabel, stages, stepPath, testFor } from './curriculum';
+import {
+  corePortfolioPath,
+  findLine,
+  lessonPlace,
+  nextStep,
+  publishedLessons,
+  stageLabel,
+  stages,
+  stageUnlocked,
+  stepPath,
+  testFor,
+} from './curriculum';
 import type { NextStep } from './curriculum';
 
 // Pages and interactive tools load on demand so the first screen only ships the shell and course data.
@@ -243,6 +254,7 @@ function stepTitle(step: NextStep | undefined, prefix: string) {
   if (!step) return `${prefix}：先通过主线当前阶段`;
   if (step.kind === 'lesson') return `${prefix}：${findLesson(step.lesson)?.title ?? '下一课'}`;
   if (step.kind === 'test') return `${prefix}：${stageLabel(step.stage)} 阶段测验`;
+  if (step.kind === 'portfolio') return `${prefix}：L5 结业作品集`;
   return `${prefix}：${stageLabel(step.stage)} 课程编写中`;
 }
 
@@ -260,9 +272,9 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
   const greeting = hour < 11 ? '早上好' : hour < 14 ? '中午好' : hour < 18 ? '下午好' : '晚上好';
   const tasks = [
     {
-      title: stepTitle(coreStep, '主线'),
+      title: coreStep ? stepTitle(coreStep, '主线') : '主线：L5 已完成',
       detail: coreStep ? `音乐素养主线 · ${stageLabel(coreStep.stage)}` : '音乐素养主线',
-      done: today.lessons > 0,
+      done: !coreStep || (coreStep.kind === 'lesson' && today.lessons > 0),
       path: coreStep ? stepPath(coreStep) : '/path/core',
     },
     instrumentLine
@@ -316,9 +328,11 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
                 ? '查看学习路线'
                 : heroStep.kind === 'test'
                   ? '参加阶段测验'
-                  : progress.completed.length
-                    ? '继续我的学习'
-                    : '开始第一节课'}
+                  : heroStep.kind === 'portfolio'
+                    ? '完成结业作品集'
+                    : progress.completed.length
+                      ? '继续我的学习'
+                      : '开始学习'}
               <ArrowRight size={16} />
             </button>
             <div className="hero-caption">
@@ -326,8 +340,8 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
                 <Music2 size={10} />
               </span>
               {heroStep
-                ? `${stageLabel(heroStep.stage)} · ${heroLesson ? heroLesson.title : '阶段测验'}`
-                : '已上线的阶段都完成了，新课程编写中'}
+                ? `${stageLabel(heroStep.stage)} · ${heroLesson?.title ?? (heroStep.kind === 'portfolio' ? '结业作品集' : '阶段测验')}`
+                : '音乐素养主线已完成'}
             </div>
           </div>
           <div className="hero-visual">
@@ -1084,6 +1098,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
   const home = core ? '/path/core' : `/courses/${course.id}`;
   const stageTest = core && testFor('core', core.stage);
   const testPending = !!stageTest && !progress.passedTests.includes(stageTest.id);
+  const portfolioAvailable = core?.stage === 5 && stageUnlocked(progress, 'core', 5);
   useStudyClock(true);
   function finish() {
     complete(lesson.id);
@@ -1091,6 +1106,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
     const next = sequence[index + 1];
     if (next) go(`/lesson/${next.id}`);
     else if (stageTest && testPending) go(`/path/test/${stageTest.id}`);
+    else if (portfolioAvailable) go(corePortfolioPath);
     else go(home);
   }
   return (
@@ -1219,9 +1235,11 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
                 ? '完成本课，继续下一课'
                 : testPending
                   ? '完成本课，去做阶段测验'
-                  : core
-                    ? '完成本课，回到学习路线'
-                    : '完成这条入门路线'}
+                  : portfolioAvailable
+                    ? '完成本课，查看作品集'
+                    : core
+                      ? '完成本课，回到学习路线'
+                      : '完成这条入门路线'}
               <ArrowRight size={16} />
             </button>
           </div>

@@ -15,9 +15,9 @@ export const filterCourses = (query: string, family = 'all') =>
   courses.filter(course => courseMatches(course, query, family, course.tradition));
 
 /** Which content chunk holds a lesson; IDs follow the conventions of the lesson files. */
-export type LessonChunk = 'core' | 'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi' | 'catalog';
+export type LessonChunk = 'core' | 'core-l5' | 'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi' | 'catalog';
 export function lessonChunk(id: string): LessonChunk {
-  if (/^(rh|nt|th|ea|cr|ls|pf)\d-\d\d$/.test(id)) return 'core';
+  if (/^(rh|nt|th|ea|cr|ls|pf)\d-\d\d$/.test(id)) return id[2] === '5' ? 'core-l5' : 'core';
   const line = /^(piano|guitar|voice|guzheng|koudi)-l\d-\d\d$/.exec(id);
   return line ? (line[1] as LessonChunk) : 'catalog';
 }
@@ -35,6 +35,7 @@ const chunkLoaders: Record<LessonChunk, () => Promise<Lesson[]>> = {
       ...l3.coreL3Lessons,
       ...l4.coreL4Lessons,
     ]),
+  'core-l5': () => import('./core-l5-lessons.ts').then(module => module.coreL5Lessons),
   piano: () =>
     Promise.all([import('./piano-lessons.ts'), import('./piano-l3-lessons.ts'), import('./piano-l4-lessons.ts')]).then(
       ([a, b, c]) => [...a.pianoLessons, ...b.pianoL3Lessons, ...c.pianoL4Lessons],
