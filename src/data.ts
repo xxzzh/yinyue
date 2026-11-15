@@ -21,6 +21,11 @@ import { guitarL4Lessons } from './guitar-l4-lessons.ts';
 import { voiceL4Lessons } from './voice-l4-lessons.ts';
 import { guzhengL4Lessons } from './guzheng-l4-lessons.ts';
 import { koudiL4Lessons } from './koudi-l4-lessons.ts';
+import { pianoL5Lessons } from './piano-l5-lessons.ts';
+import { guitarL5Lessons } from './guitar-l5-lessons.ts';
+import { voiceL5Lessons } from './voice-l5-lessons.ts';
+import { guzhengL5Lessons } from './guzheng-l5-lessons.ts';
+import { koudiL5Lessons } from './koudi-l5-lessons.ts';
 import { instrumentLessonOrder, lineLessons } from './instrument-order.ts';
 import type { SightOptions } from './jianpu.ts';
 import type { BeatCell } from './dictation.ts';
@@ -180,9 +185,9 @@ export interface Lesson {
   sections: { title: string; body: string }[];
   takeaway: string;
   widget: Widget;
-  activity?: { title: string; intro?: string; steps: { task: string; hint: string }[] };
+  activity?: { title: string; intro?: string; steps: { task: string; hint: string }[]; required?: boolean };
   quiz: QuizItem;
-  /** Further questions; the lesson is complete when every question is answered correctly. */
+  /** Further questions to answer before completing the lesson. */
   more?: QuizItem[];
   jianpu?: JianpuExample[];
   listen?: ListenClip[];
@@ -230,18 +235,23 @@ const lineLessonsById = new Map(
     ...pianoLessons,
     ...pianoL3Lessons,
     ...pianoL4Lessons,
+    ...pianoL5Lessons,
     ...guitarLessons,
     ...guitarL3Lessons,
     ...guitarL4Lessons,
+    ...guitarL5Lessons,
     ...voiceLessons,
     ...voiceL3Lessons,
     ...voiceL4Lessons,
+    ...voiceL5Lessons,
     ...guzhengLessons,
     ...guzhengL3Lessons,
     ...guzhengL4Lessons,
+    ...guzhengL5Lessons,
     ...koudiLessons,
     ...koudiL3Lessons,
     ...koudiL4Lessons,
+    ...koudiL5Lessons,
     ...baseLessons,
   ].map(lesson => [lesson.id, lesson]),
 );

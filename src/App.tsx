@@ -64,6 +64,7 @@ import {
   nextStep,
   publishedLessons,
   stageLabel,
+  stagePassed,
   stages,
   stageUnlocked,
   stepPath,
@@ -264,6 +265,7 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
   const coreStep = nextStep(progress, 'core');
   const instrumentLine = progress.instrument ? findLine(progress.instrument) : undefined;
   const instrumentStep = instrumentLine ? nextStep(progress, instrumentLine.id) : undefined;
+  const instrumentComplete = !!instrumentLine && stagePassed(progress, instrumentLine.id, 5);
   const heroStep = [coreStep, instrumentStep].find(step => step && step.kind !== 'waiting');
   const heroLesson = heroStep?.kind === 'lesson' ? findLesson(heroStep.lesson) : undefined;
   const totalSeconds = Object.values(progress.days).reduce((sum, day) => sum + day.seconds, 0);
@@ -279,9 +281,11 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
     },
     instrumentLine
       ? {
-          title: stepTitle(instrumentStep, instrumentLine.name),
-          detail: instrumentStep ? `我的乐器 · ${stageLabel(instrumentStep.stage)}` : `我的乐器 · 先通过主线当前阶段`,
-          done: false,
+          title: instrumentComplete
+            ? `${instrumentLine.name}：L5 已结业`
+            : stepTitle(instrumentStep, instrumentLine.name),
+          detail: instrumentStep ? `我的乐器 · ${stageLabel(instrumentStep.stage)}` : '我的乐器',
+          done: instrumentComplete,
           path: instrumentStep ? stepPath(instrumentStep) : `/path/${instrumentLine.id}`,
         }
       : { title: '选一件乐器同行', detail: '钢琴、吉他、声乐、古筝、口笛', done: false, path: '/path/piano' },
@@ -1088,6 +1092,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
   const lesson = use(loadLesson(id));
   const questions = [lesson.quiz, ...(lesson.more ?? [])];
   const [answers, setAnswers] = useState<(number | null)[]>(() => questions.map(() => null));
+  const [activityRecorded, setActivityRecorded] = useState(false);
   const solved = answers.every((value, i) => value === questions[i].answer);
   const course = lessonCourse(lesson.id)!;
   const place = lessonPlace(lesson.id);
@@ -1099,6 +1104,14 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
   const stageTest = core && testFor('core', core.stage);
   const testPending = !!stageTest && !progress.passedTests.includes(stageTest.id);
   const portfolioAvailable = core?.stage === 5 && stageUnlocked(progress, 'core', 5);
+  const activityPending = !!lesson.activity?.required && !activityRecorded && !progress.completed.includes(lesson.id);
+  const instrumentGraduation = place?.stage === 5 && place.line !== 'core' && !!lesson.activity?.required;
+  const activity = (
+    <DiscoveryActivity
+      lesson={lesson}
+      onRecord={lesson.activity?.required ? () => setActivityRecorded(true) : undefined}
+    />
+  );
   useStudyClock(true);
   function finish() {
     complete(lesson.id);
@@ -1107,6 +1120,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
     if (next) go(`/lesson/${next.id}`);
     else if (stageTest && testPending) go(`/path/test/${stageTest.id}`);
     else if (portfolioAvailable) go(corePortfolioPath);
+    else if (instrumentGraduation) go(`/path/${place.line}`);
     else go(home);
   }
   return (
@@ -1168,7 +1182,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
               现在，亲手试一试
             </div>
             {lesson.widget === 'discovery' ? (
-              <DiscoveryActivity lesson={lesson} />
+              activity
             ) : lesson.widget === 'jianpu' ? (
               <JianpuWidget examples={lesson.jianpu ?? []} />
             ) : lesson.widget === 'listen' ? (
@@ -1206,7 +1220,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
             ) : (
               <TheoryPlayer type={lesson.widget} />
             )}
-            {lesson.activity && lesson.widget !== 'discovery' && <DiscoveryActivity lesson={lesson} />}
+            {lesson.activity && lesson.widget !== 'discovery' && activity}
           </section>
           <div className="takeaway">
             <Sparkles size={18} />
@@ -1230,7 +1244,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
               <ArrowLeft size={15} />
               {index > 0 ? '上一课' : core ? '学习路线' : '课程目录'}
             </button>
-            <button className="button primary" disabled={!solved} onClick={finish}>
+            <button className="button primary" disabled={!solved || activityPending} onClick={finish}>
               {index < sequence.length - 1
                 ? '完成本课，继续下一课'
                 : testPending
@@ -1239,7 +1253,9 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
                     ? '完成本课，查看作品集'
                     : core
                       ? '完成本课，回到学习路线'
-                      : '完成这条入门路线'}
+                      : instrumentGraduation
+                        ? '完成结业关卡，回到学习路线'
+                        : '完成这条入门路线'}
               <ArrowRight size={16} />
             </button>
           </div>
@@ -1248,6 +1264,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
               {lesson.more?.length ? '答对上方全部问题后，就可以完成这一课。' : '答对上方小问题后，就可以完成这一课。'}
             </p>
           )}
+          {activityPending && <p className="quiz-hint">请在上方勾选并记录录音自评。</p>}
         </LoadBoundary>
       </article>
     </Dialog>

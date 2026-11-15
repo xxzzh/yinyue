@@ -18,7 +18,7 @@ test('every instrument stage lists a working title for each lesson still to be w
     const seen = new Set<string>();
     for (const stage of STAGES) {
       const published = publishedLessons(line.id, stage);
-      const titles = instrumentLessonPlans[id][stage] ?? [];
+      const titles = instrumentLessonPlans[id]?.[stage] ?? [];
       const missing = unitsOf(line.id, stage).reduce((sum, unit) => sum + (unit.extraPlanned ?? 0), 0);
       assert.equal(titles.length, missing, `${line.id} L${stage}: titles for the unwritten lessons`);
       assert.equal(published.length + titles.length, instrumentStageSize[stage], `${line.id} L${stage}`);
@@ -36,6 +36,5 @@ test('every instrument stage lists a working title for each lesson still to be w
       total += titles.length;
     }
   }
-  // L5 of every line: 15 each.
-  assert.equal(total, 75);
+  assert.equal(total, 0);
 });

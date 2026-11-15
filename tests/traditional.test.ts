@@ -37,7 +37,7 @@ test('traditional directory covers every category and each entry opens a complet
       );
       assert.ok(lesson.quiz.explanation.length > 4, lesson.id);
       if (lesson.widget === 'discovery') {
-        assert.equal(lesson.activity?.steps.length, 3, lesson.id);
+        assert.equal(lesson.activity?.steps.length, /^[a-z]+-l5-/.test(lesson.id) ? 2 : 3, lesson.id);
         assert.ok(
           lesson.activity?.steps.every(step => step.hint.trim().length > 0),
           lesson.id,

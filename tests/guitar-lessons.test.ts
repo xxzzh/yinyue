@@ -53,7 +53,7 @@ test('guitar chord shapes sound the chords they are named after', () => {
 test('guitar lessons cover L0–L2 in path order with valid tablature and sounds', () => {
   assert.equal(guitarLessons.length, 26);
   const order = lineLessons(instrumentLessonOrder.guitar);
-  assert.equal(order.length, 70);
+  assert.equal(order.length, 85);
   assert.deepEqual(
     findCourse('guitar')!.lessons.map(lesson => lesson.id),
     order,

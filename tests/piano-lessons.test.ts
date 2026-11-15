@@ -83,7 +83,7 @@ test('sight-reading melodies fill every bar, stay in range and end on do', () =>
 test('piano lessons cover L0–L2 in path order with checkable material', () => {
   assert.equal(pianoLessons.length, 26);
   const order = lineLessons(instrumentLessonOrder.piano);
-  assert.equal(order.length, 70);
+  assert.equal(order.length, 85);
   assert.deepEqual(
     findCourse('piano')!.lessons.map(lesson => lesson.id),
     order,

@@ -361,7 +361,8 @@ export function stagePassed(progress: Progress, line: LineId, stage: Stage): boo
       publishedLessons(line, stage).every(id => progress.completed.includes(id)) &&
       portfolioItemIds.every(id => progress.portfolio.includes(id))
     );
-  if (progress.passedTests.includes(`${line}-l${stage}`)) return true;
+  if (stage === 5 && !stageUnlocked(progress, line, stage)) return false;
+  if (stage < 5 && progress.passedTests.includes(`${line}-l${stage}`)) return true;
   if (line === 'core') return (progress.placement?.stage ?? 0) > stage;
   const published = publishedLessons(line, stage);
   return published.length > 0 && published.every(id => progress.completed.includes(id));

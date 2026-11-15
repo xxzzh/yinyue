@@ -9,7 +9,7 @@ test('world expansion has distinct complete routes, image metadata and meaningfu
   assert.equal(new Set(courses.map(course => course.id)).size, courses.length);
   assert.equal(new Set(allLessons.map(lesson => lesson.id)).size, allLessons.length);
   assert.equal(courses.length, 203);
-  assert.equal(allLessons.length, 1133);
+  assert.equal(allLessons.length, 1208);
   for (const item of worldCatalog) {
     const course = findCourse(item.id)!;
     assert.ok(course, item.id);

@@ -135,12 +135,32 @@ test('stages unlock by test, placement or finished instrument lessons', () => {
     STAGES.slice(0, 5).flatMap(stage => publishedLessons('piano', stage)),
   );
   assert.deepEqual(nextStep(pianoThroughL4, 'piano'), {
-    kind: 'waiting',
+    kind: 'lesson',
     line: 'piano',
     stage: 5,
+    lesson: 'piano-l5-01',
   });
   // Placement never marks lessons as completed.
   assert.deepEqual(placed.completed, []);
+});
+
+test('instrument L5 requires both L4 prerequisites and the final performance lesson', () => {
+  const earlier = STAGES.slice(0, 5).flatMap(stage => publishedLessons('piano', stage));
+  const final = publishedLessons('piano', 5);
+  const placedAtL5 = recordPlacement(freshProgress(), 5, '2026-11-15');
+  assert.equal(stageStatus(finish(placedAtL5, final), 'piano', 5), 'locked');
+  assert.equal(stageStatus(finish(freshProgress(), [...earlier, ...final]), 'piano', 5), 'locked');
+  const needsCheck = finish(placedAtL5, [...earlier, ...final.slice(0, -1)]);
+  assert.equal(stageStatus(needsCheck, 'piano', 5), 'open');
+  assert.deepEqual(nextStep(needsCheck, 'piano'), {
+    kind: 'lesson',
+    line: 'piano',
+    stage: 5,
+    lesson: 'piano-l5-15',
+  });
+  const graduated = finish(needsCheck, final.slice(-1));
+  assert.equal(stageStatus(graduated, 'piano', 5), 'passed');
+  assert.equal(nextStep(graduated, 'piano'), undefined);
 });
 
 test('L5 requires the prerequisite, all lessons and the three portfolio confirmations', () => {

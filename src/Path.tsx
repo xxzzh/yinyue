@@ -127,10 +127,9 @@ export function PathPage({ go, route }: { go: Go; route: string }) {
       <div className="gentle-tip">
         <Route size={20} />
         <div>
-          <strong>路线会一节一节补齐</strong>
+          <strong>学习路线与课程目录</strong>
           <p>
-            灰色的课程还在编写中。路线决定推荐顺序和阶段解锁；“探索课程”和各乐器目录里的现有课程仍可随时浏览。
-            网站能判定乐理与听辨题，判定不了音色、姿势和表现，演奏请配合录音回放和老师的反馈。
+            学习路线按阶段推荐并解锁课程。“探索课程”和各乐器目录可随时查阅。L5 乐器关卡由学习者回听自己的录音后自评。
           </p>
         </div>
       </div>
@@ -270,7 +269,9 @@ function StageCard({ line, stage, current, go }: { line: LineId; stage: Stage; c
               ? '本阶段的课程仍在编写中。'
               : stage === 0
                 ? '学完本阶段全部课程即可通过。'
-                : '本阶段最后一课是关卡，学完本阶段全部课程即可通过。'}
+                : stage === 5
+                  ? '学完本阶段全部课程，并在最后一课记录录音自评即可结业。'
+                  : '本阶段最后一课是关卡，学完本阶段全部课程即可通过。'}
           </p>
         )}
       </div>

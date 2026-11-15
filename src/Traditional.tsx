@@ -285,7 +285,7 @@ export function TraditionalPage({
   );
 }
 
-export function DiscoveryActivity({ lesson }: { lesson: Lesson }) {
+export function DiscoveryActivity({ lesson, onRecord }: { lesson: Lesson; onRecord?: () => void }) {
   const [done, setDone] = useState<number[]>([]);
   const [recorded, setRecorded] = useState(false);
   const { exercise, notify } = useLearning();
@@ -323,19 +323,26 @@ export function DiscoveryActivity({ lesson }: { lesson: Lesson }) {
         onClick={() => {
           exercise();
           setRecorded(true);
-          notify('这组观察练习已计入学习记录。');
+          onRecord?.();
+          notify(lesson.activity?.required ? '本次录音自评已记录。' : '这组观察练习已计入学习记录。');
         }}
       >
         {recorded ? (
           <>
             <Check size={14} />
-            已记录本次练习
+            {lesson.activity.required ? '已记录本次自评' : '已记录本次练习'}
           </>
+        ) : lesson.activity.required ? (
+          '记录录音自评'
         ) : (
           '记为一次观察练习'
         )}
       </button>
-      <small className="discovery-note">这是自主观察记录，不是演奏能力评分；完成本课还需通过下方测验。</small>
+      <small className="discovery-note">
+        {lesson.activity.required
+          ? '按录音自行核对清单。记录自评并答对下方题目后，即可完成关卡。'
+          : '勾选内容用于自评。完成本课还需通过下方测验。'}
+      </small>
     </div>
   );
 }

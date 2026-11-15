@@ -26,6 +26,11 @@ import { guitarL4Lessons } from '../src/guitar-l4-lessons.ts';
 import { voiceL4Lessons } from '../src/voice-l4-lessons.ts';
 import { guzhengL4Lessons } from '../src/guzheng-l4-lessons.ts';
 import { koudiL4Lessons } from '../src/koudi-l4-lessons.ts';
+import { pianoL5Lessons } from '../src/piano-l5-lessons.ts';
+import { guitarL5Lessons } from '../src/guitar-l5-lessons.ts';
+import { voiceL5Lessons } from '../src/voice-l5-lessons.ts';
+import { guzhengL5Lessons } from '../src/guzheng-l5-lessons.ts';
+import { koudiL5Lessons } from '../src/koudi-l5-lessons.ts';
 
 const lines = [
   { id: 'piano', stage: 3, lessons: pianoL3Lessons },
@@ -38,6 +43,11 @@ const lines = [
   { id: 'voice', stage: 4, lessons: voiceL4Lessons },
   { id: 'guzheng', stage: 4, lessons: guzhengL4Lessons },
   { id: 'koudi', stage: 4, lessons: koudiL4Lessons },
+  { id: 'piano', stage: 5, lessons: pianoL5Lessons },
+  { id: 'guitar', stage: 5, lessons: guitarL5Lessons },
+  { id: 'voice', stage: 5, lessons: voiceL5Lessons },
+  { id: 'guzheng', stage: 5, lessons: guzhengL5Lessons },
+  { id: 'koudi', stage: 5, lessons: koudiL5Lessons },
 ] as const;
 
 const fullBars = (source: string, label: string) => {
@@ -76,11 +86,12 @@ function checkMaterial(lesson: Lesson) {
   for (const target of lesson.pitch?.targets ?? []) assert.notEqual(Note.midi(target), null, target);
 }
 
-test('instrument lines L3 and L4 are written, ordered and end with a performance check', () => {
+test('instrument lines L3–L5 are written, ordered and end with a performance check', () => {
   for (const line of lines) {
     const label = `${line.id} L${line.stage}`;
     const order = instrumentLessonOrder[line.id][line.stage]!;
-    assert.equal(line.lessons.length, 20, label);
+    const size = line.stage === 5 ? 15 : 20;
+    assert.equal(line.lessons.length, size, label);
     assert.deepEqual(
       line.lessons.map(lesson => lesson.id),
       order,
@@ -89,17 +100,24 @@ test('instrument lines L3 and L4 are written, ordered and end with a performance
     assert.equal(publishedLessons(line.id, line.stage).length, plannedSize(line.id, line.stage), label);
     const course = findCourse(line.id)!.lessons.map(lesson => lesson.id);
     const start = course.indexOf(order[0]);
-    assert.deepEqual(course.slice(start, start + 20), order, `${label}: course order`);
-    assert.match(line.lessons[19].title, new RegExp(`^L${line.stage} (演奏|演唱)关卡`), label);
-    assert.equal(new Set(line.lessons.map(lesson => lesson.title)).size, 20, `${label}: titles are unique`);
+    assert.deepEqual(course.slice(start, start + size), order, `${label}: course order`);
+    assert.match(line.lessons[size - 1].title, new RegExp(`^L${line.stage} (演奏|演唱)关卡`), label);
+    assert.equal(new Set(line.lessons.map(lesson => lesson.title)).size, size, `${label}: titles are unique`);
+    if (line.stage === 5) {
+      const check = line.lessons[size - 1];
+      assert.equal(check.activity?.required, true, label);
+      assert.equal(check.activity.steps.length, 3, label);
+      assert.equal(check.widget, 'record', label);
+      assert.equal(line.lessons.filter(lesson => lesson.activity?.required).length, 1, label);
+    }
   }
 });
 
-test('instrument L3 and L4 lessons are complete, checkable and playable', () => {
+test('instrument L3–L5 lessons are complete, checkable and playable', () => {
   for (const line of lines)
     for (const lesson of line.lessons) {
       assert.equal(findLesson(lesson.id), lesson, lesson.id);
-      assert.equal(lesson.sections.length, 3, lesson.id);
+      assert.equal(lesson.sections.length, line.stage === 5 ? 2 : 3, lesson.id);
       assert.ok(
         lesson.sections.every(section => section.body.length >= 30),
         lesson.id,
@@ -113,7 +131,9 @@ test('instrument L3 and L4 lessons are complete, checkable and playable', () => 
         assert.ok(item.explanation.length > 8, item.question);
         if (item.listen) assert.ok(parseSequence(item.listen).length, item.question);
       }
-      if (lesson.widget === 'discovery' || lesson.activity) assert.equal(lesson.activity?.steps.length, 3, lesson.id);
+      if (line.stage === 5) assert.ok((lesson.activity?.steps.length ?? 0) >= 2, lesson.id);
+      else if (lesson.widget === 'discovery' || lesson.activity)
+        assert.equal(lesson.activity?.steps.length, 3, lesson.id);
       if (lesson.widget === 'jianpu') assert.ok(lesson.jianpu?.length, lesson.id);
       if (lesson.widget === 'play') assert.ok(lesson.play?.length, lesson.id);
       if (lesson.widget === 'tab') assert.ok(lesson.tab?.length, lesson.id);
@@ -145,5 +165,7 @@ test('the lesson kit places correct answers in varying positions', () => {
   for (const line of lines)
     for (const lesson of line.lessons)
       for (const item of [lesson.quiz, ...(lesson.more ?? [])]) positions[item.answer]++;
-  for (const count of positions) assert.ok(count >= 100 && count <= 200, `answer positions ${positions.join(' ')}`);
+  const total = positions.reduce((sum, count) => sum + count, 0);
+  for (const count of positions)
+    assert.ok(count / total >= 0.2 && count / total <= 0.3, `answer positions ${positions.join(' ')}`);
 });

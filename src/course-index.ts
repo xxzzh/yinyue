@@ -15,11 +15,14 @@ export const filterCourses = (query: string, family = 'all') =>
   courses.filter(course => courseMatches(course, query, family, course.tradition));
 
 /** Which content chunk holds a lesson; IDs follow the conventions of the lesson files. */
-export type LessonChunk = 'core' | 'core-l5' | 'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi' | 'catalog';
+type InstrumentLine = 'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi';
+export type LessonChunk = InstrumentLine | `${InstrumentLine}-l5` | 'core' | 'core-l5' | 'catalog';
 export function lessonChunk(id: string): LessonChunk {
   if (/^(rh|nt|th|ea|cr|ls|pf)\d-\d\d$/.test(id)) return id[2] === '5' ? 'core-l5' : 'core';
-  const line = /^(piano|guitar|voice|guzheng|koudi)-l\d-\d\d$/.exec(id);
-  return line ? (line[1] as LessonChunk) : 'catalog';
+  const match = /^(piano|guitar|voice|guzheng|koudi)-l(\d)-\d\d$/.exec(id);
+  if (!match) return 'catalog';
+  const line = match[1] as InstrumentLine;
+  return match[2] === '5' ? `${line}-l5` : line;
 }
 const chunkLoaders: Record<LessonChunk, () => Promise<Lesson[]>> = {
   core: () =>
@@ -60,6 +63,11 @@ const chunkLoaders: Record<LessonChunk, () => Promise<Lesson[]>> = {
     Promise.all([import('./koudi-lessons.ts'), import('./koudi-l3-lessons.ts'), import('./koudi-l4-lessons.ts')]).then(
       ([a, b, c]) => [...a.koudiLessons, ...b.koudiL3Lessons, ...c.koudiL4Lessons],
     ),
+  'piano-l5': () => import('./piano-l5-lessons.ts').then(module => module.pianoL5Lessons),
+  'guitar-l5': () => import('./guitar-l5-lessons.ts').then(module => module.guitarL5Lessons),
+  'voice-l5': () => import('./voice-l5-lessons.ts').then(module => module.voiceL5Lessons),
+  'guzheng-l5': () => import('./guzheng-l5-lessons.ts').then(module => module.guzhengL5Lessons),
+  'koudi-l5': () => import('./koudi-l5-lessons.ts').then(module => module.koudiL5Lessons),
   catalog: () => import('./catalog-content.ts').then(module => module.baseLessons),
 };
 const chunks = new Map<LessonChunk, Promise<Map<string, Lesson>>>();
