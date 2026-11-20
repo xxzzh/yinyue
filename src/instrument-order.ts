@@ -1,8 +1,12 @@
 // Published lessons of each instrument line, by stage, in path order. IDs only, so the first screen can
 // use it: the graded path (curriculum.ts) reads it, and data.ts orders each instrument course the same way.
-export type LessonOrder = Partial<Record<0 | 1 | 2 | 3 | 4 | 5, string[]>>;
+import { secondBatchOrder } from './second-batch-order.ts';
+import type { SecondBatchLine } from './second-batch-order.ts';
 
-export const instrumentLessonOrder: Record<'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi', LessonOrder> = {
+export type LessonOrder = Partial<Record<0 | 1 | 2 | 3 | 4 | 5, string[]>>;
+export type InstrumentLine = 'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi' | SecondBatchLine;
+
+export const instrumentLessonOrder: Record<InstrumentLine, LessonOrder> = {
   piano: {
     0: ['piano-1', 'piano-l0-02', 'piano-l0-03', 'piano-l0-04'],
     1: [
@@ -76,6 +80,10 @@ export const instrumentLessonOrder: Record<'piano' | 'guitar' | 'voice' | 'guzhe
     4: Array.from({ length: 20 }, (_, i) => `koudi-l4-${String(i + 1).padStart(2, '0')}`),
     5: Array.from({ length: 15 }, (_, i) => `koudi-l5-${String(i + 1).padStart(2, '0')}`),
   },
+  ukulele: secondBatchOrder('ukulele'),
+  kalimba: secondBatchOrder('kalimba'),
+  recorder: secondBatchOrder('recorder'),
+  drums: secondBatchOrder('drums'),
 };
 
 /** All published lessons of a line in path order. */

@@ -4,6 +4,9 @@
 import { courseIndex } from './lesson-index.ts';
 import { courseFamilies, courseMatches } from './course-meta.ts';
 import type { Lesson } from './data.ts';
+import { isSecondBatchLine } from './second-batch-order.ts';
+import type { SecondBatchLine } from './second-batch-order.ts';
+import type { InstrumentLine } from './instrument-order.ts';
 
 export { courseFamilies };
 export const courses = courseIndex;
@@ -15,13 +18,14 @@ export const filterCourses = (query: string, family = 'all') =>
   courses.filter(course => courseMatches(course, query, family, course.tradition));
 
 /** Which content chunk holds a lesson; IDs follow the conventions of the lesson files. */
-type InstrumentLine = 'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi';
-export type LessonChunk = InstrumentLine | `${InstrumentLine}-l5` | 'core' | 'core-l5' | 'catalog';
+type FirstBatchLine = Exclude<InstrumentLine, SecondBatchLine>;
+export type LessonChunk = InstrumentLine | `${FirstBatchLine}-l5` | 'core' | 'core-l5' | 'catalog';
 export function lessonChunk(id: string): LessonChunk {
   if (/^(rh|nt|th|ea|cr|ls|pf)\d-\d\d$/.test(id)) return id[2] === '5' ? 'core-l5' : 'core';
-  const match = /^(piano|guitar|voice|guzheng|koudi)-l(\d)-\d\d$/.exec(id);
+  const match = /^(piano|guitar|voice|guzheng|koudi|ukulele|kalimba|recorder|drums)-l(\d)-\d\d$/.exec(id);
   if (!match) return 'catalog';
-  const line = match[1] as InstrumentLine;
+  if (isSecondBatchLine(match[1])) return match[1];
+  const line = match[1] as FirstBatchLine;
   return match[2] === '5' ? `${line}-l5` : line;
 }
 const chunkLoaders: Record<LessonChunk, () => Promise<Lesson[]>> = {
@@ -68,6 +72,10 @@ const chunkLoaders: Record<LessonChunk, () => Promise<Lesson[]>> = {
   'voice-l5': () => import('./voice-l5-lessons.ts').then(module => module.voiceL5Lessons),
   'guzheng-l5': () => import('./guzheng-l5-lessons.ts').then(module => module.guzhengL5Lessons),
   'koudi-l5': () => import('./koudi-l5-lessons.ts').then(module => module.koudiL5Lessons),
+  ukulele: () => import('./ukulele-lessons.ts').then(module => module.ukuleleLessons),
+  kalimba: () => import('./kalimba-lessons.ts').then(module => module.kalimbaLessons),
+  recorder: () => import('./recorder-lessons.ts').then(module => module.recorderLessons),
+  drums: () => import('./drums-lessons.ts').then(module => module.drumsLessons),
   catalog: () => import('./catalog-content.ts').then(module => module.baseLessons),
 };
 const chunks = new Map<LessonChunk, Promise<Map<string, Lesson>>>();

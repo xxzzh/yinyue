@@ -74,6 +74,7 @@ import {
   testFor,
 } from './curriculum';
 import type { NextStep } from './curriculum';
+import { isSecondBatchLine } from './second-batch-order';
 
 // Pages and interactive tools load on demand so the first screen only ships the shell and course data.
 const PianoTool = lazy(() => import('./Tools').then(m => ({ default: m.PianoTool })));
@@ -82,6 +83,7 @@ const EarTool = lazy(() => import('./Tools').then(m => ({ default: m.EarTool }))
 const RhythmTool = lazy(() => import('./Tools').then(m => ({ default: m.RhythmTool })));
 const TheoryPlayer = lazy(() => import('./Tools').then(m => ({ default: m.TheoryPlayer })));
 const DrumTool = lazy(() => import('./InstrumentTools').then(m => ({ default: m.DrumTool })));
+const DrumExamplePlayer = lazy(() => import('./InstrumentTools').then(m => ({ default: m.DrumExamplePlayer })));
 const InstrumentPractice = lazy(() => import('./InstrumentTools').then(m => ({ default: m.InstrumentPractice })));
 const InstrumentTool = lazy(() => import('./InstrumentTools').then(m => ({ default: m.InstrumentTool })));
 const DiscoveryActivity = lazy(() => import('./Traditional').then(m => ({ default: m.DiscoveryActivity })));
@@ -295,7 +297,12 @@ function Overview({ go, onSettings }: { go: Go; onSettings: () => void }) {
           done: instrumentComplete,
           path: instrumentStep ? stepPath(instrumentStep) : `/path/${instrumentLine.id}`,
         }
-      : { title: '选一件乐器同行', detail: '钢琴、吉他、声乐、古筝、口笛', done: false, path: '/path/piano' },
+      : {
+          title: '选一件乐器同行',
+          detail: '九条分级路线，含尤克里里、卡林巴、竖笛和架子鼓',
+          done: false,
+          path: '/path/ukulele',
+        },
     { title: '听一听，两个音有多远', detail: '听觉训练 · 音程听辨', done: today.exercises > 0, path: '/practice/ear' },
     {
       title: '错题复习',
@@ -569,6 +576,7 @@ function CoursesPage({
   const [filter, setFilter] = useState('all');
   const [page, setPage] = useCatalogPage([query, filter]);
   if (course) {
+    const graded = isSecondBatchLine(course.id);
     const completed = course.lessons.filter(lesson => progress.completed.includes(lesson.id)).length;
     const next = course.lessons.find(lesson => !progress.completed.includes(lesson.id)) ?? course.lessons[0];
     return (
@@ -590,7 +598,7 @@ function CoursesPage({
             <div className="banner-meta">
               <span>
                 <BookOpen size={15} />
-                {course.lessons.length} 节{course.level ? '认识与启蒙课' : '入门课'}
+                {course.lessons.length} 节{graded ? ' L0–L5 分级课' : course.level ? '认识与启蒙课' : '入门课'}
               </span>
               <span>
                 <Clock3 size={15} />约 {course.lessons.reduce((sum, lesson) => sum + lesson.minutes, 0)} 分钟
@@ -600,9 +608,9 @@ function CoursesPage({
                 已完成 {completed} 节
               </span>
             </div>
-            <button className="button dark" onClick={() => go(`/lesson/${next.id}`)}>
+            <button className="button dark" onClick={() => go(graded ? `/path/${course.id}` : `/lesson/${next.id}`)}>
               <Play size={15} />
-              {completed ? '继续学习' : '开始这条路线'}
+              {graded ? '打开分级学习路线' : completed ? '继续学习' : '开始这条路线'}
             </button>
           </div>
           {instrumentImages[course.id] ? (
@@ -614,7 +622,7 @@ function CoursesPage({
           )}
         </div>
         <InstrumentCharacter course={course} />
-        {course.level && (
+        {course.level && !graded && (
           <div className="gentle-tip">
             <BookOpen size={20} />
             <div>
@@ -1112,12 +1120,15 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
   const solved = answers.every((value, i) => value === questions[i].answer);
   const course = lessonCourse(lesson.id)!;
   const place = lessonPlace(lesson.id);
-  // Main-line lessons follow the graded path; other lessons follow their course.
   const core = place?.line === 'core' ? place : undefined;
+  const secondBatch = place && isSecondBatchLine(place.line) ? place : undefined;
+  const graded = core ?? secondBatch;
   const reviewEnabled = core !== undefined && core.stage <= 2;
-  const sequence = core ? publishedLessons('core', core.stage).map(lessonId => findLesson(lessonId)!) : course.lessons;
+  const sequence = graded
+    ? publishedLessons(graded.line, graded.stage).map(lessonId => findLesson(lessonId)!)
+    : course.lessons;
   const index = sequence.findIndex(item => item.id === lesson.id);
-  const home = core ? '/path/core' : `/courses/${course.id}`;
+  const home = graded ? `/path/${graded.line}` : `/courses/${course.id}`;
   const stageTest = core && testFor('core', core.stage);
   const testPending = !!stageTest && !progress.passedTests.includes(stageTest.id);
   const portfolioAvailable = core?.stage === 5 && stageUnlocked(progress, 'core', 5);
@@ -1210,6 +1221,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
               <Volume2 size={15} />
               现在，亲手试一试
             </div>
+            {lesson.drum && <DrumExamplePlayer example={lesson.drum} />}
             {lesson.widget === 'discovery' ? (
               activity
             ) : lesson.widget === 'jianpu' ? (
@@ -1243,12 +1255,15 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
             ) : lesson.widget === 'rhythm' ? (
               <RhythmTool compact meter={lesson.meter} />
             ) : lesson.widget === 'drums' ? (
-              <DrumTool />
+              lesson.drum ? null : (
+                <DrumTool />
+              )
             ) : lesson.widget === 'instrument' ? (
               <InstrumentTool track={course.id} />
             ) : (
               <TheoryPlayer type={lesson.widget} />
             )}
+            {lesson.pitch && lesson.widget !== 'pitch' && <PitchWidget task={lesson.pitch} />}
             {lesson.activity && lesson.widget !== 'discovery' && activity}
           </section>
           <div className="takeaway">
@@ -1265,7 +1280,7 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
           <div className="lesson-actions">
             <button className="text-button" onClick={() => go(index > 0 ? `/lesson/${sequence[index - 1].id}` : home)}>
               <ArrowLeft size={15} />
-              {index > 0 ? '上一课' : core ? '学习路线' : '课程目录'}
+              {index > 0 ? '上一课' : graded ? '学习路线' : '课程目录'}
             </button>
             <button className="button primary" disabled={!solved || activityPending} onClick={finish}>
               {index < sequence.length - 1
@@ -1274,10 +1289,10 @@ function LessonReader({ id, go }: { id: string; go: Go }) {
                   ? '完成本课，去做阶段测验'
                   : portfolioAvailable
                     ? '完成本课，查看作品集'
-                    : core
-                      ? '完成本课，回到学习路线'
-                      : instrumentGraduation
-                        ? '完成结业关卡，回到学习路线'
+                    : instrumentGraduation
+                      ? '完成结业关卡，回到学习路线'
+                      : graded
+                        ? '完成本课，回到学习路线'
                         : '完成这条入门路线'}
               <ArrowRight size={16} />
             </button>

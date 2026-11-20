@@ -26,7 +26,14 @@ import { guitarL5Lessons } from './guitar-l5-lessons.ts';
 import { voiceL5Lessons } from './voice-l5-lessons.ts';
 import { guzhengL5Lessons } from './guzheng-l5-lessons.ts';
 import { koudiL5Lessons } from './koudi-l5-lessons.ts';
+import { ukuleleLessons } from './ukulele-lessons.ts';
+import { kalimbaLessons } from './kalimba-lessons.ts';
+import { recorderLessons } from './recorder-lessons.ts';
+import { drumsLessons } from './drums-lessons.ts';
 import { instrumentLessonOrder, lineLessons } from './instrument-order.ts';
+import type { DrumExample } from './drum-notation.ts';
+import { isSecondBatchLine } from './second-batch-order.ts';
+import type { SecondBatchLine } from './second-batch-order.ts';
 import type { SightOptions } from './jianpu.ts';
 import type { BeatCell } from './dictation.ts';
 import type { Degree } from './harmony.ts';
@@ -202,6 +209,7 @@ export interface Lesson {
   tab?: TabExample[];
   pitch?: PitchTask;
   record?: RecordTask;
+  drum?: DrumExample;
   dictation?: DictationTask;
   progression?: ProgressionTask;
   chorale?: ChoraleTask;
@@ -252,6 +260,10 @@ const lineLessonsById = new Map(
     ...koudiL3Lessons,
     ...koudiL4Lessons,
     ...koudiL5Lessons,
+    ...ukuleleLessons,
+    ...kalimbaLessons,
+    ...recorderLessons,
+    ...drumsLessons,
     ...baseLessons,
   ].map(lesson => [lesson.id, lesson]),
 );
@@ -269,10 +281,55 @@ const courseOrder: Partial<Record<Track, string[]>> = {
   voice: lineLessons(instrumentLessonOrder.voice),
   guzheng: lineLessons(instrumentLessonOrder.guzheng),
   koudi: lineLessons(instrumentLessonOrder.koudi),
+  ukulele: lineLessons(instrumentLessonOrder.ukulele),
+  kalimba: lineLessons(instrumentLessonOrder.kalimba),
+  recorder: lineLessons(instrumentLessonOrder.recorder),
+  drums: lineLessons(instrumentLessonOrder.drums),
 };
+
+const secondBatchDetails: Record<SecondBatchLine, { description: string; reading: NonNullable<Course['sources']> }> = {
+  ukulele: {
+    description: '从高 G 调弦与一个 C 和弦开始，逐步学会扫弦、指弹、移调、编配和合奏。',
+    reading: [
+      {
+        title: 'Fender · 尤克里里和弦指南',
+        url: 'https://www.fender.com/articles/chords/ukulele-chords-for-beginners',
+      },
+    ],
+  },
+  kalimba: {
+    description: '用 17 键 C 调卡林巴从三个音起步，再学双音、三拍、分层演奏与曲目改编。',
+    reading: [
+      {
+        title: 'Kalimba Magic · 17 键 C 调琴的八度',
+        url: 'https://www.kalimbamagic.com/news-and-announcements/octaves-on-the-17-note-kalimba',
+      },
+    ],
+  },
+  recorder: {
+    description: '用英式 C 调高音竖笛练稳第一音，再学换指、连吐、半孔高音和二重奏。',
+    reading: [
+      {
+        title: 'Yamaha · 高音竖笛指法图',
+        url: 'https://www.yamaha.com/en/musical_instrument_guide/recorder/play/play002.html',
+      },
+    ],
+  },
+  drums: {
+    description: '从练习垫或网页鼓机入门，练稳四拍，再进阶到过门、混合分拍和乐队伴奏。',
+    reading: [
+      { title: 'Vic Firth · 40 种军鼓基本功', url: 'https://ae.vicfirth.com/education/40-essential-rudiments/' },
+    ],
+  },
+};
+
 export const courses: Course[] = baseCourses.map(course => {
   const order = courseOrder[course.id];
-  return order ? { ...course, lessons: order.map(lessonId => lineLessonsById.get(lessonId)!) } : course;
+  if (!order) return course;
+  const ordered = { ...course, lessons: order.map(lessonId => lineLessonsById.get(lessonId)!) };
+  if (!isSecondBatchLine(course.id)) return ordered;
+  const { description, reading } = secondBatchDetails[course.id];
+  return { ...ordered, description, sources: [...(course.sources ?? []), ...reading] };
 });
 
 export { courseFamilies };

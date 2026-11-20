@@ -95,6 +95,38 @@ export const instrumentPlans: Record<Exclude<LineId, 'core'>, Record<Stage, Inst
     },
     5: { technique: '独奏会曲目、与乐队协奏、个人风格', repertoire: '个人曲目单' },
   },
+  ukulele: {
+    0: { technique: '高 G 调弦、按第 1 弦与第一次四拍扫弦', repertoire: '两个小节的 C 伴奏' },
+    1: { technique: '上下扫、C–Am–F–G7、换指与收尾', repertoire: '四和弦伴奏' },
+    2: { technique: '三拍、分解和弦、反拍与单音填句', repertoire: '三拍分解伴奏' },
+    3: { technique: 'C/G 移调、次属、切分、小横按', repertoire: '两调伴奏与单音过门' },
+    4: { technique: '向上换把、七和弦、最高声部、借用和弦', repertoire: '三段式和弦旋律小品' },
+    5: { technique: '合奏声部、主题变奏、交接排练与教学', repertoire: '独奏和合奏作品集' },
+  },
+  kalimba: {
+    0: { technique: '17 键 C 调布局、左右拇指与第一次三音短句', repertoire: 'C–D–E 三音问答' },
+    1: { technique: '五音位置、重复音、休止与问答', repertoire: '原创短曲《窗边》' },
+    2: { technique: '八度、同手移动、双音与三拍', repertoire: '三拍小圆舞' },
+    3: { technique: '固定音列中的调性、和声、切分与弱起', repertoire: '原创八小节问答' },
+    4: { technique: '声部层级、滑拨、收音、音区与二重奏', repertoire: '三段式卡林巴小品' },
+    5: { technique: '曲目改编、录音、可复演谱与教学', repertoire: '改编与原创作品集' },
+  },
+  recorder: {
+    0: { technique: '英式 C 调高音竖笛、轻气与稳吹 G5', repertoire: '两次短长音' },
+    1: { technique: 'B–A–G 指法、单吐、换气', repertoire: '三音小曲《纸船》' },
+    2: { technique: '右手低音、F 叉指、F♯、C6/D6 与连音', repertoire: 'G 调四小节小曲' },
+    3: { technique: '半孔、Bb、音准、倚音与乐句换气', repertoire: 'F/G 调乐句' },
+    4: { technique: '高区、连吐、颤音、力度与二重奏', repertoire: '三拍舞曲与当代短句' },
+    5: { technique: '版本、合奏音准、排练提示与诊断教学', repertoire: '独奏与合奏录音' },
+  },
+  drums: {
+    0: { technique: '鼓机或练习垫、四拍八分与第 2、4 拍重音', repertoire: '第一条四拍节奏' },
+    1: { technique: '单击回弹、手脚分工、四小节与句尾', repertoire: '四拍律动加过门' },
+    2: { technique: '双击、单跳复合击、反拍脚、三连音与十六分', repertoire: '八小节伴奏' },
+    3: { technique: '轻击、半拍感、摇摆、6/8 与分拍转换', repertoire: '两种分拍的连续演奏' },
+    4: { technique: '五拍、装饰击、段落留白与音色编配', repertoire: '多段式鼓伴奏' },
+    5: { technique: '力度、录音定位、合奏提示与排练谱', repertoire: '两首不同律动的作品集' },
+  },
 };
 
 const question = (

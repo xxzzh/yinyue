@@ -3,13 +3,15 @@
 // the whole ladder honestly. Lesson content itself stays in data.ts and the course modules.
 import { findLesson } from './course-index.ts';
 import { instrumentLessonOrder } from './instrument-order.ts';
+import type { InstrumentLine } from './instrument-order.ts';
+import { instrumentStageSize } from './second-batch-order.ts';
 import { portfolioItemIds } from './progress.ts';
 import type { Progress } from './progress.ts';
 import { pendingReviews, reviewLessonId } from './review.ts';
 
 export type Stage = 0 | 1 | 2 | 3 | 4 | 5;
 export type Skill = 'rh' | 'nt' | 'th' | 'ea' | 'pf' | 'cr' | 'ls';
-export type LineId = 'core' | 'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi';
+export type LineId = 'core' | InstrumentLine;
 export type UnitItem = { lesson: string } | { plan: string };
 
 export interface StageInfo {
@@ -152,12 +154,36 @@ export const lines: LineInfo[] = [
     english: 'KOUDI',
     description: '小巧明亮的中国吹管乐器。先确定两孔或五孔形制，再练口风、吐音与装饰。',
   },
+  {
+    id: 'ukulele',
+    name: '尤克里里',
+    english: 'UKULELE',
+    description: '从一个 C 和弦开始。用高 G 调弦练扫弦、伴奏、指弹与编配。',
+  },
+  {
+    id: 'kalimba',
+    name: '卡林巴',
+    english: 'KALIMBA',
+    description: '用 17 键 C 调拇指琴拨出三个音，再把它们发展成旋律、双音和改编小品。',
+  },
+  {
+    id: 'recorder',
+    name: '竖笛',
+    english: 'RECORDER',
+    description: '用英式 C 调高音竖笛吹稳 G5，逐步练习吐音、换气、高音区与合奏。',
+  },
+  {
+    id: 'drums',
+    name: '架子鼓',
+    english: 'DRUM KIT',
+    description: '先用线上鼓机或练习垫打稳四拍，再练手脚、过门、风格和乐队伴奏。',
+  },
 ];
 export const instrumentLines = lines.filter(line => line.id !== 'core');
 export const findLine = (id: string) => lines.find(line => line.id === id);
 
 /** Planned lessons per stage for every instrument line (template in the outline, section 5.1). */
-export const instrumentStageSize: Record<Stage, number> = { 0: 4, 1: 10, 2: 16, 3: 20, 4: 20, 5: 15 };
+export { instrumentStageSize };
 
 const l = (lesson: string): UnitItem => ({ lesson });
 const unit = (line: LineId, stage: Stage, skill: Skill, items: UnitItem[], title = skillNames[skill]): Unit => ({

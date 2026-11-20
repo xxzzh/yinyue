@@ -4045,6 +4045,35 @@ input[type='range'] {
   margin: 20px 0;
   padding: 4px 0;
 }
+.drum-study-score {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding-inline-start: 24px;
+}
+.drum-study-score li {
+  padding: 4px 0;
+}
+.drum-study-beat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 6px 2px 0;
+  padding: 5px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.drum-study-beat span {
+  display: inline-block;
+  min-width: 1.5em;
+  text-align: center;
+}
+.drum-study-beat .current-step {
+  background: var(--ink);
+  color: white;
+  border-radius: 3px;
+}
 .drum-count,
 .drum-row {
   display: grid;

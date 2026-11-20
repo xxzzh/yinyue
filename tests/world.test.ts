@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { allLessons, courses, filterCourses, findCourse } from '../src/data.ts';
 import { filterWorld, worldCatalog, worldInstrument, worldSources } from '../src/world-catalog.ts';
+import { isSecondBatchLine } from '../src/second-batch-order.ts';
 
 test('world expansion has distinct complete routes, image metadata and meaningful quizzes', () => {
   assert.equal(worldCatalog.length, 92);
@@ -9,19 +10,21 @@ test('world expansion has distinct complete routes, image metadata and meaningfu
   assert.equal(new Set(courses.map(course => course.id)).size, courses.length);
   assert.equal(new Set(allLessons.map(lesson => lesson.id)).size, allLessons.length);
   assert.equal(courses.length, 203);
-  assert.equal(allLessons.length, 1208);
+  assert.equal(allLessons.length, 1534);
   for (const item of worldCatalog) {
     const course = findCourse(item.id)!;
     assert.ok(course, item.id);
     assert.equal(course.traditional, undefined, item.id);
     assert.equal(course.family, item.family);
-    assert.equal(course.lessons.length, 3);
+    assert.equal(course.lessons.length, isSecondBatchLine(item.id) ? 85 : 3);
     assert.ok(course.sources?.some(source => source.url === worldSources[item.ref].url));
     assert.ok(
       item.shape.length > 15 && item.voice.length > 15 && item.step.length > 15 && item.contrast.length > 15,
       item.id,
     );
-    for (const lesson of course.lessons) {
+    const discoveryLessons = course.lessons.filter(lesson => lesson.widget === 'discovery');
+    assert.equal(discoveryLessons.length, 3, item.id);
+    for (const lesson of discoveryLessons) {
       assert.equal(lesson.widget, 'discovery');
       assert.equal(lesson.activity?.steps.length, 3);
       assert.equal(lesson.quiz.options.length, 4);

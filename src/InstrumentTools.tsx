@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Play, Square, Volume2 } from 'lucide-react';
 import { basicDrumPattern, drumVoices, emptyDrumPattern, instrumentProfiles, stringNote } from './instrument-profiles';
 import type { DrumPattern, DrumVoice } from './instrument-profiles';
 import type { Track } from './data';
 import { drumLoop, playDrum, playSequence } from './audio';
+import { parseDrumScore } from './drum-notation';
+import type { DrumExample, DrumStep } from './drum-notation';
 import { useLearning, useStudyClock } from './learning';
 
 export function InstrumentTool({ track }: { track: Track }) {
@@ -128,9 +130,7 @@ export function InstrumentPractice() {
   );
 }
 
-export function DrumTool() {
-  const [pattern, setPattern] = useState<DrumPattern>(basicDrumPattern);
-  const [bpm, setBpm] = useState(72);
+function useDrumPlayback(steps: DrumStep[], bpm: number) {
   const [running, setRunning] = useState(false);
   const [step, setStep] = useState(-1);
   const { notify, exercise } = useLearning();
@@ -139,7 +139,7 @@ export function DrumTool() {
     if (!running) return;
     let cancelled = false;
     let stop: (() => void) | undefined;
-    drumLoop(pattern, bpm, step => {
+    drumLoop(steps, bpm, step => {
       if (!cancelled) setStep(step);
     })
       .then(dispose => {
@@ -156,7 +156,78 @@ export function DrumTool() {
       cancelled = true;
       stop?.();
     };
-  }, [running, pattern, bpm, notify]);
+  }, [running, steps, bpm, notify]);
+  function togglePlayback() {
+    if (!running) exercise();
+    setStep(-1);
+    setRunning(value => !value);
+  }
+  return { running, step, togglePlayback };
+}
+
+export function DrumExamplePlayer({ example }: { example: DrumExample }) {
+  const bars = useMemo(() => parseDrumScore(example.score), [example.score]);
+  const steps = useMemo(() => bars.flat(2), [bars]);
+  const [bpm, setBpm] = useState(example.tempo);
+  const { running, step, togglePlayback } = useDrumPlayback(steps, bpm);
+  let position = 0;
+  return (
+    <div className="drum-tool">
+      <div className="instrument-heading">
+        <h3>鼓组示范</h3>
+        <p>按小节循环播放。K 是底鼓，S 是军鼓，H 是踩镲，! 是重击。</p>
+      </div>
+      <div className="drum-controls">
+        <label>
+          速度{' '}
+          <input
+            aria-label="示范速度"
+            type="range"
+            min="40"
+            max="140"
+            value={bpm}
+            onChange={event => setBpm(Number(event.target.value))}
+          />
+          <strong>{bpm} BPM</strong>
+        </label>
+        <button className="button primary small" onClick={togglePlayback}>
+          {running ? <Square size={14} /> : <Play size={14} />}
+          {running ? '停止示范' : '播放节奏示范'}
+        </button>
+      </div>
+      <ol className="drum-study-score" aria-label="节奏示范谱">
+        {bars.map((bar, barIndex) => (
+          <li key={barIndex} aria-label={`第 ${barIndex + 1} 小节`}>
+            {bar.map((beat, beatIndex) => (
+              <span className="drum-study-beat" key={beatIndex}>
+                <small>{beatIndex + 1}</small>
+                {beat.map((cell, cellIndex) => (
+                  <span key={cellIndex} className={position++ === step ? 'current-step' : undefined}>
+                    {cell.token}
+                  </span>
+                ))}
+              </span>
+            ))}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+export function DrumTool() {
+  const [pattern, setPattern] = useState<DrumPattern>(basicDrumPattern);
+  const [bpm, setBpm] = useState(72);
+  const steps = useMemo(
+    () =>
+      pattern.kick.map((_, i) => ({
+        hits: drumVoices.filter(voice => pattern[voice.id][i]).map(voice => voice.id),
+        beats: 0.5,
+      })),
+    [pattern],
+  );
+  const { running, step, togglePlayback } = useDrumPlayback(steps, bpm);
+  const { notify } = useLearning();
   function toggle(voice: DrumVoice, index: number) {
     setPattern(current => ({ ...current, [voice]: current[voice].map((on, i) => (i === index ? !on : on)) }));
   }
@@ -179,14 +250,7 @@ export function DrumTool() {
           />
           <strong>{bpm} BPM</strong>
         </label>
-        <button
-          className="button primary small"
-          onClick={() => {
-            if (!running) exercise();
-            setStep(-1);
-            setRunning(value => !value);
-          }}
-        >
+        <button className="button primary small" onClick={togglePlayback}>
           {running ? <Square size={14} /> : <Play size={14} />}
           {running ? '停止鼓机' : '播放节奏'}
         </button>

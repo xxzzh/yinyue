@@ -36,6 +36,7 @@ import {
   unlockHint,
 } from './curriculum';
 import type { LineId, Question, Stage, StageStatus, StageTest } from './curriculum';
+import { isSecondBatchLine } from './second-batch-order';
 
 type Go = (path: string) => void;
 
@@ -149,6 +150,7 @@ function StageCard({ line, stage, current, go }: { line: LineId; stage: Stage; c
   const indexed = testFor(line, stage);
   const test = indexed && findStageTest(indexed.id);
   const plan = line === 'core' ? undefined : instrumentPlans[line][stage];
+  const secondBatch = isSecondBatchLine(line);
   let number = 0;
   return (
     <details className={`stage-card ${status}${current ? ' current' : ''}`} open={current}>
@@ -172,8 +174,8 @@ function StageCard({ line, stage, current, go }: { line: LineId; stage: Stage; c
             已上线 {published.length} / 规划 {plannedSize(line, stage)} 节
           </span>
           <span>已完成 {done} 节</span>
-          <span>参考水平：{info.level}</span>
-          <span>建议：{info.duration}</span>
+          {!secondBatch && <span>参考水平：{info.level}</span>}
+          {!secondBatch && <span>建议：{info.duration}</span>}
         </div>
         {status === 'locked' && (
           <p className="stage-lock">
@@ -271,7 +273,9 @@ function StageCard({ line, stage, current, go }: { line: LineId; stage: Stage; c
                 ? '学完本阶段全部课程即可通过。'
                 : stage === 5
                   ? '学完本阶段全部课程，并在最后一课记录录音自评即可结业。'
-                  : '本阶段最后一课是关卡，学完本阶段全部课程即可通过。'}
+                  : secondBatch
+                    ? '学完本阶段全部课程，并在最后一课记录录音自评。'
+                    : '本阶段最后一课是关卡，学完本阶段全部课程即可通过。'}
           </p>
         )}
       </div>

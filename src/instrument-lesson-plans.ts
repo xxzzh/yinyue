@@ -1,6 +1,5 @@
 // Working titles for unwritten instrument lessons, in path order. Published IDs live in instrument-order.ts.
 import type { Stage } from './curriculum.ts';
+import type { InstrumentLine } from './instrument-order.ts';
 
-type Line = 'piano' | 'guitar' | 'voice' | 'guzheng' | 'koudi';
-
-export const instrumentLessonPlans: Partial<Record<Line, Partial<Record<Stage, string[]>>>> = {};
+export const instrumentLessonPlans: Partial<Record<InstrumentLine, Partial<Record<Stage, string[]>>>> = {};

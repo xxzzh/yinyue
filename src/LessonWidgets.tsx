@@ -774,8 +774,14 @@ export function PitchWidget({ task }: { task: PitchTask }) {
   const [held, setHeld] = useState(0);
   const [status, setStatus] = useState('');
   const session = useRef<(() => void) | null>(null);
+  const targetProgress = useRef({ index: 0, held: 0 });
   useStudyClock(running);
   useEffect(() => () => session.current?.(), []);
+  function resetTargets() {
+    targetProgress.current = { index: 0, held: 0 };
+    setIndex(0);
+    setHeld(0);
+  }
   async function start() {
     if (!navigator.mediaDevices?.getUserMedia) {
       setStatus('当前浏览器不支持麦克风。');
@@ -791,7 +797,6 @@ export function PitchWidget({ task }: { task: PitchTask }) {
       context.createMediaStreamSource(stream).connect(analyser);
       const buffer = new Float32Array(analyser.fftSize);
       const recent: number[] = [];
-      const progress = { index: 0, held: 0 };
       let last = performance.now();
       let frame = 0;
       const loop = () => {
@@ -802,8 +807,11 @@ export function PitchWidget({ task }: { task: PitchTask }) {
         last = now;
         analyser.getFloatTimeDomainData(buffer);
         const result = detectPitch(buffer, context.sampleRate);
+        const progress = targetProgress.current;
         if (!result || result.clarity < 0.8) {
           recent.length = 0;
+          progress.held = 0;
+          setHeld(0);
           setReading(null);
           return;
         }
@@ -825,14 +833,13 @@ export function PitchWidget({ task }: { task: PitchTask }) {
         }
         setHeld(progress.held);
       };
+      resetTargets();
       loop();
       session.current = () => {
         cancelAnimationFrame(frame);
         stream.getTracks().forEach(track => track.stop());
         void context.close();
       };
-      setIndex(0);
-      setHeld(0);
       setStatus('');
       setRunning(true);
     } catch {
@@ -871,7 +878,7 @@ export function PitchWidget({ task }: { task: PitchTask }) {
             </button>
           )}
           {targets.length > 0 && index >= targets.length && (
-            <button className="text-button" onClick={() => setIndex(0)}>
+            <button className="text-button" onClick={resetTargets}>
               <RotateCcw size={14} />
               再来一遍
             </button>

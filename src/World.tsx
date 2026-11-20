@@ -8,6 +8,7 @@ import { InstrumentImage } from './InstrumentImage';
 import { CourseArt } from './Art';
 import { CatalogPager } from './CatalogPager';
 import { useLearning } from './learning';
+import { isSecondBatchLine } from './second-batch-order';
 
 export const worldDirectory = courses.filter(course => !course.traditional && course.family !== 'foundation');
 export function filterWorldDirectory(query = '', family = 'all', area = '全部地域') {
@@ -68,7 +69,7 @@ export function WorldPage({
               <strong>{worldDirectory.length}</strong> 种乐器
             </span>
             <span>
-              <strong>{worldDirectory.reduce((sum, course) => sum + course.lessons.length, 0)}</strong> 节基础与启蒙课
+              <strong>{worldDirectory.reduce((sum, course) => sum + course.lessons.length, 0)}</strong> 节课程
             </span>
           </div>
         </div>
@@ -186,7 +187,8 @@ export function WorldPage({
                 <TimbrePreview track={course.id} />
                 <div className="heritage-card-foot">
                   <span>
-                    {course.lessons.length} 课 · {course.level ? '认识与启蒙' : '演奏入门'}
+                    {course.lessons.length} 课 ·{' '}
+                    {isSecondBatchLine(course.id) ? 'L0–L5 分级' : course.level ? '认识与启蒙' : '演奏入门'}
                   </span>
                   <span>
                     {completed ? (

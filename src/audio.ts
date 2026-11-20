@@ -1,5 +1,6 @@
 import type * as ToneTypes from 'tone';
-import type { DrumPattern, DrumVoice } from './instrument-profiles';
+import type { DrumVoice } from './instrument-profiles';
+import type { DrumStep } from './drum-notation';
 import type { MusicEvent } from './jianpu';
 let tone: typeof ToneTypes | null = null;
 let piano: ToneTypes.PolySynth | null = null;
@@ -196,15 +197,15 @@ async function drumEngine() {
     }).toDestination();
   return { tone: e.tone, kick, snare, hat };
 }
-function triggerDrum(e: Awaited<ReturnType<typeof drumEngine>>, voice: DrumVoice, time: number) {
-  if (voice === 'kick') e.kick.triggerAttackRelease('C2', '16n', time);
-  else e[voice].triggerAttackRelease('32n', time);
+function triggerDrum(e: Awaited<ReturnType<typeof drumEngine>>, voice: DrumVoice, time: number, velocity = 1) {
+  if (voice === 'kick') e.kick.triggerAttackRelease('C2', '16n', time, velocity);
+  else e[voice].triggerAttackRelease('32n', time, velocity);
 }
 export async function playDrum(voice: DrumVoice) {
   const e = await drumEngine();
   triggerDrum(e, voice, e.tone.now() + 0.01);
 }
-export async function drumLoop(pattern: DrumPattern, bpm: number, onStep: (step: number) => void): Promise<() => void> {
+export async function drumLoop(steps: DrumStep[], bpm: number, onStep: (step: number) => void): Promise<() => void> {
   const e = await drumEngine();
   let next = e.tone.now() + 0.08;
   let step = 0;
@@ -213,8 +214,9 @@ export async function drumLoop(pattern: DrumPattern, bpm: number, onStep: (step:
     const now = e.tone.now();
     if (next < now - 0.1) next = now + 0.03;
     while (next < now + 0.1) {
-      const current = step % 8;
-      for (const voice of ['kick', 'snare', 'hat'] as const) if (pattern[voice][current]) triggerDrum(e, voice, next);
+      const current = step % steps.length;
+      const { hits, beats, accent } = steps[current];
+      for (const voice of hits) triggerDrum(e, voice, next, accent === false ? 0.68 : 1);
       const timeout = setTimeout(
         () => {
           pending.delete(timeout);
@@ -223,7 +225,7 @@ export async function drumLoop(pattern: DrumPattern, bpm: number, onStep: (step:
         Math.max(0, (next - now) * 1000),
       );
       pending.add(timeout);
-      next += 30 / bpm;
+      next += (60 * beats) / bpm;
       step++;
     }
   }, 25);

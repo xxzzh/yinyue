@@ -1,6 +1,6 @@
 // The catalog courses with their original lessons: theory and ear introductions, the instrument courses,
 // Chinese and world instruments. The lesson reader loads this chunk for every lesson outside the main line
-// and the five instrument lines (course-index.ts, loadLesson); data.ts adds those lines and orders the courses.
+// and the graded instrument chunks (course-index.ts, loadLesson); data.ts adds those lessons and orders the courses.
 import type { Course } from './data.ts';
 import { coreLessonExtras } from './core-extras.ts';
 import { instrumentCourses } from './instrument-courses.ts';
